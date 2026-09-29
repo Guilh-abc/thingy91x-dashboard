@@ -9,6 +9,8 @@ PT-BR abaixo · English short section at the end.
 
 ## URL pública (GitHub Pages)
 
+**v31:** presença só com evidência da nuvem (last_seen / mensagens / shadow $meta) — hora do poll, USB serial local, trilha e cache não contam mais como "online"; `connected=true` velho (>1h) não sobrepõe silêncio; strip "Último dado do aparelho (nuvem)" + "Fonte da rede" (nuvem vs USB do Mac).
+
 **v30:** mapa explica por que está vazio (401 = falta API Key da equipe / nenhum fix na nuvem); trilha busca os pontos mais recentes primeiro; Netlify lê `NRF_TEAM_READ_TOKEN` (ou `NRF_TEAM_WRITE_TOKEN`) para mensagens/localização quando o navegador não envia `X-Nrf-Team-Key` (`/health` → `readTokenConfigured`).
 
 **v27:** playback da trilha, sparklines, `NRF_TEAM_WRITE_TOKEN` no Netlify, API `/alerts`. Detalhes em `docs/v27-playback-sparklines-infra.md`.

@@ -20,7 +20,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=30">
+    <link rel="stylesheet" href="styles.css?v=31">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
@@ -249,8 +249,12 @@
                                     <span class="conn-strip-value" id="stripLastPoll">—</span>
                                 </div>
                                 <div class="conn-strip-item">
-                                    <span class="conn-strip-label">Dado de rede</span>
+                                    <span class="conn-strip-label" title="Hora do dado mais recente que o aparelho enviou à nuvem">Último dado do aparelho (nuvem)</span>
                                     <span class="conn-strip-value" id="stripNetAge">—</span>
+                                </div>
+                                <div class="conn-strip-item">
+                                    <span class="conn-strip-label">Fonte da rede</span>
+                                    <span class="conn-strip-value" id="stripNetSrc">—</span>
                                 </div>
                                 <div class="conn-strip-item">
                                     <span class="conn-strip-label">Intervalo poll</span>
@@ -470,6 +474,6 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=30"></script>
+    <script src="app.js?v=31"></script>
 </body>
 </html>

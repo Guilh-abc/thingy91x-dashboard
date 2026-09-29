@@ -223,7 +223,8 @@ function evaluateAlerts({ deviceId, device, msgs }) {
   );
   const offlineThr = Math.max(RULES.SLEEPING_MAX_MS, onlineWin);
   let presence = 'nodata';
-  if (cloudOk === true) presence = 'online';
+  // v31: stale connected=true must not override long silence
+  if (cloudOk === true && (age == null || age <= offlineThr)) presence = 'online';
   else if (age == null) presence = 'nodata';
   else if (age <= onlineWin) presence = 'online';
   else if (age <= offlineThr) presence = 'sleeping';

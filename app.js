@@ -140,7 +140,7 @@ const elements = {
     motionSpeedWrap: $('motionSpeedWrap'), motionSpeed: $('motionSpeed'),
     connectivityStrip: $('connectivityStrip'), cardNetwork: $('cardNetwork'),
     stripCloud: $('stripCloud'), stripCell: $('stripCell'), stripQuality: $('stripQuality'),
-    stripLastPoll: $('stripLastPoll'), stripNetAge: $('stripNetAge'), stripPollMs: $('stripPollMs'),
+    stripLastPoll: $('stripLastPoll'), stripNetAge: $('stripNetAge'), stripNetSrc: $('stripNetSrc'), stripPollMs: $('stripPollMs'),
     stripHint: $('stripHint'), stripRefreshStatus: $('stripRefreshStatus'),
     refreshNowBtn: $('refreshNowBtn'),
 };
@@ -375,26 +375,34 @@ function onlineWindowMs(intervalSec) {
     const fromIv = intervalSec != null ? PRESENCE.INTERVAL_FACTOR * intervalSec * 1000 : 0;
     return Math.max(PRESENCE.MIN_ONLINE_MS, fromIv);
 }
-function collectActivityMs(opts = {}) {
-    const cands = [];
-    const push = (v) => { const t = toTsMs(v); if (t != null) cands.push(t); };
-    push(opts.lastSeen);
-    push(opts.latestAt);
-    push(opts.netAt);
-    push(opts.gpsAt);
-    push(opts.serialAt);
-    push(opts.shadowMeta);
-    push(opts.batteryAt);
-    push(opts.envAt);
+/**
+ * v31: cloud evidence only. Local USB serial time, local trail points, poll time and
+ * cached "last net payload" are NOT evidence that the device transmitted to the cloud.
+ * Returns { ms, src } (src = which field carried the newest timestamp).
+ */
+function collectActivity(opts = {}) {
+    let best = null;
+    const push = (v, src) => {
+        const t = toTsMs(v);
+        if (t != null && (best == null || t > best.ms)) best = { ms: t, src };
+    };
+    push(opts.lastSeen, 'last_seen (Memfault/shadow)');
+    push(opts.latestAt, 'última mensagem na nuvem');
+    push(opts.netAt, 'mensagem de rede na nuvem');
+    push(opts.gpsAt, 'mensagem de GPS na nuvem');
+    push(opts.shadowMeta, 'shadow $meta');
+    push(opts.batteryAt, 'mensagem de bateria na nuvem');
+    push(opts.envAt, 'mensagem de ambiente na nuvem');
     if (Array.isArray(opts.msgs)) {
         for (const m of opts.msgs.slice(0, 40)) {
-            push(m.receivedAt || m.received_at || m.ts || m.timestamp || m.insertedAt);
+            push(m.receivedAt || m.received_at || m.ts || m.timestamp || m.insertedAt, 'mensagem na nuvem');
         }
     }
-    if (Array.isArray(opts.trailPts)) {
-        for (const pt of opts.trailPts.slice(-15)) push(pt.at || pt.ts || pt.timestamp);
-    }
-    return cands.length ? Math.max(...cands) : null;
+    return best;
+}
+function collectActivityMs(opts = {}) {
+    const a = collectActivity(opts);
+    return a ? a.ms : null;
 }
 /**
  * Activity-based presence for CoAP Asset Tracker.
@@ -407,17 +415,21 @@ function resolvePresence(opts = {}) {
         : pickSampleIntervalSec(opts.parsed || opts.device || opts);
     const win = onlineWindowMs(intervalSec);
     const sleepMax = Math.max(PRESENCE.SLEEPING_MAX_MS, win);
-    const activityMs = collectActivityMs(opts);
+    const act = collectActivity(opts);
+    const activityMs = act ? act.ms : null;
     const age = activityMs != null ? Date.now() - activityMs : null;
     const base = {
+        activitySource: act ? act.src : null,
         ageMs: age,
         activityAt: activityMs != null ? new Date(activityMs).toISOString() : null,
         onlineWindowMs: win,
         offlineThresholdMs: sleepMax,
         intervalSec,
-        cloudConnected: cloudBonus ? true : (opts.cloudConnected === false || opts.connected === false ? false : null),
+        cloudConnected: (cloudBonus && !(age != null && age > sleepMax)) ? true : (opts.cloudConnected === false || opts.connected === false ? false : null),
     };
-    if (cloudBonus) {
+    // v31: a stale shadow connected=true must not override 1h+ of silence.
+    const staleBonus = cloudBonus && age != null && age > sleepMax;
+    if (cloudBonus && !staleBonus) {
         return {
             ...base, kind: 'online', label: 'Online (transmitindo)', shortLabel: 'Online',
             isOnline: true, isSleeping: false, isOffline: false, hasData: true,
@@ -470,17 +482,17 @@ function presenceFromParsed(parsed = {}, fromMsg = {}, extra = {}) {
         connected: cloudConnected === true ? true : undefined,
         lastSeen: parsed.lastSeen,
         latestAt: fromMsg.latestAt,
-        netAt: fromMsg.netAt || lastNetPayloadAt,
-        gpsAt: fromMsg.gpsAt || lastGpsFix?.at,
-        serialAt: lastSerial?.updatedAt || extra.serialAt,
+        netAt: fromMsg.netAt,
+        gpsAt: fromMsg.gpsAt,
         shadowMeta: lastDeviceRaw?.$meta?.updatedAt || lastDeviceRaw?._nrf?.$meta?.updatedAt,
         batteryAt: fromMsg.batteryAt,
         envAt: fromMsg.envAt,
         msgs: extra.msgs || lastMessages,
-        trailPts: extra.trailPts || lastTrail,
         parsed,
         intervalSec: parsed.sampleIntervalSec,
         ...extra,
+        serialAt: undefined,
+        trailPts: undefined,
     });
 }
 
@@ -723,7 +735,7 @@ function computeOperationalAlerts({
 
     const p = presence || resolvePresence({
         cloudConnected: connected === true ? true : null,
-        lastSeen, gpsAt, netAt, trailPts,
+        lastSeen,
     });
     // Offline alert only past offline threshold (CoAP idle ≠ offline).
     if (p.kind === 'offline') {
@@ -840,8 +852,7 @@ function updateSituacaoInteligente(opts = {}) {
     const netAt = opts.netAt || lastNetPayloadAt || null;
     const presence = opts.presence || resolvePresence({
         cloudConnected: connected === true ? true : null,
-        lastSeen, gpsAt, netAt, trailPts,
-        serialAt: lastSerial?.updatedAt,
+        lastSeen,
         msgs: lastMessages,
         parsed: opts.parsed,
     });
@@ -1066,15 +1077,38 @@ function renderConnectivityAges() {
             setStripClass(elements.stripLastPoll, 'muted');
         }
     }
+    // v31: "Último dado do aparelho" = newest CLOUD timestamp (last_seen / messages), not poll time,
+    // not USB serial, not cached net payload.
     if (elements.stripNetAge) {
-        if (lastNetPayloadAt) {
-            const ts = new Date(lastNetPayloadAt).toLocaleTimeString('pt-BR', { hour12: false });
-            setText(elements.stripNetAge, `${ts} · ${timeAgo(lastNetPayloadAt)}`);
-            const s = Math.floor((Date.now() - new Date(lastNetPayloadAt).getTime()) / 1000);
-            setStripClass(elements.stripNetAge, Number.isFinite(s) && s > 300 ? 'warn' : 'ok');
+        const pr = lastPresence;
+        const at = pr?.activityAt || null;
+        if (at) {
+            const d = new Date(at);
+            const same = new Date().toDateString() === d.toDateString();
+            const ts = same ? d.toLocaleTimeString('pt-BR', { hour12: false }) : d.toLocaleString('pt-BR', { hour12: false });
+            setText(elements.stripNetAge, `${ts} · ${timeAgo(at)}`);
+            elements.stripNetAge.title = `Fonte: ${pr.activitySource || 'nuvem'}`;
+            const age = Date.now() - d.getTime();
+            setStripClass(elements.stripNetAge, pr.kind === 'online' ? 'ok' : (pr.kind === 'sleeping' ? 'warn' : 'err'));
+            if (!Number.isFinite(age)) setStripClass(elements.stripNetAge, 'muted');
         } else {
-            setText(elements.stripNetAge, 'sem payload de rede');
+            setText(elements.stripNetAge, 'nenhum dado na nuvem');
+            elements.stripNetAge.title = '';
             setStripClass(elements.stripNetAge, 'muted');
+        }
+    }
+    if (elements.stripNetSrc) {
+        const src = telemetrySource.net;
+        const serialLive = serialIsHealthy(lastSerial);
+        if (src === 'serial' && serialLive) {
+            setText(elements.stripNetSrc, 'USB do Mac (modem local)');
+            setStripClass(elements.stripNetSrc, 'warn');
+        } else if (src === 'cloud') {
+            setText(elements.stripNetSrc, 'nuvem');
+            setStripClass(elements.stripNetSrc, 'ok');
+        } else {
+            setText(elements.stripNetSrc, '—');
+            setStripClass(elements.stripNetSrc, 'muted');
         }
     }
     setText(elements.stripPollMs, `a cada ${POLL_MS / 1000}s`);
@@ -1130,7 +1164,7 @@ function updateConnectivityStrip({ connected, presence, parsed = {}, fromMsg = {
     }
 
     if (cell) {
-        lastNetPayloadAt = fromMsg.netAt || fromMsg.latestAt || parsed.lastSeen || lastNetPayloadAt || lastSuccessfulPollAt;
+        lastNetPayloadAt = fromMsg.netAt || fromMsg.latestAt || parsed.lastSeen || lastNetPayloadAt;
     }
 
     // Hint honest empty / token
@@ -1139,6 +1173,10 @@ function updateConnectivityStrip({ connected, presence, parsed = {}, fromMsg = {
             elements.stripHint.hidden = false;
             elements.stripHint.classList.add('need-token');
             elements.stripHint.textContent = 'Configure a User API Key na engrenagem para ver a nuvem.';
+        } else if (cell && (offline || sleeping) && telemetrySource.net === 'serial') {
+            elements.stripHint.hidden = false;
+            elements.stripHint.classList.remove('need-token');
+            elements.stripHint.textContent = `Rede/RSRP lidos pela USB do Mac (modem ligado). A nuvem não recebe dados do aparelho: ${formatPresenceAge(p) || 'sem timestamp'}.`;
         } else if (!cell && noTeam && onPages) {
             elements.stripHint.hidden = false;
             elements.stripHint.classList.add('need-token');
