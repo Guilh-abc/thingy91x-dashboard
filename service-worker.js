@@ -1,5 +1,5 @@
-const CACHE = 'thingy91x-v31';
-const ASSETS = ['./manifest.json', './icon.svg', './styles.css'];
+const CACHE = 'thingy91x-v32';
+const ASSETS = ['./manifest.json', './icon.svg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

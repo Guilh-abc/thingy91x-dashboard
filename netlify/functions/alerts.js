@@ -1,11 +1,14 @@
 /**
- * Alerts on-demand (v29) — activity-based presence (CoAP-safe); offline só após limiar.
+ * Alerts on-demand (v32) — presença via presence-core.js (mesma função do front): evidência = mais recente entre
+ * last_seen Memfault, mensagens da nuvem (qualquer appId), histórico de localização da nuvem e shadow $meta.
+ * (v29: activity-based, CoAP-safe; offline só após limiar.)
  * GET /.netlify/functions/alerts?deviceId=UUID
  * Auth: mesmos headers do nrfcloud (Authorization / X-User-* / X-Nrf-Team-Key)
  *      + env NRF_TEAM_WRITE_TOKEN (ou NRF_TEAM_READ_TOKEN) para schedule sem headers.
  * Geofence NÃO é avaliada no worker (só no cliente) — sem store server-side.
  * Nunca retorna segredos.
  */
+import '../../presence-core.js';
 const MEMFAULT_HOST = 'https://api.memfault.com';
 const NRF_HOST = 'https://api.nrfcloud.com';
 const DEFAULT_ORG = process.env.MEMFAULT_ORG || 'telekom';
@@ -112,44 +115,67 @@ async function upstreamGet(url, auth, label) {
   return { res, data };
 }
 
+function msgList(msgs) {
+  return Array.isArray(msgs) ? msgs : msgs?.items || msgs?.messages || [];
+}
+function msgApp(m) {
+  return String(m?.message?.appId || m?.appId || m?.app_id || m?.app || '').toUpperCase();
+}
+function msgData(m) {
+  return m?.message?.data ?? m?.data ?? m?.message ?? null;
+}
+function newestFirst(list) {
+  return list.slice().sort((a, b) => (globalThis.PresenceCore.msgRecvMs(b) || 0) - (globalThis.PresenceCore.msgRecvMs(a) || 0));
+}
+
 function pickBatteryPct(device, msgs) {
   const state = device?.state || device?.nrfRaw?.state || device?.shadow?.state || {};
   const reported = state.reported || state || {};
   const bat = reported.device?.batteryStatus || reported.battery || {};
   let pct = numOrNull(bat.percent ?? bat.percentage ?? bat.SoC ?? bat.soc ?? bat.level ?? bat.battery);
   if (pct == null) pct = voltToPct(bat.voltage ?? bat.batteryVoltage ?? bat.v);
-  if (pct != null) return pct;
-  // scan recent messages
-  const list = Array.isArray(msgs) ? msgs : msgs?.items || msgs?.messages || [];
-  for (const m of list.slice(0, 40)) {
-    const app = (m.appId || m.app || '').toUpperCase();
-    const d = m.data ?? m.message?.data ?? m;
-    if (app === 'BATTERY' || app === 'BAT' || app === 'DEVICE') {
-      const p = numOrNull(d?.percent ?? d?.percentage ?? d?.battery ?? d?.SoC);
-      if (p != null) return p;
-      const vv = numOrNull(d?.voltage ?? d?.batteryVoltage ?? d?.v);
+  // ATT 1.5: mensagem BATTERY com data = número (% de carga) — a MAIS RECENTE vale
+  for (const m of newestFirst(msgList(msgs)).slice(0, 60)) {
+    const app = msgApp(m);
+    if (app !== 'BATTERY' && app !== 'BAT') continue;
+    const d = msgData(m);
+    if (d != null && typeof d !== 'object') {
+      const p = numOrNull(typeof d === 'string' ? d.trim() : d);
+      if (p != null && p >= 0 && p <= 100) return Math.round(p);
+    } else if (d) {
+      const p = numOrNull(d.percent ?? d.percentage ?? d.battery ?? d.SoC ?? d.value);
+      if (p != null && p >= 0 && p <= 100) return Math.round(p);
+      const vv = numOrNull(d.voltage ?? d.batteryVoltage ?? d.v);
       if (vv != null) return voltToPct(vv);
     }
   }
-  return null;
+  return pct;
 }
 
 function pickRsrp(device, msgs) {
-  const state = device?.state || device?.nrfRaw?.state || {};
-  const reported = state.reported || state || {};
-  const ni = reported.networkInfo || reported.roam || {};
-  let r = numOrNull(ni.rsrp ?? reported.rsrp);
-  if (r != null) return r;
-  const list = Array.isArray(msgs) ? msgs : msgs?.items || msgs?.messages || [];
-  for (const m of list.slice(0, 40)) {
-    const app = (m.appId || m.app || '').toUpperCase();
-    const d = m.data ?? m.message?.data ?? m;
+  for (const m of newestFirst(msgList(msgs)).slice(0, 60)) {
+    const app = msgApp(m);
     if (app === 'RSRP' || app === 'SCELL' || app === 'DEVICE' || app === 'NETWORK') {
-      const v = numOrNull(typeof d === 'number' ? d : d?.rsrp ?? d?.value);
+      const d = msgData(m);
+      const v = numOrNull(typeof d === 'object' && d ? (d.rsrp ?? d.value ?? d.networkInfo?.rsrp) : d);
       if (v != null) return v;
     }
   }
-  return null;
+  const state = device?.state || device?.nrfRaw?.state || {};
+  const reported = state.reported || state || {};
+  const ni = reported.networkInfo || reported.device?.networkInfo || reported.roam || {};
+  return numOrNull(ni.rsrp ?? reported.rsrp);
+}
+
+/** Hora da última mensagem de rede (DEVICE/SCELL/RSRP) na nuvem. */
+function netMsgAtMs(msgs) {
+  let best = null;
+  for (const m of msgList(msgs)) {
+    if (!['DEVICE', 'SCELL', 'CELL_POS', 'RSRP', 'RSRQ', 'NETWORK'].includes(msgApp(m))) continue;
+    const t = globalThis.PresenceCore.msgRecvMs(m);
+    if (t != null && (best == null || t > best)) best = t;
+  }
+  return best;
 }
 
 function toTsMs(v) {
@@ -176,31 +202,6 @@ function pickIntervalSec(device) {
   return null;
 }
 
-function pickLastSeen(device, msgs) {
-  const candidates = [
-    device?.last_seen,
-    device?.lastSeen,
-    device?.$meta?.updatedAt,
-    device?.nrfRaw?.$meta?.updatedAt,
-    device?.state?.reported?.$meta?.updatedAt,
-    device?.state?.reported?.connection?.$meta?.updatedAt,
-    device?.state?.reported?.device?.$meta?.updatedAt,
-    device?._memfault?.last_seen,
-  ];
-  let best = null;
-  for (const c of candidates) {
-    const t = toTsMs(c);
-    if (t != null && (best == null || t > best)) best = t;
-  }
-  const list = Array.isArray(msgs) ? msgs : msgs?.items || msgs?.messages || [];
-  for (const m of list.slice(0, 40)) {
-    const at = m.receivedAt || m.received_at || m.ts || m.timestamp || m.insertedAt;
-    const t = toTsMs(at);
-    if (t != null && (best == null || t > best)) best = t;
-  }
-  return best;
-}
-
 /** Cloud MQTT session flag — bonus only (true ⇒ online). CoAP usually reports false. */
 function cloudConnectedBonus(device) {
   const rep = device?.state?.reported || device?.nrfRaw?.state?.reported || {};
@@ -210,34 +211,35 @@ function cloudConnectedBonus(device) {
   return null;
 }
 
-function evaluateAlerts({ deviceId, device, msgs }) {
+function evaluateAlerts({ deviceId, device, msgs, locs }) {
   const alerts = [];
   const push = (level, id, text) => alerts.push({ level, id, text, source: 'server' });
-  const lastSeenMs = pickLastSeen(device, msgs);
-  const age = lastSeenMs != null ? Date.now() - lastSeenMs : null;
-  const cloudOk = cloudConnectedBonus(device);
+  const list = msgList(msgs);
   const intervalSec = pickIntervalSec(device);
-  const onlineWin = Math.max(
-    RULES.MIN_ONLINE_MS,
-    intervalSec != null ? Math.round(RULES.INTERVAL_FACTOR * intervalSec * 1000) : 0
-  );
-  const offlineThr = Math.max(RULES.SLEEPING_MAX_MS, onlineWin);
-  let presence = 'nodata';
-  // v31: stale connected=true must not override long silence
-  if (cloudOk === true && (age == null || age <= offlineThr)) presence = 'online';
-  else if (age == null) presence = 'nodata';
-  else if (age <= onlineWin) presence = 'online';
-  else if (age <= offlineThr) presence = 'sleeping';
-  else presence = 'offline';
+  const cloudOk = cloudConnectedBonus(device);
+  // v32: UMA função de presença (presence-core.js) — igual ao front
+  const pres = globalThis.PresenceCore.resolve({
+    lastSeen: device?.last_seen || device?._memfault?.last_seen || null,
+    shadowMeta: device?.nrfRaw?.$meta?.updatedAt || device?.nrfRaw?.updatedAt || null,
+    messages: list,
+    locations: locs || [],
+    cloudConnected: cloudOk,
+    intervalSec,
+  });
+  const presence = pres.kind;
+  const age = pres.ageMs;
+  const lastSeenMs = pres.activityAt ? Date.parse(pres.activityAt) : null;
+  const onlineWin = pres.onlineWindowMs;
+  const offlineThr = pres.offlineThresholdMs;
+  const srcTxt = pres.activitySource ? ` (${pres.activitySource})` : '';
 
   // Offline alert ONLY past offline threshold (not merely connected===false / CoAP idle).
   if (presence === 'offline') {
-    const mins = age != null ? Math.round(age / 60000) : '?';
-    push('crítico', 'offline', `Offline / sem dados há ~${mins} min`);
+    push('crítico', 'offline', `Offline / sem dados há ~${Math.round(age / 60000)} min${srcTxt}`);
   } else if (presence === 'sleeping') {
-    push('atenção', 'stale', `Em espera — último envio há ~${Math.round(age / 60000)} min`);
-  } else if (age != null && age > RULES.DATA_STALE_MS && presence === 'online') {
-    push('atenção', 'stale', `Dados antigos (~${Math.round(age / 60000)} min)`);
+    push('atenção', 'stale', `Em espera — último envio há ~${Math.round(age / 60000)} min${srcTxt}`);
+  } else if (presence === 'nodata') {
+    push('atenção', 'stale', 'Sem dados de atividade na nuvem');
   }
 
   const pct = pickBatteryPct(device, msgs);
@@ -250,6 +252,14 @@ function evaluateAlerts({ deviceId, device, msgs }) {
   const rsrp = pickRsrp(device, msgs);
   if (rsrp != null && rsrp < RULES.RSRP_WEAK) {
     push('atenção', 'rsrp-weak', `Sinal fraco (RSRP ${rsrp} dBm)`);
+  }
+
+  // Dado de rede velho: se o aparelho está ativo, é só informativo (não é falta de cobertura)
+  const netMs = netMsgAtMs(list);
+  if (presence === 'online' && (netMs == null || Date.now() - netMs > RULES.DATA_STALE_MS)) {
+    push('ok', 'net-info', netMs == null
+      ? `Aparelho enviando${srcTxt}, mas sem dados de rede (DEVICE/SCELL) na nuvem`
+      : `Aparelho enviando${srcTxt}, mas sem dados de rede (DEVICE/SCELL) há ~${Math.round((Date.now() - netMs) / 60000)} min`);
   }
 
   const rank = { crítico: 0, atenção: 1, ok: 2 };
@@ -265,13 +275,16 @@ function evaluateAlerts({ deviceId, device, msgs }) {
       rsrpWeak: RULES.RSRP_WEAK,
       dataStaleMin: Math.round(RULES.DATA_STALE_MS / 60000),
       geofence: false,
-      note: 'v29 activity-based (CoAP). Geofence só no cliente.',
+      note: 'v32 presence-core (last_seen + mensagens + localização + shadow). Geofence só no cliente.',
     },
     snapshot: {
       presence,
       cloudConnected: cloudOk,
       connected: presence === 'online' ? true : presence === 'offline' ? false : null,
       lastSeenMs,
+      activityAt: pres.activityAt,
+      activitySource: pres.activitySource,
+      evidence: pres.evidence.map((e) => ({ src: e.src, at: new Date(e.ms).toISOString() })),
       batteryPct: pct,
       rsrp,
     },
@@ -342,7 +355,7 @@ export async function handler(event) {
 
     let msgs = [];
     try {
-      const mq = new URLSearchParams({ deviceId, pageLimit: '50' });
+      const mq = new URLSearchParams({ deviceId, pageLimit: '50', pageSort: 'desc' });
       const mr = await upstreamGet(`${NRF_HOST}/v1/messages?${mq}`, nrfAuth, 'NRF messages');
       if (mr.res.ok) {
         const d = mr.data;
@@ -350,7 +363,21 @@ export async function handler(event) {
       }
     } catch { /* soft */ }
 
-    const out = evaluateAlerts({ deviceId, device, msgs });
+    // v32: localização da nuvem (GNSS/Wi‑Fi/célula) também é evidência de presença
+    let locs = [];
+    try {
+      const lq = new URLSearchParams({
+        deviceId, pageLimit: '20', pageSort: 'desc',
+        start: new Date(Date.now() - 24 * 3600 * 1000).toISOString(), end: new Date().toISOString(),
+      });
+      const lr = await upstreamGet(`${NRF_HOST}/v1/location/history?${lq}`, nrfAuth, 'NRF location');
+      if (lr.res.ok) {
+        const d = lr.data;
+        locs = Array.isArray(d) ? d : d?.items || d?.data || [];
+      }
+    } catch { /* soft */ }
+
+    const out = evaluateAlerts({ deviceId, device, msgs, locs });
     // Netlify schedule warm: ?warm=1 just evaluates + logs
     if (qs.warm === '1' || event.headers?.['x-nf-scheduled']) {
       console.log(`[alerts] warm device=${deviceId} n=${out.alerts.length}`);

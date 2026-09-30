@@ -7,12 +7,16 @@
     "start": "node proxy.js",
     "dev": "node --watch proxy.js",
     "serve": "node proxy.js",
-    "check": "node --check app.js && node --check proxy.js && node --check netlify/functions/nrfcloud.js && echo OK"
+    "check": "node --check app.js && node --check presence-core.js && node --check proxy.js && node --check netlify/functions/nrfcloud.js && node --check netlify/functions/alerts.js && echo OK",
+    "test": "node tests/presence.test.mjs && node tests/functions.test.mjs",
+    "test:e2e": "python3 tests/e2e_presence.py"
   },
   "dependencies": {
     "express": "^4.19.2",
     "cors": "^2.8.5",
     "node-fetch": "^3.3.2"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }

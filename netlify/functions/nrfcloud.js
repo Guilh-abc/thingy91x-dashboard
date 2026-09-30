@@ -1,8 +1,8 @@
+import '../../presence-core.js'; // v32: mesma lógica de presença do front (globalThis.PresenceCore)
 const MEMFAULT_HOST = 'https://api.memfault.com';
 const NRF_HOST = 'https://api.nrfcloud.com';
 const DEFAULT_ORG = process.env.MEMFAULT_ORG || 'telekom';
 const DEFAULT_PROJECT = process.env.MEMFAULT_PROJECT || 'nrf-project';
-const ONLINE_MS = Number(process.env.MEMFAULT_ONLINE_MS || 15 * 60 * 1000);
 
 const UNSUPPORTED_WRITES = [
   { re: /^\/(?:firmware|firmwares|fota)(?:\/|$|\?)/i, feature: 'legacy FOTA' },
@@ -150,7 +150,10 @@ function normalizeDevice(raw, extras = {}) {
   const d = unwrapDevicePayload(raw);
   if (!d || typeof d !== 'object') return d;
   const serial = d.device_serial || d.id || d.name || extras.nrfId;
-  const lastSeen = d.last_seen || d.updated_date || d.created_date || extras.nrfUpdated || null;
+  // v32: last_seen = SÓ o do Memfault. updated_date/created_date NÃO são atividade do aparelho
+  // (mudam ao editar o device) e $meta do shadow é evidência separada (não vira "last_seen").
+  const lastSeen = d.last_seen || null;
+  const shadowMeta = extras.nrfUpdated || null;
   const nrfReported = extras.nrfState?.reported || extras.nrfState?.state?.reported || null;
   // Activity window: max(15min, 2.5× sample/update interval). CoAP has no persistent session —
   // shadow reported.connected is usually false between uploads; only trust connected===true as a bonus.
@@ -160,13 +163,13 @@ function normalizeDevice(raw, extras = {}) {
     const n = Number(cfg?.[k]);
     if (Number.isFinite(n) && n > 0) { intervalSec = n > 10000 ? Math.round(n / 1000) : Math.round(n); break; }
   }
-  const onlineMs = Math.max(ONLINE_MS, intervalSec != null ? Math.round(2.5 * intervalSec * 1000) : 0);
+  // v32: presença do device (só evidência de nível de device: last_seen + shadow $meta). O front soma
+  // mensagens e localização da nuvem com a MESMA função (presence-core.js).
+  const devPresence = globalThis.PresenceCore.resolve({ lastSeen, shadowMeta, intervalSec, cloudConnected: nrfReported?.connected === true ? true : null });
   let connected;
-  if (lastSeen) {
-    const age = Date.now() - new Date(lastSeen).getTime();
-    connected = Number.isFinite(age) ? age < onlineMs : undefined;
-  }
   if (nrfReported?.connected === true) connected = true;
+  else if (devPresence.kind === 'online') connected = true;
+  else if (devPresence.kind === 'offline') connected = false;
   const flat = flattenAttributes(extras.attributes);
   const fwVer =
     d.last_seen_release?.version ||
@@ -225,7 +228,9 @@ function normalizeDevice(raw, extras = {}) {
     hardware_version: d.hardware_version,
     cohort: d.cohort,
     firmware: fwVer ? { app: { version: fwVer } } : (d.firmware || extras.nrfFirmwareObj || {}),
-    $meta: { updatedAt: lastSeen || extras.nrfUpdated || null },
+    $meta: { updatedAt: shadowMeta },
+    _shadowMeta: shadowMeta,
+    _presence: { kind: devPresence.kind, activityAt: devPresence.activityAt, activitySource: devPresence.activitySource, scope: 'device (last_seen + shadow)' },
     state: { reported },
     last_seen: lastSeen,
     last_seen_release: d.last_seen_release,
