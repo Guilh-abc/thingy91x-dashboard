@@ -19,7 +19,7 @@ PT-BR abaixo · English short section at the end.
 
 Dashboard estático em:
 
-**https://guilhermeromio-netto-prog.github.io/thingy91x-dashboard/**
+**https://guilh-abc.github.io/thingy91x-dashboard/**
 
 - **Nuvem (Memfault / nRF Cloud):** funciona no github.io — configure a API key na engrenagem ⚙️. As chamadas vão para a function Netlify (`thingy91x-x-dashboard.netlify.app`).
 - **Serial / USB / cell·Wi‑Fi resolve local:** só via localhost (`Thingy91X-Dashboard.command` / `npm run serve`). No Pages o bridge UART não existe (404 silencioso).

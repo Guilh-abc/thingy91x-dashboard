@@ -4,7 +4,7 @@ Não usa chaves reais; intercepta /.netlify/functions/** e serve os arquivos loc
 import json, os, sys, mimetypes, datetime as dt
 from playwright.sync_api import sync_playwright
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PAGES = 'https://guilhermeromio-netto-prog.github.io/thingy91x-dashboard/'
+PAGES = 'https://guilh-abc.github.io/thingy91x-dashboard/'
 DEV = '50423451-3737-4337-80fc-110bddf418ff'
 now = dt.datetime.now(dt.timezone.utc)
 iso = lambda d: d.strftime('%Y-%m-%dT%H:%M:%S.000Z')

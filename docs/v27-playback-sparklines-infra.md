@@ -55,7 +55,7 @@ Redirect: `/api/alerts` → `/.netlify/functions/alerts`.
 
 ## Teste rápido (PT-BR)
 
-1. Abrir `https://guilhermeromio-netto-prog.github.io/thingy91x-dashboard/?v=27` (hard refresh / limpar SW se UI antiga).
+1. Abrir `https://guilh-abc.github.io/thingy91x-dashboard/?v=27` (hard refresh / limpar SW se UI antiga).
 2. Com trilha carregada: scrubber move o fantasma; ▶ em 5× percorre pontos; chip mostra hora/bat/RSRP se houver.
 3. Sparklines: se ≥3 amostras de bat/RSRP na trilha, linhas SVG; senão “histórico insuficiente”.
 4. Health write token: URL Netlify `/nrfcloud/health` → `writeTokenConfigured`.

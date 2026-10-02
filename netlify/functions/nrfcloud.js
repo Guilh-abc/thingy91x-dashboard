@@ -384,7 +384,7 @@ function corsOrigin(event) {
   const origin = (event?.headers?.origin || event?.headers?.Origin || '').toString();
   // Mirror existing *: no credentials on fetch. Prefer echoing known public origins.
   if (
-    origin === 'https://guilhermeromio-netto-prog.github.io' ||
+    origin === 'https://guilh-abc.github.io' ||
     /\.github\.io$/i.test((() => { try { return new URL(origin).hostname; } catch { return ''; } })()) ||
     /\.netlify\.app$/i.test((() => { try { return new URL(origin).hostname; } catch { return ''; } })()) ||
     /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)

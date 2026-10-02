@@ -38,7 +38,7 @@ Esses itens pedem trabalho futuro de FW/app; esta entrega não grava nem pede fl
 
 ## Como testar
 
-1. **Remoto:** abrir `https://guilhermeromio-netto-prog.github.io/thingy91x-dashboard/?v=25` com a chave já salva (ou engrenagem).
+1. **Remoto:** abrir `https://guilh-abc.github.io/thingy91x-dashboard/?v=25` com a chave já salva (ou engrenagem).
 2. Conferir faixa Situação (Estado/Onde/Risco/Ação) e lista Alertas.
 3. Card Bateria → linha “Autonomia estimada”.
 4. Controles da trilha → chip “Resumo da trilha”.

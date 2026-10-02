@@ -257,7 +257,7 @@ function buildPairingUrl() {
         projectSlug: config.projectSlug || 'nrf-project',
         deviceId: config.deviceId || '',
     };
-    const base = 'https://guilhermeromio-netto-prog.github.io/thingy91x-dashboard/?v=32#cfg=';
+    const base = 'https://guilh-abc.github.io/thingy91x-dashboard/?v=32#cfg=';
     return base + b64urlEncode(JSON.stringify(payload));
 }
 async function copyPairingLink() {
