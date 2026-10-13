@@ -4,15 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
-<title>BMW · Conectividade contínua by Telekom</title>
+<title>Connect · IoT Cat-M e Satélite NTN — demonstração</title>
+<meta property="og:title" content="Connect · IoT Cat-M e Satélite NTN">
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="bmw.css?v=2">
+<link rel="stylesheet" href="connect.css?v=3">
 </head>
 <body>
 <header class="top">
-  <div><h1>BMW · Conectividade contínua <span class="tk">by Telekom</span></h1>
-  <small>Módulo nRF9151 independente do veículo · LTE-M primário · fallback satélite NTN Skylo · Deutsche Telekom IoT</small></div>
+  <div style="display:flex;gap:12px;align-items:center"><svg class="wm" viewBox="0 0 44 44" width="40" height="40" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#a45cff"/></linearGradient></defs><rect x="1" y="1" width="42" height="42" rx="12" fill="#111a2e" stroke="url(#cg)" stroke-width="1.5"/><path d="M28.5 14.5a10 10 0 1 0 0 15" fill="none" stroke="url(#cg)" stroke-width="3.2" stroke-linecap="round"/><circle cx="22" cy="22" r="3" fill="#fff"/><path d="M31 11.5a14 14 0 0 1 3.5 5.5M33.5 8.5a18 18 0 0 1 4.5 7" fill="none" stroke="#a45cff" stroke-width="1.8" stroke-linecap="round" opacity=".85"/></svg><div><h1>Connect <span class="tk">IoT Cat-M e Satélite NTN</span></h1>
+  <small>Módulo nRF9151 independente do veículo · LTE-M primário · fallback satélite NTN Skylo · Deutsche Telekom IoT</small></div></div>
   <nav><a href="index.html">NTN Pro (dados reais)</a><a href="lab.html">NTN Lab (logs)</a></nav>
 </header>
 <div class="sim-banner">SIMULAÇÃO DE DEMONSTRAÇÃO · eventos, latências e posições desta página são simulados e não são resultados de teste. Os dados reais do teste continuam no NTN Pro.</div>
@@ -20,14 +21,14 @@
 <main>
 <section class="card">
   <h2>Conceito</h2>
-  <p>Um módulo de conectividade <b>totalmente independente do carro</b>: sem CAN, sem integração com sistemas BMW. A placa Nordic nRF9151 com SIM Telekom fala pela rede celular <b>LTE-M</b> e, quando a cobertura acaba, muda sozinha para o <b>satélite NTN Skylo</b>, mantendo o veículo em contato com a central para serviços críticos de baixo volume de dados. Sem vídeo e sem internet: só dado crítico, posição e eventos.</p>
+  <p>Um módulo de conectividade <b>totalmente independente do carro</b>: sem CAN, sem integração com sistemas do veículo. A placa Nordic nRF9151 com SIM Telekom fala pela rede celular <b>LTE-M</b> e, quando a cobertura acaba, muda sozinha para o <b>satélite NTN Skylo</b>, mantendo o veículo em contato com a central para serviços críticos de baixo volume de dados. Sem vídeo e sem internet: só dado crítico, posição e eventos.</p>
 </section>
 
 <section class="grid2">
   <div class="card">
     <h2>Tela traseira (simulação)</h2>
     <div class="screen">
-      <div class="scr-top"><span>Conectividade contínua by Telekom</span><span id="badge" class="badge cell">via celular (LTE-M)</span></div>
+      <div class="scr-top"><span>Connect · Cat-M + Satélite NTN</span><span id="badge" class="badge cell">via celular (LTE-M)</span></div>
       <div id="geoAlert" class="geo-alert" hidden></div>
       <div id="map"></div>
       <div class="scr-btns"><button id="bPanic" class="panic">ASSISTÊNCIA / PÂNICO</button><button id="bSup" class="sup">Suporte</button></div>
@@ -78,8 +79,8 @@
   </ul>
 </section>
 </main>
-<footer>Telekom · Deutsche Telekom IoT · Protótipo conceitual para demonstração. BMW é citada apenas como cliente-alvo.</footer>
+<footer>Telekom · Deutsche Telekom IoT · Protótipo conceitual para demonstração.</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="bmw.js?v=2"></script>
+<script src="connect.js?v=3"></script>
 </body>
 </html>

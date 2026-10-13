@@ -28,3 +28,23 @@ body.present .top .link,body.present .foot{display:none}body.present .live b{fon
 .nowpin span{position:absolute;inset:3px;border-radius:50%;background:var(--c);border:3px solid #fff;box-shadow:0 0 0 0 var(--c);animation:nowp 1.6s infinite}
 .nowpin b{position:absolute;left:26px;top:1px;white-space:nowrap;background:rgba(10,14,25,.85);color:#fff;font:600 11px/1.6 system-ui;padding:0 6px;border-radius:4px;border:1px solid var(--c)}
 @keyframes nowp{0%{box-shadow:0 0 0 0 rgba(255,255,255,.7)}70%{box-shadow:0 0 0 14px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+
+/* v46 Connect: refinamento visual */
+:root{--card:#111827;--card2:#162036;--line:#222d45;--catm:#3d8bff;--ntn:#a45cff}
+body{font:14px/1.5 Inter,system-ui,sans-serif;letter-spacing:-.003em}
+.top{padding:16px 26px;background:linear-gradient(180deg,#0e1424e6,#0b0f1acc);backdrop-filter:blur(8px);position:sticky;top:0;z-index:1100}
+.brand .wm{flex:none;filter:drop-shadow(0 4px 14px #5b6cff40)}
+.wordmark{font-size:24px;font-weight:800;letter-spacing:-.035em;line-height:1;background:linear-gradient(90deg,#fff 30%,#c9b5ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tagline{display:flex;gap:6px;align-items:center;margin-top:4px;font-size:12.5px;color:var(--mu)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:1px 9px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.chip.catm,.tag.catm{color:#8fb8ff;background:#3d8bff1f;border-color:#3d8bff66}
+.chip.ntn,.tag.ntn{color:#cfa8ff;background:#a45cff1f;border-color:#a45cff66}
+.tag.catm,.tag.ntn{border:1px solid;border-radius:999px;padding:1px 8px;font-weight:600}
+.card,.live>div,.kpi{border-radius:16px;box-shadow:0 1px 0 #ffffff08 inset,0 10px 30px -18px #000}
+.card{padding:16px 18px}.card-h h2{font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0}
+.live,.kpis,.grid{margin-left:26px;margin-right:26px}.live b,.kpi b{letter-spacing:-.02em}
+.kpi small,.live small{letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;font-weight:600}
+.seg button.on{background:linear-gradient(135deg,#3d8bff33,#a45cff33)!important;color:#fff}
+body.present .top{padding:18px 34px}body.present .wordmark{font-size:30px}body.present .actions .link,body.present #btnExport{display:none}
+body.present .live,body.present .kpis,body.present .grid{margin-left:34px;margin-right:34px}
