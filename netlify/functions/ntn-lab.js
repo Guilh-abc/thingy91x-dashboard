@@ -42,7 +42,7 @@ const r3 = (v) => (num(v) != null && v !== 0 ? Math.round(v * 1000) / 1000 : nul
 /** Normaliza uma mensagem compacta da placa (app v2.0). Exportado para testes. */
 export function normalizeIngest(m, rawLen, rxIso, trHint) {
   if (!m || typeof m !== 'object') return null;
-  const type = m.t === 'e' ? 'event' : m.t === 'm' ? 'telemetry' : null;
+  const type = m.t === 'e' ? 'event' : m.t === 'm' ? 'telemetry' : m.t === 'g' ? 'satsum' : m.t === 'd' ? 'satdet' : null;
   if (!type) return null;
   const late = Math.max(0, num(m.l) || 0);
   const k = Array.isArray(m.k) ? m.k.map((x) => num(x) ?? 0) : null;
@@ -63,6 +63,13 @@ export function normalizeIngest(m, rawLen, rxIso, trHint) {
     counters: k ? { tries: k[0], ok: k[1], fail: k[2], switches: k[3] } : null,
     failReasons: Array.isArray(m.f) ? { wait: num(m.f[0]) ?? 0, dns: num(m.f[1]) ?? 0, timeout: num(m.f[2]) ?? 0, other: num(m.f[3]) ?? 0 } : null,
   });
+  else if (type === 'satsum') { const tr3 = (x) => (Array.isArray(x) ? x.slice(0, 3).map((v) => (num(v) === 999 ? null : num(v))) : [null, null, null]);
+    const [rmin, rmax, ravg] = tr3(m.rm), [qmin, qmax, qavg] = tr3(m.qm);
+    Object.assign(rec, { sess: num(m.id), samples: num(m.k), rsrpMin: rmin, rsrpMax: rmax, rsrpAvg: ravg, snrMin: qmin, snrMax: qmax, snrAvg: qavg,
+      regPct: num(m.rp), tReg: num(m.tr) != null && m.tr >= 0 ? m.tr : null, dur: num(m.d), rej: num(m.rj) != null && m.rj >= 0 ? m.rj : null, probe: m.pr === 1, plmn: str(m.p, 8), satOp: str(m.op, 16) || null }); }
+  else if (type === 'satdet') { const v = String(m.v || '').slice(0, 400).split(';').map((x) => x.split(',').map(Number)).filter((a) => a.length === 4 && a.every(Number.isFinite))
+      .map(([t, r, q, st]) => ({ t, rsrp: r === 999 ? null : r, snr: q === 127 ? null : q, st }));
+    Object.assign(rec, { sess: num(m.id), off: num(m.o), pts: v }); }
   else Object.assign(rec, { event: str(m.e, 12), value: num(m.x), info: str(m.i, 40), ...(m.p ? { plmn: str(m.p, 8), act: num(m.a) } : {}) });
   return rec;
 }
