@@ -7,7 +7,13 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const hhmm = (iso) => (iso ? new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—');
   const dmy = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—');
-  const netTag = (n) => (n ? `<span class="tag ${n}">${n === 'ntn' ? 'Satélite' : 'Cat-M'}</span>` : '—');
+  const SAT = { '90198': 'Skylo' }; // v45: extensivel (Sateliot etc.)
+  const satName = (r) => { const p = r && r.net === 'ntn' && r.plmn ? r.plmn : null; const op = (r && r.satOp) || (p && SAT[p]);
+    return op ? { t: op + ' (' + (p || Object.keys(SAT).find((k) => SAT[k] === op) || '?') + ')', inf: false } : { t: 'Skylo (90198)', inf: true }; };
+  const netTag = (n, r) => { if (!n) return '—'; if (n !== 'ntn') return '<span class="tag catm">Cat-M</span>';
+    if (!r) return '<span class="tag ntn">Satélite</span>'; const s = satName(r);
+    return `<span class="tag ntn">Satélite · ${s.t}</span>${s.inf ? ' <small class="muted">(inferido)</small>' : ''}`; };
+  window.ntnSatName = satName;
   const LS = 'ntnpro.filters';
   const st = Object.assign({ src: 'live', period: '24h', net: 'all', pos: 'all', sw: false }, JSON.parse(localStorage.getItem(LS) || '{}'));
   const params = new URLSearchParams(location.search);
@@ -141,7 +147,7 @@
     $('msgBody').innerHTML = rows.map((r) => {
       const det = r.type === 'event' ? (P.EVENT_PT[r.event] || r.event) + (r.info ? ' — ' + r.info : '') + (r.event === 'reg' || r.event === 'fix' ? ' (' + P.fmtDur(r.value) + ')' : '') : 'Telemetria' + (r.plmn ? ' · ' + r.plmn : '');
       const lat = r.rttMs != null ? P.fmtMs(r.rttMs) : own.has(r) ? P.fmtMs(own.get(r)) : '—';
-      return `<tr><td class="mono">${hhmm(r.ts)}</td><td>${r.seq ?? '—'}</td><td>${netTag(r.deliveredNet || r.net)}${r.transport === 'udp' ? ' <span class="tag late" style="background:#1f6f43">UDP</span>' : ''}</td><td>${r.type === 'event' ? 'evento' : 'telemetria'}</td><td>${esc(det)}</td><td>${r.rsrp != null ? r.rsrp + ' dBm' : '—'}</td><td>${r.bytes ?? '—'}</td><td>${lat}</td><td>${r.late > 0 ? `<span class="tag late">atrasada ${P.fmtDur(r.late)}</span>` : 'tempo real'}</td></tr>`;
+      return `<tr><td class="mono">${hhmm(r.ts)}</td><td>${r.seq ?? '—'}</td><td>${netTag(r.deliveredNet || r.net, r)}${r.transport === 'udp' ? ' <span class="tag late" style="background:#1f6f43">UDP</span>' : ''}</td><td>${r.type === 'event' ? 'evento' : 'telemetria'}</td><td>${esc(det)}</td><td>${r.rsrp != null ? r.rsrp + ' dBm' : '—'}</td><td>${r.bytes ?? '—'}</td><td>${lat}</td><td>${r.late > 0 ? `<span class="tag late">atrasada ${P.fmtDur(r.late)}</span>` : 'tempo real'}</td></tr>`;
     }).join('');
   }
   const lg = { net: 'all', tr: 'all', late: false, q: '' };
@@ -154,7 +160,7 @@
     lgRows = P.sortRecs(all).filter((r) => (lg.net === 'all' || r.deliveredNet === lg.net) && (lg.tr === 'all' || (r.transport || 'https') === lg.tr) && (!lg.late || r.late > 0) && (!q || (lgDesc(r) + ' ' + r.seq).toLowerCase().includes(q)))
       .map((r) => ({ r, lat: r.rttMs ?? own.get(r) ?? null })).reverse();
     $('lgCount').textContent = lgRows.length + ' registros · ' + lgRows.filter((x) => x.r.deliveredNet === 'ntn').length + ' via satélite';
-    $('lgBody').innerHTML = lgRows.slice(0, 1500).map(({ r, lat }) => `<tr${r.deliveredNet === 'ntn' ? ' style="background:rgba(155,77,255,.16)"' : ''}><td class="mono">${dmy(r.ts)}</td><td class="mono">${dmy(r.rx || r.ts)}</td><td>${r.seq ?? '—'}</td><td>${netTag(r.net)}</td><td>${netTag(r.deliveredNet)}${r.deliveredHow === 'inferido' ? ' <small class="muted">inf.</small>' : ''}</td><td>${(r.transport || 'https').toUpperCase()}</td><td>${r.type === 'event' ? 'evento' : 'telemetria'}</td><td>${esc(lgDesc(r))}</td><td>${r.bytes ?? '—'}</td><td>${lat != null ? P.fmtMs(lat) : '—'}</td><td>${r.late > 0 ? '<span class="tag late">' + P.fmtDur(r.late) + '</span>' : 'tempo real'}</td></tr>`).join('');
+    $('lgBody').innerHTML = lgRows.slice(0, 1500).map(({ r, lat }) => `<tr${r.deliveredNet === 'ntn' ? ' style="background:rgba(155,77,255,.16)"' : ''}><td class="mono">${dmy(r.ts)}</td><td class="mono">${dmy(r.rx || r.ts)}</td><td>${r.seq ?? '—'}</td><td>${netTag(r.net)}</td><td>${netTag(r.deliveredNet, r)}</td><td>${(r.transport || 'https').toUpperCase()}</td><td>${r.type === 'event' ? 'evento' : 'telemetria'}</td><td>${esc(lgDesc(r))}</td><td>${r.bytes ?? '—'}</td><td>${lat != null ? P.fmtMs(lat) : '—'}</td><td>${r.late > 0 ? '<span class="tag late">' + P.fmtDur(r.late) + '</span>' : 'tempo real'}</td></tr>`).join('');
   }
   function render() {
     const rs = view();

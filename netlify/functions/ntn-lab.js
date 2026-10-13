@@ -54,6 +54,7 @@ export function normalizeIngest(m, rawLen, rxIso, trHint) {
     prevRttMs: num(m.pr) != null && m.pr >= 0 ? m.pr : null,
     transport: m.tr === 'u' || trHint === 'udp' ? 'udp' : 'https',
     txNet: m.tx === 'n' ? 'ntn' : m.tx === 'c' ? 'catm' : null,
+    satOp: str(m.op, 16) || null, satTac: str(m.tc, 12) || null, satCell: str(m.ci, 12) || null, regSecs: num(m.rt),
   };
   if (rec.lat === 0 && rec.lon === 0) { rec.lat = null; rec.lon = null; }
   if (type === 'telemetry') Object.assign(rec, {
@@ -62,7 +63,7 @@ export function normalizeIngest(m, rawLen, rxIso, trHint) {
     counters: k ? { tries: k[0], ok: k[1], fail: k[2], switches: k[3] } : null,
     failReasons: Array.isArray(m.f) ? { wait: num(m.f[0]) ?? 0, dns: num(m.f[1]) ?? 0, timeout: num(m.f[2]) ?? 0, other: num(m.f[3]) ?? 0 } : null,
   });
-  else Object.assign(rec, { event: str(m.e, 12), value: num(m.x), info: str(m.i, 40) });
+  else Object.assign(rec, { event: str(m.e, 12), value: num(m.x), info: str(m.i, 40), ...(m.p ? { plmn: str(m.p, 8), act: num(m.a) } : {}) });
   return rec;
 }
 /** v37: "cl":"72410,C423,0C5F2C16" (PLMN,TAC hex,ECI hex) -> objeto lte do nRF Cloud ground fix. */
