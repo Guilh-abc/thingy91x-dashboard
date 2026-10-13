@@ -7,7 +7,7 @@
 <title>BMW · Conectividade contínua by Telekom</title>
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="bmw.css?v=1">
+<link rel="stylesheet" href="bmw.css?v=2">
 </head>
 <body>
 <header class="top">
@@ -28,13 +28,14 @@
     <h2>Tela traseira (simulação)</h2>
     <div class="screen">
       <div class="scr-top"><span>Conectividade contínua by Telekom</span><span id="badge" class="badge cell">via celular (LTE-M)</span></div>
+      <div id="geoAlert" class="geo-alert" hidden></div>
       <div id="map"></div>
       <div class="scr-btns"><button id="bPanic" class="panic">ASSISTÊNCIA / PÂNICO</button><button id="bSup" class="sup">Suporte</button></div>
       <div class="scr-msgs"><b>Mensagens da central</b><ul id="msgs"></ul></div>
     </div>
   </div>
   <div class="card">
-    <h2>Painel da demo (4 serviços)</h2>
+    <h2>Painel da demo (5 serviços)</h2>
     <label class="tg"><input type="checkbox" id="tLte"> Simular perda de cobertura LTE-M (vai para satélite)</label>
     <div class="demo">
       <button data-ev="panic">1. Pânico via satélite</button>
@@ -42,6 +43,8 @@
       <button data-ev="tamper">3. Reboque / violação (corte do 12 V)</button>
       <button data-ev="cabin">4. Cabine quente</button>
     </div>
+    <div class="geo"><b>5. Cerca virtual (simulação)</b> Raio <input id="geoR" type="number" min="100" max="5000" step="100" value="800"> m <button id="bTrip">Iniciar trajeto</button><br><small class="muted">Rota ilustrativa simulada. Saída e reentrada geram o evento automaticamente, sem clique.</small></div>
+    <div id="geoPanel" class="geo-alert" hidden></div>
     <p class="muted">Limite NTN: 256 bytes por mensagem e intervalo superior a 30 s entre envios (documentação Skylo). Tamanhos abaixo são do payload simulado.</p>
     <table class="tbl"><thead><tr><th>Hora</th><th>Evento</th><th>Rede</th><th>Bytes</th><th>Latência (simulada)</th><th>Status</th></tr></thead><tbody id="log"></tbody></table>
   </div>
@@ -77,6 +80,6 @@
 </main>
 <footer>Telekom · Deutsche Telekom IoT · Protótipo conceitual para demonstração. BMW é citada apenas como cliente-alvo.</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="bmw.js?v=1"></script>
+<script src="bmw.js?v=2"></script>
 </body>
 </html>

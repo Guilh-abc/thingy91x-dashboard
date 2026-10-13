@@ -21,3 +21,5 @@ h2{margin:0 0 10px;font-size:17px;color:var(--mg)}.grid2{display:grid;grid-templ
 .ok{color:#4ade80}.err{color:#f87171}
 .arch{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.arch div{background:#22252f;border-left:3px solid var(--mg);padding:10px;border-radius:6px;font-weight:600;font-size:14px}.arch i{color:var(--mg);font-style:normal;font-size:20px}
 footer{padding:16px 20px;color:var(--mu);font-size:12px}
+.geo{margin:12px 0;padding:10px;border:1px dashed var(--mg);border-radius:8px}.geo input{width:80px;background:#22252f;color:var(--tx);border:1px solid #444;border-radius:4px;padding:3px}.geo button{margin-left:8px;padding:6px 12px;background:var(--mg);color:#fff;border:0;border-radius:6px;font-weight:700;cursor:pointer}
+.geo-alert{padding:8px;border-radius:8px;font-weight:800;margin:6px 0;text-align:center}.geo-alert.out{background:#d42020;animation:pl 1s infinite}.geo-alert.in{background:#166534}@keyframes pl{50%{opacity:.6}}
