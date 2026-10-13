@@ -48,4 +48,4 @@ body{font:14px/1.5 Inter,system-ui,sans-serif;letter-spacing:-.003em}
 .seg button.on{background:linear-gradient(135deg,#3d8bff33,#a45cff33)!important;color:#fff}
 body.present .top{padding:18px 34px}body.present .wordmark{font-size:30px}body.present .actions .link,body.present #btnExport{display:none}
 body.present .live,body.present .kpis,body.present .grid{margin-left:34px;margin-right:34px}
-.live{grid-template-columns:1.3fr repeat(4,1fr)!important}@media (max-width:900px){.live{grid-template-columns:1fr 1fr}}@media (max-width:700px){.live{grid-template-columns:1fr}}
+.live{grid-template-columns:1.3fr repeat(4,1fr)}@media (max-width:1000px){.live{grid-template-columns:1fr 1fr 1fr}}@media (max-width:900px){.live{grid-template-columns:1fr 1fr}}@media (max-width:700px){.live{grid-template-columns:1fr}}
