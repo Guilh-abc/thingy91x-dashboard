@@ -1,0 +1,23 @@
+:root{--mg:#E20074;--bg:#0e0f14;--card:#181a22;--tx:#eceef4;--mu:#9aa0ae;--sat:#9b4dff;--cell:#2f7cf6}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:14px 20px;border-bottom:3px solid var(--mg)}
+h1{margin:0;font-size:22px}.tk{color:var(--mg)}small,.muted{color:var(--mu);font-size:13px}
+nav a{color:var(--tx);margin-left:14px;font-size:14px}
+.sim-banner{background:#3a2a00;color:#ffd54a;padding:8px 20px;font-size:13px}
+main{padding:16px 20px;display:grid;gap:16px}.card{background:var(--card);border-radius:12px;padding:16px}
+h2{margin:0 0 10px;font-size:17px;color:var(--mg)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.screen{background:#000;border:6px solid #333;border-radius:14px;padding:10px}
+.scr-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:8px}
+.badge{padding:4px 10px;border-radius:20px;font-weight:700;font-size:12px}.badge.cell{background:var(--cell)}.badge.sat{background:var(--sat)}
+#map{height:230px;border-radius:8px}
+.scr-btns{display:flex;gap:8px;margin:10px 0}.scr-btns button{flex:1;padding:14px;border:0;border-radius:10px;font-weight:800;color:#fff;cursor:pointer}
+.panic{background:#d42020}.sup{background:#444}
+.scr-msgs ul{list-style:none;padding:0;margin:6px 0 0;max-height:120px;overflow:auto;font-size:13px}.scr-msgs li{padding:4px 0;border-bottom:1px solid #222}
+.tg{display:block;margin-bottom:10px;font-weight:600}
+.demo{display:grid;grid-template-columns:1fr 1fr;gap:8px}.demo button{padding:12px;border:1px solid var(--mg);background:transparent;color:var(--tx);border-radius:8px;cursor:pointer;font-weight:600}
+.demo button:hover{background:var(--mg)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th,.tbl td{text-align:left;padding:6px;border-bottom:1px solid #2a2d38}
+.ok{color:#4ade80}.err{color:#f87171}
+.arch{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.arch div{background:#22252f;border-left:3px solid var(--mg);padding:10px;border-radius:6px;font-weight:600;font-size:14px}.arch i{color:var(--mg);font-style:normal;font-size:20px}
+footer{padding:16px 20px;color:var(--mu);font-size:12px}

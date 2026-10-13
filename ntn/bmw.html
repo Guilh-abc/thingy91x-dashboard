@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>BMW · Conectividade contínua by Telekom</title>
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="bmw.css?v=1">
+</head>
+<body>
+<header class="top">
+  <div><h1>BMW · Conectividade contínua <span class="tk">by Telekom</span></h1>
+  <small>Módulo nRF9151 independente do veículo · LTE-M primário · fallback satélite NTN Skylo · Deutsche Telekom IoT</small></div>
+  <nav><a href="index.html">NTN Pro (dados reais)</a><a href="lab.html">NTN Lab (logs)</a></nav>
+</header>
+<div class="sim-banner">SIMULAÇÃO DE DEMONSTRAÇÃO · eventos, latências e posições desta página são simulados e não são resultados de teste. Os dados reais do teste continuam no NTN Pro.</div>
+
+<main>
+<section class="card">
+  <h2>Conceito</h2>
+  <p>Um módulo de conectividade <b>totalmente independente do carro</b>: sem CAN, sem integração com sistemas BMW. A placa Nordic nRF9151 com SIM Telekom fala pela rede celular <b>LTE-M</b> e, quando a cobertura acaba, muda sozinha para o <b>satélite NTN Skylo</b>, mantendo o veículo em contato com a central para serviços críticos de baixo volume de dados. Sem vídeo e sem internet: só dado crítico, posição e eventos.</p>
+</section>
+
+<section class="grid2">
+  <div class="card">
+    <h2>Tela traseira (simulação)</h2>
+    <div class="screen">
+      <div class="scr-top"><span>Conectividade contínua by Telekom</span><span id="badge" class="badge cell">via celular (LTE-M)</span></div>
+      <div id="map"></div>
+      <div class="scr-btns"><button id="bPanic" class="panic">ASSISTÊNCIA / PÂNICO</button><button id="bSup" class="sup">Suporte</button></div>
+      <div class="scr-msgs"><b>Mensagens da central</b><ul id="msgs"></ul></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Painel da demo (4 serviços)</h2>
+    <label class="tg"><input type="checkbox" id="tLte"> Simular perda de cobertura LTE-M (vai para satélite)</label>
+    <div class="demo">
+      <button data-ev="panic">1. Pânico via satélite</button>
+      <button data-ev="crash">2. Colisão automática</button>
+      <button data-ev="tamper">3. Reboque / violação (corte do 12 V)</button>
+      <button data-ev="cabin">4. Cabine quente</button>
+    </div>
+    <p class="muted">Limite NTN: 256 bytes por mensagem e intervalo superior a 30 s entre envios (documentação Skylo). Tamanhos abaixo são do payload simulado.</p>
+    <table class="tbl"><thead><tr><th>Hora</th><th>Evento</th><th>Rede</th><th>Bytes</th><th>Latência (simulada)</th><th>Status</th></tr></thead><tbody id="log"></tbody></table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Arquitetura</h2>
+  <div class="arch">
+    <div>Sensores próprios<br><small>botão, IMU, temp/umidade, ADC 12 V, bateria backup, reed switch</small></div><i>→</i>
+    <div>Módulo nRF9151<br><small>GNSS integrado, SIM Telekom, independente do veículo</small></div><i>→</i>
+    <div>LTE-M (primário)<br><small>ou NTN Skylo (fallback)</small></div><i>→</i>
+    <div>Plataforma IoT Deutsche Telekom</div><i>→</i>
+    <div>Central de atendimento<br><small>operador a definir</small></div><i>↔</i>
+    <div>Tela traseira<br><small>assistência, mapa, mensagens</small></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Catálogo de serviços (sem integração com o carro)</h2>
+  <p class="muted">Tamanhos são estimativas de projeto (HIPÓTESE).</p>
+  <table class="tbl"><thead><tr><th>Serviço</th><th>Sensor</th><th>Como funciona</th><th>Tamanho estimado</th><th>Cabe no NTN?</th></tr></thead><tbody id="cat"></tbody></table>
+</section>
+
+<section class="card">
+  <h2>Limitações e lacunas</h2>
+  <ul>
+    <li>Sem ligação com o carro: sem dados de motor, códigos de falha ou pneus. Velocidade e quilometragem vêm do GNSS.</li>
+    <li>Satélite: mensagens curtas, atraso de vários segundos; vídeo nunca vai pelo satélite.</li>
+    <li>Antena precisa de visada do céu; ignição inferida pelo 12 V pode errar com start-stop.</li>
+    <li>A confirmar: uso comercial do Skylo com SIM Telekom no Brasil, modelo comercial, antena veicular, homologação Anatel, operador da central.</li>
+  </ul>
+</section>
+</main>
+<footer>Telekom · Deutsche Telekom IoT · Protótipo conceitual para demonstração. BMW é citada apenas como cliente-alvo.</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="bmw.js?v=1"></script>
+</body>
+</html>
