@@ -49,19 +49,27 @@
     layer.clearLayers();
     const pts = P.mapPoints(rs, st.pos === 'salva');
     for (const s of P.segments(pts)) L.polyline(s.pts, { color: P.NET[s.net]?.color || '#888', weight: 4, opacity: 0.85 }).addTo(layer);
+    const circ = new Set();
     pts.forEach((p, i) => {
       const r = p.rec, c = P.NET[p.net]?.color || '#888', ev = r.type === 'event';
       const jitter = 0.00012 * (i % 7); // separa pontos sobrepostos da placa parada (visual)
       const ll = [p.lat + (pts.length > 1 ? jitter * Math.sin(i) : 0), p.lon + (pts.length > 1 ? jitter * Math.cos(i) : 0)];
       const src = r.posSrc;
-      if (src === 'celula' && r.acc) L.circle([p.lat, p.lon], { radius: Math.min(r.acc, 5000), color: c, weight: 1, dashArray: '4', fillColor: c, fillOpacity: 0.08, interactive: false }).addTo(layer);
-      const sty = src === 'salva' ? { fillOpacity: 0.25, opacity: 0.4 } : src === 'celula' ? { fillOpacity: 0.45, dashArray: '2' } : src === 'injetada' ? { color: '#ffd54a', weight: 2.5 } : {};
+      const ck = p.lat.toFixed(3) + ',' + p.lon.toFixed(3) + ',' + r.acc;
+      if (src === 'celula' && r.acc && !circ.has(ck)) { circ.add(ck); L.circle([p.lat, p.lon], { radius: Math.min(r.acc, 5000), color: c, weight: 1, opacity: 0.6, dashArray: '6 6', fillColor: c, fillOpacity: 0.06, interactive: false }).addTo(layer); }
+      const sty = src === 'salva' ? { fillOpacity: 0.25, opacity: 0.4 } : src === 'celula' ? { fillOpacity: 0.5 } : src === 'injetada' ? { color: '#ffd54a', weight: 2.5 } : {};
       const m = ev && ['sw', 'reg', 'fail'].includes(r.event)
         ? L.marker(ll, { icon: L.divIcon({ className: '', html: `<div style="width:14px;height:14px;background:${c};border:2px solid #fff;border-radius:3px;transform:rotate(45deg)"></div>`, iconSize: [14, 14] }) })
-        : L.circleMarker(ll, { radius: ev ? 5 : 7, color: r.late > 0 ? '#ffb020' : '#fff', dashArray: r.late > 0 ? '3' : null, weight: r.late > 0 ? 2.5 : 1.5, fillColor: c, fillOpacity: 0.95, ...sty });
+        : L.circleMarker(ll, { radius: ev ? 3.5 : 4.5, color: r.late > 0 ? '#ffb020' : '#fff', dashArray: r.late > 0 ? '3' : null, weight: r.late > 0 ? 2.5 : 1.5, fillColor: c, fillOpacity: 0.95, ...sty });
       m.bindPopup(popup(r)).addTo(layer);
     });
-    if (pts.length && (!fitted || st.src === 'replay')) { map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lon])).pad(0.4), { maxZoom: 16 }); fitted = true; }
+    if (pts.length) {
+      const lp = pts[pts.length - 1], lr = lp.rec, lc = P.NET[lr.deliveredNet || lp.net]?.color || '#888';
+      const lbl = 'Agora · ' + hhmm(lr.ts) + (lr.posSrc ? ' · ' + lr.posSrc + (lr.acc ? ' ±' + lr.acc + ' m' : '') : '');
+      L.marker([lp.lat, lp.lon], { zIndexOffset: 10000, icon: L.divIcon({ className: '', iconSize: [22, 22], iconAnchor: [11, 11],
+        html: `<div class="nowpin" style="--c:${lc}"><span></span><b>${esc(lbl)}</b></div>` }) }).bindPopup(popup(lr)).addTo(layer);
+      if (!fitted || st.src === 'replay') { map.setView([lp.lat, lp.lon], lr.acc > 1500 ? 14 : 16); fitted = true; }
+    }
   }
 
   function drawLive(all) {
@@ -165,7 +173,7 @@
   }
   async function loadReplay() {
     if (replay) return replay;
-    const r = await fetch('replay.json?v=41', { cache: 'no-store' }); replay = await r.json();
+    const r = await fetch('replay.json?v=42', { cache: 'no-store' }); replay = await r.json();
     $('replayTitle').textContent = replay.title; return replay;
   }
   function stopReplay() { clearInterval(rpTimer); rpTimer = null; $('rpPlay').textContent = '▶ Reproduzir'; }
