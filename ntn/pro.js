@@ -48,16 +48,26 @@
   function drawMap(rs) {
     layer.clearLayers();
     const pts = P.mapPoints(rs, st.pos === 'salva');
-    for (const s of P.segments(pts)) L.polyline(s.pts, { color: P.NET[s.net]?.color || '#888', weight: 4, opacity: 0.85 }).addTo(layer);
-    const circ = new Set();
-    pts.forEach((p, i) => {
+    const isCell = (p) => p.rec.posSrc === 'celula' || p.rec.posSrc === 'salva';
+    const gps = pts.filter((p) => !isCell(p));
+    for (const s of P.segments(gps)) L.polyline(s.pts, { color: P.NET[s.net]?.color || '#888', weight: 4, opacity: 0.85 }).addTo(layer);
+    // v44: celula/salva agrupadas por coordenada num marcador de antena (sem jitter, fora da trilha)
+    const groups = new Map();
+    pts.filter(isCell).forEach((p) => { const k = p.lat.toFixed(5) + ',' + p.lon.toFixed(5); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(p); });
+    for (const g of groups.values()) {
+      const f = g[0], l = g[g.length - 1], r = l.rec, c = P.NET[l.net]?.color || '#888';
+      const acc = Math.max(...g.map((p) => p.rec.acc || 0));
+      if (r.posSrc === 'celula' && acc) L.circle([f.lat, f.lon], { radius: Math.min(acc, 5000), color: c, weight: 1, opacity: 0.6, dashArray: '6 6', fillColor: c, fillOpacity: 0.06, interactive: false }).addTo(layer);
+      const srcs = [...new Set(g.map((p) => p.rec.posSrc))].join('/');
+      const html = `<div style="position:relative;width:26px;height:26px;border-radius:50%;background:${c};border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:${r.posSrc === 'salva' ? 0.6 : 1}">📡${g.length > 1 ? `<b style="position:absolute;top:-8px;right:-10px;background:#111;color:#fff;border:1px solid #fff;border-radius:9px;font:600 10px sans-serif;padding:1px 4px">${g.length}</b>` : ''}</div>`;
+      const pop = `<b>Posição por ${esc(srcs)} (antena)</b><br>${g.length} leitura(s)<br>de ${dmy(f.rec.ts)}<br>até ${dmy(r.ts)}${acc ? '<br>precisão ±' + acc + ' m' : ''}<br>${f.lat.toFixed(4)}, ${f.lon.toFixed(4)}<hr>Última:<br>` + popup(r);
+      L.marker([f.lat, f.lon], { icon: L.divIcon({ className: '', html, iconSize: [26, 26], iconAnchor: [13, 13] }) }).bindPopup(pop).addTo(layer);
+    }
+    gps.forEach((p) => {
       const r = p.rec, c = P.NET[p.net]?.color || '#888', ev = r.type === 'event';
-      const jitter = 0.00012 * (i % 7); // separa pontos sobrepostos da placa parada (visual)
-      const ll = [p.lat + (pts.length > 1 ? jitter * Math.sin(i) : 0), p.lon + (pts.length > 1 ? jitter * Math.cos(i) : 0)];
+      const ll = [p.lat, p.lon];
       const src = r.posSrc;
-      const ck = p.lat.toFixed(3) + ',' + p.lon.toFixed(3) + ',' + r.acc;
-      if (src === 'celula' && r.acc && !circ.has(ck)) { circ.add(ck); L.circle([p.lat, p.lon], { radius: Math.min(r.acc, 5000), color: c, weight: 1, opacity: 0.6, dashArray: '6 6', fillColor: c, fillOpacity: 0.06, interactive: false }).addTo(layer); }
-      const sty = src === 'salva' ? { fillOpacity: 0.25, opacity: 0.4 } : src === 'celula' ? { fillOpacity: 0.5 } : src === 'injetada' ? { color: '#ffd54a', weight: 2.5 } : {};
+      const sty = src === 'injetada' ? { color: '#ffd54a', weight: 2.5 } : {};
       const m = ev && ['sw', 'reg', 'fail'].includes(r.event)
         ? L.marker(ll, { icon: L.divIcon({ className: '', html: `<div style="width:14px;height:14px;background:${c};border:2px solid #fff;border-radius:3px;transform:rotate(45deg)"></div>`, iconSize: [14, 14] }) })
         : L.circleMarker(ll, { radius: ev ? 3.5 : 4.5, color: r.late > 0 ? '#ffb020' : '#fff', dashArray: r.late > 0 ? '3' : null, weight: r.late > 0 ? 2.5 : 1.5, fillColor: c, fillOpacity: 0.95, ...sty });
