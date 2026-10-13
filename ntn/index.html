@@ -9,7 +9,7 @@
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="pro.css?v=42">
+<link rel="stylesheet" href="pro.css?v=43">
 </head>
 <body>
 <header class="top">
@@ -49,6 +49,12 @@
     <div id="map"></div>
     <div class="legend"><span><i style="background:#2f7cf6"></i>Cat-M (celular)</span><span><i style="background:#9b4dff"></i>Satélite NTN (Skylo)</span><span><i style="background:#2f7cf6;border:2px solid #fff"></i>GNSS (sólido)</span><span><i style="background:rgba(47,124,246,.25);border:1px dashed #2f7cf6;border-radius:50%"></i>Célula (círculo = precisão)</span><span><i style="background:#2f7cf6;opacity:.3"></i>Salva (sem trilha)</span><span><i style="background:#9b4dff;border:2px solid #ffd54a"></i>Injetada (NTN)</span><span><i class="ring"></i>entregue atrasada (store-and-forward)</span><span><i class="sq"></i>evento de comutação</span><span class="muted">posição pública arredondada (~100 m)</span></div>
   </section>
+  <section class="card tbl-card" id="simCard">
+    <div class="card-h"><h2>Conectividade &amp; SIM</h2><span id="simState"></span></div>
+    <div id="simGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:8px 0"></div>
+    <div id="simHint" style="margin:6px 0;color:#ffcc66"></div>
+    <div class="table-wrap" style="max-height:260px"><table class="tbl"><thead><tr><th>Hora</th><th>Evento</th><th>Explicação</th></tr></thead><tbody id="simHist"></tbody></table></div>
+  </section>
   <section class="card tl-card">
     <div class="card-h"><h2>Linha do tempo de comutações</h2><span id="swCount" class="pill"></span></div>
     <div id="swBar" class="swbar"></div>
@@ -74,7 +80,8 @@
 <div id="empty" class="empty" hidden></div>
 <footer class="foot muted">nRF9151 DK · modem mfw_nrf9151-ntn_1.0.1 · app NTN Pro v2.3 · mensagens ≤ 256 B, ≥ 30 s em NTN · <span id="foot"></span></footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="pro-core.js?v=42"></script>
-<script src="pro.js?v=40"></script>
+<script src="pro-core.js?v=43"></script>
+<script src="sim.js?v=43"></script>
+<script src="pro.js?v=43"></script>
 </body>
 </html>

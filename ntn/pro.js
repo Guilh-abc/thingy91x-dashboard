@@ -154,7 +154,7 @@
     document.querySelectorAll('#fNet button').forEach((b) => b.classList.toggle('on', b.dataset.net === st.net));
     document.querySelectorAll('#fPos button').forEach((b) => b.classList.toggle('on', b.dataset.pos === st.pos));
     $('fPeriod').value = st.period; $('fPeriod').disabled = st.src === 'replay'; $('fSw').checked = st.sw;
-    P.annotateDelivery(all); drawLog(all);
+    P.annotateDelivery(all); drawLog(all); if (window.drawSim) window.drawSim(all);
     drawLive(all); drawKpis(rs); drawSwitches(st.sw ? all : rs); drawMap(rs); drawTable(rs);
     const empty = $('empty');
     empty.hidden = rs.length > 0;
@@ -173,7 +173,7 @@
   }
   async function loadReplay() {
     if (replay) return replay;
-    const r = await fetch('replay.json?v=42', { cache: 'no-store' }); replay = await r.json();
+    const r = await fetch('replay.json?v=43', { cache: 'no-store' }); replay = await r.json();
     $('replayTitle').textContent = replay.title; return replay;
   }
   function stopReplay() { clearInterval(rpTimer); rpTimer = null; $('rpPlay').textContent = '▶ Reproduzir'; }
