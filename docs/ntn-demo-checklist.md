@@ -51,3 +51,8 @@ Opcional: **modo automático** (Botão 4) ou **demo de comutação** (`python3 a
 - **Segurança:** credencial única por dispositivo (certificado no modem, não token compartilhado), rotação, TLS/DTLS ponta a ponta, logs sem PII, LGPD.
 - **OTA:** FOTA do app (MCUboot) e do modem pelo Cat-M (nunca pelo satélite), com rollback.
 - **Operação:** monitor de frota, KPIs por rede, fallback automático com histerese (já no app v2.0), testes de campo e de longa duração.
+
+## Regra de aplicabilidade (definida em 14/10/2026)
+- **Padrão:** o rastreador volta SEMPRE com prioridade para o Cat-M.
+- **Exceção:** Botão 4 pressionado por mais de 4 s = migração forçada para o satélite (Skylo). Nesse modo a placa tem uma janela generosa para sonda e registro NTN, sem forçar a volta ao Cat-M no meio da tentativa.
+- Fora do Botão 4, nenhuma lógica deve manter a placa no satélite se o Cat-M estiver disponível.
