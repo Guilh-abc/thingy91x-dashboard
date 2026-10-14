@@ -79,6 +79,10 @@
     const ivs = []; for (let i = 1; i < tel.length; i++) { const d = (T(tel[i]) - T(tel[i - 1])) / 60000; if (d > 0.5 && d < 30) ivs.push(d); }
     const ivMin = median(ivs);
     const ses = sessions(rs), sCur = ses.length && ses[ses.length - 1].open ? ses[ses.length - 1] : null;
+    /* v7: evidência real tem prioridade sobre a flag de teste. Sessão aberta (sat_start/stest) mas última telemetria é Cat-M depois do início e de qualquer evidência de satélite => está no Cat-M. */
+    const lastSatEv = sCur ? [...sCur.ev].reverse().find((r) => ['sat_search', 'sat_reg', 'sat_lost'].includes(r.event) || (r.type === 'telemetry' && isSat(r))) : null;
+    const catmNow = !!(sCur && lt && !isSat(lt) && T(lt) > Math.max(sCur.start, lastSatEv ? T(lastSatEv) : 0));
+    const sNet = catmNow ? null : sCur;
     const st1 = [...rs].reverse().find((r) => r.type === 'event' && r.event === 'stest');
     const tOn = !!sCur || (st1 && st1.value === 1 && !ses.some((s) => s.start >= T(st1) && !s.open));
     $('testPill').hidden = !tOn; if (tOn) $('testPill').textContent = 'Modo teste satélite ativo';
@@ -90,13 +94,13 @@
     K.push(kpi('', 'Total acumulado', last ? nf(last.totalL) + '<u>L</u>' : '—', last ? m3(last.totalL) + ' m³ · leitura ' + hm(T(last)) : 'aguardando primeira leitura'));
     K.push(kpi('', 'Consumo hoje', rd.length ? nf(today.s) + '<u>L</u>' : '—', rd.length ? `última hora: <b>${nf(hour.s)} L</b>${hour.n ? '' : ' (sem leituras na última hora)'}` : 'aguardando primeira leitura'));
     let netBig = '—', netSub = 'aguardando primeira leitura', netCls = 'off';
-    if (sCur) { netCls = 'ntn'; netBig = sCur.reg ? 'Satélite Skylo' : 'Buscando Skylo'; netSub = (sCur.reg ? 'registrado na rede 90198' : `teste desde ${hm(sCur.start)} · sem registro em 90198`) + (lastAny && Date.now() - RX(lastAny) > 1800000 ? ` · último estado conhecido, sem notícias há ${ago(lastAny.rx || lastAny.ts)}` : ''); }
-    else if (lt) { const sat = isSat(lt); netCls = sat ? 'ntn' : 'catm'; netBig = sat ? 'Satélite Skylo' : 'Cat-M'; netSub = sat ? 'PLMN 90198' : `${OPS[lt.plmn] || 'operadora'} (${esc(lt.plmn || '—')}) · LTE-M banda ${esc(lt.band || '—')}`; }
+    if (sNet) { netCls = 'ntn'; netBig = sCur.reg ? 'Satélite Skylo' : 'Buscando Skylo'; netSub = (sCur.reg ? 'registrado na rede 90198' : `teste desde ${hm(sCur.start)} · sem registro em 90198`) + (lastAny && Date.now() - RX(lastAny) > 1800000 ? ` · último estado conhecido, sem notícias há ${ago(lastAny.rx || lastAny.ts)}` : ''); }
+    else if (lt) { const sat = isSat(lt); netCls = sat ? 'ntn' : 'catm'; netBig = sat ? 'Satélite Skylo' : 'Cat-M'; netSub = sat ? 'PLMN 90198' : `${OPS[lt.plmn] || 'operadora'} (${esc(lt.plmn || '—')}) · LTE-M banda ${esc(lt.band || '—')}${catmNow ? ' · modo teste NTN ligado, sem registro no satélite' : ''}`; }
     K.push(kpi(netCls, 'Rede atual', netBig, netSub));
     const q = sigQ(lt?.rsrp);
-    K.push(kpi(q ? q[2] : 'off', 'Qualidade do sinal', lt?.rsrp != null ? `${lt.rsrp}<u>dBm</u>` : '—', lt?.rsrp != null ? `<b style="color:${q[1]}">${q[0]}</b> · SNR ${lt.snr ?? '—'} dB${sCur ? ' · na última leitura Cat-M' : ''}` : 'sem medição ainda', gauge(lt?.rsrp)));
+    K.push(kpi(q ? q[2] : 'off', 'Qualidade do sinal', lt?.rsrp != null ? `${lt.rsrp}<u>dBm</u>` : '—', lt?.rsrp != null ? `<b style="color:${q[1]}">${q[0]}</b> · SNR ${lt.snr ?? '—'} dB${sNet ? ' · na última leitura Cat-M' : ''}` : 'sem medição ainda', gauge(lt?.rsrp)));
     const onlineMs = Math.max(6, (ivMin || 2) * 3) * 60000, age = lastAny ? Date.now() - RX(lastAny) : null, on = age != null && age < onlineMs;
-    K.push(kpi(lastAny ? (on ? 'ok' : sCur && age < 1800000 ? 'ntn' : 'bad') : 'off', 'Último envio', lastAny ? 'há ' + agoS(age) : '—', lastAny ? `<span style="color:${on ? '#2fd27a' : sCur && age < 1800000 ? '#c79bff' : '#ff5470'}"><span class="dot"></span>${on ? 'Online' : sCur && age < 1800000 ? 'Buscando satélite' : 'Offline'}</span> · ${dmy(RX(lastAny))}` : 'aguardando primeira leitura'));
+    K.push(kpi(lastAny ? (on ? 'ok' : sNet && age < 1800000 ? 'ntn' : 'bad') : 'off', 'Último envio', lastAny ? 'há ' + agoS(age) : '—', lastAny ? `<span style="color:${on ? '#2fd27a' : sNet && age < 1800000 ? '#c79bff' : '#ff5470'}"><span class="dot"></span>${on ? 'Online' : sNet && age < 1800000 ? 'Buscando satélite' : 'Offline'}</span> · ${dmy(RX(lastAny))}` : 'aguardando primeira leitura'));
     const sim = [...rs].reverse().find((r) => r.event === 'sim'), sp = sim ? simParse(sim) : null;
     const simOk = sp && sp.pin === 'READY';
     K.push(kpi(sim ? (simOk ? 'ok' : 'bad') : 'off', 'SIM', sim ? (simOk ? 'Pronto' : 'Erro') : '—', sim ? `ICCID •••• ${esc(sp.ic || '—')} · PIN ${esc(sp.pin || '—')} · ${ago(sim.ts)}` : 'sem dados do SIM ainda'));
@@ -108,6 +112,11 @@
     const lastSes = ses[ses.length - 1];
     K.push(kpi(tOn ? 'ntn' : 'off', 'Modo teste satélite', tOn ? 'Ligado' : 'Desligado', tOn ? `desde ${hm(sCur ? sCur.start : T(st1))} · leitura a cada 2 min ao registrar` : lastSes ? `última tentativa ${dmy(lastSes.start)} · ${lastSes.reg ? 'registrou' : 'sem registro'}` : 'B4 por 3 s para iniciar'));
     $('kpis').innerHTML = K.join('');
+    if (window.drawHeroU) { let runStart = null; for (let i = tel.length - 1; i >= 0 && !isSat(tel[i]); i--) runStart = T(tel[i]);
+      const chg = [...rs].reverse().find((r) => r.type === 'event' && ['boot', 'back_catm', 'sw', 'lost', 'reg'].includes(r.event)); if (runStart != null && chg && T(chg) > runStart) runStart = T(chg);
+      const key = !rs.length ? 'nodata' : !on && !(sNet && age < 1800000) ? 'off' : sNet ? (sNet.reg ? 'ntn' : 'search') : 'catm';
+      window.drawHeroU({ key, since: key === 'ntn' ? T(sNet.reg) : key === 'search' ? sNet.start : key === 'catm' ? runStart : null, lastRx: lastAny ? RX(lastAny) : null,
+        note: key === 'catm' && tOn ? 'modo teste NTN ligado, sem registro no satélite' : key === 'catm' && lt ? `${OPS[lt.plmn] || 'operadora'} (${lt.plmn || 'n/d'}) · banda ${lt.band || 'n/d'} · ${lt.rsrp ?? 'n/d'} dBm` : '' }); }
 
     $('cChart').innerHTML = consumo(rd);
     $('sChart').innerHTML = sinal(rs, tel);

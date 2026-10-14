@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <link rel="stylesheet" href="../ntn/pro.css?v=47">
 <link rel="stylesheet" href="utilities.css?v=4">
+<link rel="stylesheet" href="../ntn/hero.css?v=45">
 </head>
 <body>
 <header class="top">
@@ -19,11 +20,13 @@
   <div class="actions">
     <span id="testPill" class="chip ntn" hidden style="padding:4px 12px"></span>
     <span id="devPill" class="pill">medidor m1</span>
+    <button id="btnPres2" class="btn" title="Mostra só o status, os KPIs, consumo e mapa">◉ Modo Apresentação</button>
     <a class="link" href="../ntn/">Rastreador</a>
     <a class="link" href="../docs/connect-como-funciona.md">Como funciona</a>
   </div>
 </header>
 <div id="waitBanner" class="wait-banner">Aguardando a primeira leitura do medidor. Esta página mostra apenas dados reais enviados pela placa; ainda não há nenhum.</div>
+<section id="hero" class="hero off" aria-live="polite"></section>
 <section class="kpis" id="kpis" aria-label="Indicadores principais"></section>
 <main class="u2">
   <section class="card span2"><div class="card-h"><h2>Consumo</h2><div class="seg" id="aggSeg"><button data-a="i" class="on">Por envio</button><button data-a="h">Por hora</button><button data-a="d">Por dia</button></div></div>
@@ -61,6 +64,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="../ntn/pointing.js?v=1"></script>
 <script src="sat-live.js?v=4"></script>
-<script src="utilities.js?v=6"></script>
+<script src="hero-u.js?v=7"></script>
+<script src="utilities.js?v=7"></script>
 </body>
 </html>

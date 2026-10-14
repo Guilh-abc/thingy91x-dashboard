@@ -24,7 +24,10 @@
     var rs = P.sortRecs(all).filter(function (r) { return t(r) <= now && (r.type === 'telemetry' || (r.type === 'event' && /^(lost|fail|reg|sw|wait)$/.test(r.event))); });
     var last = rs[rs.length - 1];
     if (last && last.type === 'event' && (last.event === 'lost' || last.event === 'fail')) return { k: 'off', s: s };
-    if (s.waiting || (last && last.type === 'event' && last.event === 'sw' && last.value === 1)) return { k: 'search', s: s };
+    // v45: evidência real primeiro. Telemetria Cat-M depois do 'wait' anula o estado de busca.
+    var lastWait = null; for (var i = rs.length - 1; i >= 0; i--) { if (rs[i].type === 'event' && /^(wait|reg|sw)$/.test(rs[i].event)) { lastWait = rs[i]; break; } }
+    var catmAfter = last && last.type === 'telemetry' && last.net === 'catm' && lastWait && t(last) > t(lastWait);
+    if ((s.waiting && !catmAfter) || (last && last.type === 'event' && last.event === 'sw' && last.value === 1)) return { k: 'search', s: s };
     return { k: s.net === 'ntn' ? 'ntn' : 'catm', s: s };
   }
   function fmtT(iso) { return iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'n/d'; }

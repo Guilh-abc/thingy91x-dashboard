@@ -9,3 +9,6 @@
 body.apresentacao #live,body.apresentacao main.grid > section:not(.map-card),body.apresentacao .actions > :not(#btnPres2):not(#srcSeg){display:none!important}
 body.apresentacao main.grid{display:block}body.apresentacao #map{height:60vh}
 #btnPres2.on{background:#E20074;color:#fff}
+/* utilities (v7) */
+body.apresentacao main.u2 > section:not(:has(#map)):not(:has(#cChart)),body.apresentacao .tech{display:none!important}
+body.apresentacao:has(main.u2) .actions > :not(#btnPres2){display:none!important}
