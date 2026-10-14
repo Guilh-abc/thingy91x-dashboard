@@ -96,10 +96,14 @@
     let netBig = '—', netSub = 'aguardando primeira leitura', netCls = 'off';
     if (sNet) { netCls = 'ntn'; netBig = sCur.reg ? 'Satélite Skylo' : 'Buscando Skylo'; netSub = (sCur.reg ? 'registrado na rede 90198' : `teste desde ${hm(sCur.start)} · sem registro em 90198`) + (lastAny && Date.now() - RX(lastAny) > 1800000 ? ` · último estado conhecido, sem notícias há ${ago(lastAny.rx || lastAny.ts)}` : ''); }
     else if (lt) { const sat = isSat(lt); netCls = sat ? 'ntn' : 'catm'; netBig = sat ? 'Satélite Skylo' : 'Cat-M'; netSub = sat ? 'PLMN 90198' : `${OPS[lt.plmn] || 'operadora'} (${esc(lt.plmn || '—')}) · LTE-M banda ${esc(lt.band || '—')}${catmNow ? ' · modo teste NTN ligado, sem registro no satélite' : ''}`; }
+    /* v8: offline quando o último dado passa de 2,5x o intervalo medido (mínimo 5 min no Cat-M; 15 min em satélite, como no ntn/) */
+    const offLimMs = (sNet ? 15 : Math.max(5, (ivMin || 2) * 2.5)) * 60000, offNow = !!lastAny && Date.now() - RX(lastAny) > offLimMs;
+    const lastNetTxt = netBig;
+    if (offNow) { netCls = 'bad'; netSub = 'sem comunicação · última rede conhecida: ' + netBig + ' · ' + netSub; netBig = 'Sem comunicação'; }
     K.push(kpi(netCls, 'Rede atual', netBig, netSub));
     const q = sigQ(lt?.rsrp);
     K.push(kpi(q ? q[2] : 'off', 'Qualidade do sinal', lt?.rsrp != null ? `${lt.rsrp}<u>dBm</u>` : '—', lt?.rsrp != null ? `<b style="color:${q[1]}">${q[0]}</b> · SNR ${lt.snr ?? '—'} dB${sNet ? ' · na última leitura Cat-M' : ''}` : 'sem medição ainda', gauge(lt?.rsrp)));
-    const onlineMs = Math.max(6, (ivMin || 2) * 3) * 60000, age = lastAny ? Date.now() - RX(lastAny) : null, on = age != null && age < onlineMs;
+    const onlineMs = (sNet ? 15 : Math.max(5, (ivMin || 2) * 2.5)) * 60000, age = lastAny ? Date.now() - RX(lastAny) : null, on = age != null && age < onlineMs;
     K.push(kpi(lastAny ? (on ? 'ok' : sNet && age < 1800000 ? 'ntn' : 'bad') : 'off', 'Último envio', lastAny ? 'há ' + agoS(age) : '—', lastAny ? `<span style="color:${on ? '#2fd27a' : sNet && age < 1800000 ? '#c79bff' : '#ff5470'}"><span class="dot"></span>${on ? 'Online' : sNet && age < 1800000 ? 'Buscando satélite' : 'Offline'}</span> · ${dmy(RX(lastAny))}` : 'aguardando primeira leitura'));
     const sim = [...rs].reverse().find((r) => r.event === 'sim'), sp = sim ? simParse(sim) : null;
     const simOk = sp && sp.pin === 'READY';
@@ -114,8 +118,8 @@
     $('kpis').innerHTML = K.join('');
     if (window.drawHeroU) { let runStart = null; for (let i = tel.length - 1; i >= 0 && !isSat(tel[i]); i--) runStart = T(tel[i]);
       const chg = [...rs].reverse().find((r) => r.type === 'event' && ['boot', 'back_catm', 'sw', 'lost', 'reg'].includes(r.event)); if (runStart != null && chg && T(chg) > runStart) runStart = T(chg);
-      const key = !rs.length ? 'nodata' : !on && !(sNet && age < 1800000) ? 'off' : sNet ? (sNet.reg ? 'ntn' : 'search') : 'catm';
-      window.drawHeroU({ key, since: key === 'ntn' ? T(sNet.reg) : key === 'search' ? sNet.start : key === 'catm' ? runStart : null, lastRx: lastAny ? RX(lastAny) : null,
+      const key = !rs.length ? 'nodata' : offNow || (!on && !(sNet && age < 1800000)) ? 'off' : sNet ? (sNet.reg ? 'ntn' : 'search') : 'catm';
+      window.drawHeroU({ key, lastNet: lastNetTxt, since: key === 'ntn' ? T(sNet.reg) : key === 'search' ? sNet.start : key === 'catm' ? runStart : null, lastRx: lastAny ? RX(lastAny) : null,
         note: key === 'catm' && tOn ? 'modo teste NTN ligado, sem registro no satélite' : key === 'catm' && lt ? `${OPS[lt.plmn] || 'operadora'} (${lt.plmn || 'n/d'}) · banda ${lt.band || 'n/d'} · ${lt.rsrp ?? 'n/d'} dBm` : '' }); }
 
     $('cChart').innerHTML = consumo(rd);
@@ -216,5 +220,5 @@
     }).join('') + '<div class="legend"><span><i style="background:#3d8bff"></i>GNSS</span><span><i style="background:#ffb020"></i>buscando</span><span><i style="background:#2fd27a"></i>registrado</span><span><i style="background:#ffffff33"></i>sem notícias</span></div>';
   }
   async function load() { try { const r = await fetch(API + '&t=' + Date.now(), { cache: 'no-store' }); const j = await r.json(); if (j && Array.isArray(j.records)) recs = sanitizeNet(j.records); } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
-  load(); setInterval(load, 30000);
+  load(); setInterval(load, 30000); setInterval(render, 15000); // v8: reavalia offline sem dado novo
 })();

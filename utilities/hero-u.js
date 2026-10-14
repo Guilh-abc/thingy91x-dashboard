@@ -14,6 +14,7 @@
   window.drawHeroU = function (o) {
     var el = document.getElementById('hero'); if (!el) return;
     var k = qs.get('estado') && ST[qs.get('estado')] ? qs.get('estado') : o.key, d = ST[k], now = Date.now();
+    if (k === 'off' && o.lastRx && !qs.get('estado')) d = ['off', '⛔', 'OFFLINE: SEM DADOS DA PLACA HÁ ' + dur(now - o.lastRx).toUpperCase(), 'Último dado ' + hm(o.lastRx) + (o.lastNet ? ' · última rede conhecida: ' + o.lastNet : '')];
     el.className = 'hero ' + d[0];
     el.innerHTML = '<div class="hero-ico">' + d[1] + '</div><div class="hero-main"><div class="hero-txt">' + d[2] + '</div><div class="hero-sub">' + d[3] + (o.note ? ' · ' + o.note : '') + (qs.get('estado') ? ' · ESTADO FORÇADO PARA TESTE' : '') + '</div></div>' +
       '<div class="hero-meta"><div><small>No estado atual</small><b>' + (o.since ? dur(now - o.since) : 'n/d') + '</b></div><div><small>Último dado</small><b>' + hm(o.lastRx) + '</b><span>' + (o.lastRx ? 'há ' + dur(now - o.lastRx) : '') + '</span></div></div>';
