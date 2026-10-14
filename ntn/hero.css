@@ -12,3 +12,9 @@ body.apresentacao main.grid{display:block}body.apresentacao #map{height:60vh}
 /* utilities (v7) */
 body.apresentacao main.u2 > section:not(:has(#map)):not(:has(#cChart)),body.apresentacao .tech{display:none!important}
 body.apresentacao:has(main.u2) .actions > :not(#btnPres2){display:none!important}
+.hero.search{background:#c98a12;animation:hbs 2.4s ease-in-out infinite}@keyframes hbs{50%{filter:brightness(1.18)}}
+.hbusca{margin:0 16px 12px;padding:14px 18px;border-radius:12px;background:#2a2110;border:1px solid #c98a12;color:#f3e6c8;font-family:Inter,system-ui,sans-serif}
+.hb-row{display:flex;flex-wrap:wrap;gap:24px}.hb-row small{display:block;opacity:.8;font-size:12px}.hb-row b{font-size:20px;display:block}.hb-row span{font-size:12px;opacity:.8}
+.hb-ets{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}.hb-et{padding:6px 12px;border-radius:20px;background:#3a2f18;opacity:.6;font-weight:600}.hb-et.feito{opacity:1;background:#166534}.hb-et.atual{opacity:1;background:#c98a12;color:#fff;animation:hbs 2.4s infinite}
+.hb-nota{font-size:13px;margin:6px 0}.hb-rej{color:#ffb4b4}.hb-ts ul{margin:6px 0;padding-left:4px;list-style:none;font-size:13px}.hb-ts li{margin:3px 0}
+body.apresentacao #heroBusca .hb-ts{display:none}

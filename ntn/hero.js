@@ -7,8 +7,9 @@
   var ST = {
     catm: { cls: 'catm', ico: '📶', txt: 'CONECTADO VIA CELULAR (LTE-M)', sub: 'Rede terrestre Cat-M · Deutsche Telekom IoT' },
     ntn: { cls: 'ntn', ico: '🛰', txt: 'CONECTADO VIA SATÉLITE SKYLO (NTN)', sub: 'Rede não terrestre NB-IoT NTN · Skylo' },
-    search: { cls: 'search', ico: '🔎', txt: 'BUSCANDO SATÉLITE', sub: 'Placa em modo NTN, ainda sem registro ou aguardando dados do satélite' },
+    search: { cls: 'search', ico: '🔎', txt: 'BUSCANDO SATÉLITE SKYLO', sub: 'Placa em modo NTN, ainda sem registro ou aguardando dados do satélite' },
     off: { cls: 'off', ico: '⛔', txt: 'SEM CONEXÃO / NTN DESCONECTADO', sub: 'Sem dados recentes ou rede perdida' },
+    noresp: { cls: 'off', ico: '⛔', txt: 'SEM RESPOSTA DA PLACA', sub: 'Busca de satélite iniciada há mais de 30 min sem nenhum sinal de vida' },
     nodata: { cls: 'off', ico: '⛔', txt: 'SEM DADOS DA PLACA', sub: 'Nenhum registro recebido no período' }
   };
   /* Mapeamento (somente campos reais):
@@ -20,6 +21,9 @@
   function state(all, now, src) {
     var s = P.liveStatus(all, now);
     if (!s) return { k: 'nodata', s: null };
+    var bs = busca(all, now); // v46: busca NTN declarada pela placa tem prioridade sobre 'dado velho'
+    if (bs && bs.ativa) return { k: 'search', s: s, b: bs };
+    if (bs && bs.expirou) return { k: 'noresp', s: s, b: bs };
     if (s.stale && src !== 'replay') return { k: 'off', s: s };
     var rs = P.sortRecs(all).filter(function (r) { return t(r) <= now && (r.type === 'telemetry' || (r.type === 'event' && /^(lost|fail|reg|sw|wait)$/.test(r.event))); });
     var last = rs[rs.length - 1];
@@ -30,13 +34,64 @@
     if ((s.waiting && !catmAfter) || (last && last.type === 'event' && last.event === 'sw' && last.value === 1)) return { k: 'search', s: s };
     return { k: s.net === 'ntn' ? 'ntn' : 'catm', s: s };
   }
+
+  /* v46: início de busca NTN = evento probe 'inicio', sw value 1, sat_start ou stest value 1.
+     Termina com: reg NTN, telemetria via NTN, probe 'fim', sw value 0, back_catm, boot ou telemetria Cat-M posterior.
+     Em busca a placa normalmente não consegue enviar nada até registrar; por isso não vira vermelho por falta de dado antes de 30 min. */
+  var LIM_BUSCA = 30 * 60000;
+  function isStart(r) { return r.type === 'event' && ((r.event === 'probe' && /inicio/.test(r.info || '')) || (r.event === 'sw' && r.value === 1) || r.event === 'sat_start' || (r.event === 'stest' && r.value === 1)); }
+  function busca(all, now) {
+    var rs = P.sortRecs(all).filter(function (r) { return t(r) <= now; }), i, st = null;
+    for (i = rs.length - 1; i >= 0; i--) if (isStart(rs[i])) { st = i; break; }
+    if (st == null) return null;
+    var ini = rs[st], ev = rs.slice(st), b = { ini: ini, t0: t(ini), sinal: null, sync: null, reg: null, traf: null, rej: [] };
+    for (i = st; i < rs.length; i++) if (isStart(rs[i])) { b.t0 = Math.min(b.t0, t(rs[i])); } else break;
+    for (i = 1; i < ev.length; i++) {
+      var r = ev[i];
+      if (isStart(r)) continue;
+      if (r.type === 'event' && ((r.event === 'probe' && /fim/.test(r.info || '')) || (r.event === 'sw' && r.value === 0) || r.event === 'back_catm' || r.event === 'boot')) return { fim: true };
+      if (r.type === 'telemetry' && r.net === 'catm' && !(r.plmn === '90198')) return { fim: true };
+      if ((r.net === 'ntn' || r.plmn === '90198' || r.type === 'satsum' || r.type === 'satdet') && (r.rsrp != null || r.rsrpAvg != null)) b.sinal = { rsrp: r.rsrp != null ? r.rsrp : r.rsrpAvg, snr: r.snr != null ? r.snr : r.snrAvg, at: t(r) };
+      if (r.type === 'event' && (r.event === 'fix' || r.event === 'gnss_ok' || r.event === 'wait' || r.event === 'sat_search')) b.sync = b.sync || t(r);
+      if (r.type === 'event' && (r.event === 'sat_reg' || (r.event === 'reg' && (r.net === 'ntn' || /NTN|Skylo/.test(r.info || ''))))) b.reg = b.reg || t(r);
+      if (r.type === 'telemetry' && r.net === 'ntn') b.traf = b.traf || t(r);
+      if (r.rej != null) b.rej.push(r.rej);
+      if (r.type === 'event' && r.event === 'fail') b.rej.push(r.info || 'falha');
+    }
+    if (b.traf || b.reg) return null; // registrou: estado normal (ntn) assume
+    var lastAny = Math.max.apply(null, rs.map(function (r) { return Date.parse(r.rx || r.ts); }));
+    b.lastAny = lastAny; b.ativa = now - Math.max(lastAny, b.t0) < LIM_BUSCA; b.expirou = !b.ativa;
+    return b;
+  }
+  var EMM = { 2: 'IMSI desconhecido na rede', 3: 'UE ilegal (SIM rejeitado)', 6: 'equipamento ilegal', 7: 'serviço EPS não permitido no SIM', 11: 'PLMN não permitida (SIM sem perfil Skylo)', 12: 'área de rastreamento não permitida', 13: 'roaming não permitido nesta área', 14: 'EPS não permitido nesta PLMN', 15: 'sem células adequadas nesta área', 17: 'falha de rede', 22: 'congestionamento' };
+  var REF = null;
+  fetch('replay.json?v=43', { cache: 'force-cache' }).then(function (r) { return r.json(); }).then(function (j) { REF = P.switches(j.records).filter(function (x) { return x.to === 'ntn' && x.ok && x.regSec != null; }); }).catch(function () {});
+  function painelBusca(b, all, now) {
+    var el = document.getElementById('heroBusca'); if (!el) return;
+    if (!b) { el.hidden = true; return; }
+    var min = Math.floor((now - b.t0) / 60000), etapa = b.reg ? 3 : b.sync ? 2 : 1;
+    var et = ['Buscar', 'Sincronizar', 'Registrar', 'Trafegar'].map(function (n, i) { return '<span class="hb-et' + (i + 1 < etapa ? ' feito' : i + 1 === etapa ? ' atual' : '') + '">' + (i + 1) + '. ' + n + '</span>'; }).join('');
+    var refs = (REF || []).concat(P.switches(all).filter(function (x) { return x.to === 'ntn' && x.ok && x.regSec != null; }));
+    var refTxt = refs.length ? refs.map(function (x) { return P.fmtDur(x.regSec) + ' (' + new Date(x.at).toLocaleDateString('pt-BR') + ')'; }).slice(-3).join(', ') : 'nenhum registro NTN medido no histórico carregado';
+    var rej = b.rej.map(function (c) { return /^\d+$/.test(String(c)) ? 'causa ' + c + ': ' + (EMM[c] || 'código não mapeado') : String(c); });
+    el.hidden = false;
+    el.innerHTML = '<div class="hb-row"><div><small>Buscando há</small><b>' + min + ' min</b><span>desde ' + new Date(b.t0).toLocaleTimeString('pt-BR') + ' (' + ({ probe: 'sonda NTN iniciada', sw: 'comutação para satélite', sat_start: 'teste satélite iniciado', stest: 'modo teste ligado' }[b.ini.event] || b.ini.event) + (b.ini.event === 'probe' && b.ini.value ? ', ' + b.ini.value + ' min' : '') + ')</span></div>' +
+      '<div><small>Sinal do satélite</small><b>' + (b.sinal ? b.sinal.rsrp + ' dBm' + (b.sinal.snr != null ? ' · SNR ' + b.sinal.snr + ' dB' : '') : 'sinal ainda não reportado') + '</b></div>' +
+      '<div><small>Tempo de registro já observado (dados reais)</small><b style="font-size:14px">' + refTxt + '</b></div></div>' +
+      '<div class="hb-ets">' + et + '</div>' +
+      '<p class="hb-nota">Em busca NTN a placa normalmente não consegue enviar nada até registrar no satélite. Sem dados novos aqui é esperado; o painel só fica vermelho após 30 min sem nenhum sinal de vida.</p>' +
+      (rej.length ? '<p class="hb-rej"><b>Rejeição reportada pela placa:</b> ' + rej.join(' · ') + '</p>' : '') +
+      '<details class="hb-ts" open><summary><b>Troubleshooting</b></summary><ul>' +
+      ['Céu aberto com visada para o norte (satélite geoestacionário)', 'Sem teto metálico nem vidro com película térmica/metalizada acima da antena', 'Placa e antena perto do vidro ou do teto, antena voltada para cima', 'Veículo em movimento pode atrasar o registro; se possível, pare em local aberto', 'Aguardar o registro sem reiniciar a placa', 'Botão 4 acionado e LED indicando modo satélite', 'SIM Deutsche Telekom ativo com perfil NTN', 'Bandas NTN habilitadas no modem (23, 255, 256)'].map(function (x) { return '<li><label><input type="checkbox"> ' + x + '</label></li>'; }).join('') + '</ul></details>';
+  }
   function fmtT(iso) { return iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'n/d'; }
   window.drawHero = function (all, now, src) {
     var el = document.getElementById('hero'); if (!el) return;
     var r = state(all, now, src), k = qs.get('estado') && ST[qs.get('estado')] ? qs.get('estado') : r.k, d = ST[k], s = r.s;
     el.className = 'hero ' + d.cls;
+    painelBusca(k === 'search' ? r.b : null, all, now);
     el.innerHTML = '<div class="hero-ico">' + d.ico + '</div><div class="hero-main"><div class="hero-txt">' + d.txt + '</div><div class="hero-sub">' + d.sub + (src === 'replay' ? ' · REPLAY' : '') + (qs.get('estado') ? ' · ESTADO FORÇADO PARA TESTE' : '') + '</div></div>' +
-      '<div class="hero-meta"><div><small>No estado atual</small><b>' + (s && s.sinceSec != null ? P.fmtDur(s.sinceSec) : 'n/d') + '</b></div><div><small>Último dado</small><b>' + (s ? fmtT(s.lastRx) : 'n/d') + '</b><span>' + (s ? 'há ' + P.fmtDur(s.ageSec) : '') + '</span></div></div>';
+      '<div class="hero-meta"><div><small>No estado atual</small><b>' + (r.b && r.b.t0 ? P.fmtDur((now - r.b.t0) / 1000) : s && s.sinceSec != null ? P.fmtDur(s.sinceSec) : 'n/d') + '</b></div><div><small>Último dado</small><b>' + (s ? fmtT(s.lastRx) : 'n/d') + '</b><span>' + (s ? 'há ' + P.fmtDur(s.ageSec) : '') + '</span></div></div>';
   };
   // modo Apresentação
   function setPres(on) { document.body.classList.toggle('apresentacao', on); var b = document.getElementById('btnPres2'); if (b) b.classList.toggle('on', on); setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 100); }

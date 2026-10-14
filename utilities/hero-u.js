@@ -5,7 +5,7 @@
   var ST = {
     catm: ['catm', '📶', 'CONECTADO VIA CELULAR (LTE-M)', 'Rede terrestre Cat-M'],
     ntn: ['ntn', '🛰', 'CONECTADO VIA SATÉLITE SKYLO (NTN)', 'Registrado na rede Skylo 90198'],
-    search: ['search', '🔎', 'BUSCANDO SATÉLITE', 'Placa saiu do Cat-M para o teste NTN e ainda não registrou na Skylo'],
+    search: ['search', '🔎', 'BUSCANDO SATÉLITE SKYLO', 'Placa saiu do Cat-M para o teste NTN e ainda não registrou. Em busca ela pode não enviar nada até registrar'],
     off: ['off', '⛔', 'SEM CONEXÃO / NTN DESCONECTADO', 'Sem envios recentes da placa'],
     nodata: ['off', '⛔', 'SEM DADOS DA PLACA', 'Nenhum registro recebido']
   };
