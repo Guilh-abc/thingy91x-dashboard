@@ -114,7 +114,7 @@
   // seções recolhíveis (fechadas por padrão)
   var saved = {}; try { saved = JSON.parse(localStorage.getItem(LS_COL) || '{}'); } catch (e) {}
   document.querySelectorAll('main.grid > section.card').forEach(function (c, i) {
-    if (c.classList.contains('map-card')) return;
+    if (c.classList.contains('map-card') || c.hasAttribute('data-aberto')) return;
     var h = c.querySelector('.card-h'); if (!h) return;
     var id = c.id || ('sec' + i); c.classList.add('colap'); if (saved[id] !== false) c.classList.add('fechada');
     var tg = document.createElement('button'); tg.className = 'colap-btn'; tg.type = 'button'; tg.textContent = 'detalhes'; h.appendChild(tg);

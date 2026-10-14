@@ -31,7 +31,7 @@
     var t0 = saiu || DESDE, dec = now - t0;
     var vel = null; if (g.length > 1 && now - t(lastG) < 600000) { var a = g[g.length - 2]; vel = dist(a, lastG) / Math.max(1, (t(lastG) - t(a)) / 1000) * 3.6; }
     var feito = perc || (atual ? Math.max(0, tot - falta) : 0), vm = dec > 60000 ? feito / (dec / 1000) * 3.6 : null;
-    var eta = !chegou && falta != null && vm && vm > 5 ? now + falta / (vm / 3.6) * 1000 : null;
+    var eta = !chegou && falta != null && perc && vm && vm > 5 ? now + falta / (vm / 3.6) * 1000 : null;
     var q = !atual ? 'sem posição' : atual === lastG ? 'GPS' : 'célula (' + (atual.acc ? '±' + km(atual.acc) : 'imprecisa') + ')';
     el.innerHTML = '<div class="card-h"><h2>' + (chegou ? '🏠 Chegou em Casa' : '🚗 Trajeto em andamento: Trabalho → Casa') + '</h2><small class="muted">desde ' + hm(DESDE) + ' · atualiza a cada posição</small></div>' +
       '<div class="tj-bar"><i style="width:' + Math.round(Math.min(1, falta != null ? 1 - falta / tot : 0) * 100) + '%"></i></div>' +
