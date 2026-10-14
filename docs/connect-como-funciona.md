@@ -20,10 +20,10 @@ Placa nRF9151 DK (mfw_nrf9151-ntn_1.0.1)
 |---|---|---|
 | B1 | 1 pulso = 10 L | > 1 s: consumo contínuo (100 L a cada 10 s) até soltar |
 | B2 | alarme de vazamento | 3 s: violação |
-| B3 | envia leitura agora | — |
+| B3 | envia o total agora (também no satélite; se estiver dentro dos 30 s mínimos, fica na fila e sai assim que puder) | — |
 | B4 | liga/desliga modo auto (fallback satélite) | 3 s: liga/desliga o **modo teste satélite** |
 
-- **Modo teste satélite (B4 3 s):** fix GNSS → NTN (Skylo); após registrar, envia a cada 2 min uma leitura com total, consumo do intervalo (pulsos × 10 L), PLMN/operadora, RSRP/SNR e seq (sem posição, para caber em 256 B; mínimo 30 s entre msgs; fila mantida se cair). Os pulsos continuam contando. Novo B4 3 s = volta ao Cat-M. Modo auto fica suspenso durante o teste. A sonda "Varredura satélite" agora só pelo serial: `python3 meter_cmd.py probe 20`.
+- **Modo teste satélite (B4 3 s):** fix GNSS → NTN (Skylo); após registrar, envia a cada N min (padrão 2; configurável sem regravar: `python3 meter_cmd.py interval 20`, salvo em NVS) uma leitura com total, consumo do intervalo (pulsos × 10 L), PLMN/operadora, RSRP/SNR e seq (sem posição, para caber em 256 B; mínimo 30 s entre msgs; fila mantida se cair). Os pulsos continuam contando. Novo B4 3 s = volta ao Cat-M. Modo auto fica suspenso durante o teste. A sonda "Varredura satélite" agora só pelo serial: `python3 meter_cmd.py probe 20`.
 - **LEDs:** LED1 = Cat-M (aceso registrado, piscando buscando); LED2 = NTN (pisca lento registrado / rápido buscando); LED3 = GNSS ou transmissão; LED4 = aceso no modo teste satélite, piscada breve = modo auto, piscada curta = sonda; todos piscando = erro.
 - **Intervalos:** leitura a cada 1 h (CONFIG_APP_TELEM_CATM_S/NTN_S = 3600); alarmes saem na hora.
 - **Alarmes automáticos:** vazamento = fluxo contínuo por 60 min; consumo anômalo = > 500 L em 1 h; bateria baixa < 3,3 V; manuais por B2.
