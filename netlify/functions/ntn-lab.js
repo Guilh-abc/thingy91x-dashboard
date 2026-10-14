@@ -60,7 +60,7 @@ export function normalizeIngest(m, rawLen, rxIso, trHint) {
   if (type === 'telemetry') Object.assign(rec, {
     plmn: str(m.p, 8), act: num(m.a), band: str(m.b, 6) || null, rsrp: num(m.r) === 999 ? null : num(m.r), snr: num(m.q) === 999 ? null : num(m.q),
     ce: num(m.c) != null && m.c >= 0 ? m.c : null, mv: num(m.v) != null && m.v >= 0 ? m.v : null, temp: num(m.T) === -99 ? null : num(m.T), regFor: num(m.rg),
-    totalL: num(m.L), deltaL: num(m.dL),
+    totalL: num(m.L), deltaL: num(m.dL), tm: m.tm === 1 ? 1 : undefined,
     counters: k ? { tries: k[0], ok: k[1], fail: k[2], switches: k[3] } : null,
     failReasons: Array.isArray(m.f) ? { wait: num(m.f[0]) ?? 0, dns: num(m.f[1]) ?? 0, timeout: num(m.f[2]) ?? 0, other: num(m.f[3]) ?? 0 } : null,
   });

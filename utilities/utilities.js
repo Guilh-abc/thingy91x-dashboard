@@ -8,7 +8,9 @@
   const ago = (t) => { const s = Math.round((Date.now() - Date.parse(t)) / 1000); return s < 90 ? s + ' s' : s < 5400 ? Math.round(s / 60) + ' min' : s < 172800 ? Math.round(s / 3600) + ' h' : Math.round(s / 86400) + ' d'; };
   const m3 = (L) => (L / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
   const netOf = (r) => r.txNet || (r.transport === 'udp' ? 'ntn' : 'catm');
-  const tag = (n) => `<span class="tag ${n}">${n === 'ntn' ? 'Satélite' : 'Cat-M'}</span>`;
+  const SAT = { '90198': 'Skylo' };
+  const tag = (n, r) => { if (n !== 'ntn') return '<span class="tag catm">Cat-M</span>'; const op = (r && (r.satOp || SAT[r.plmn])) || null;
+    return `<span class="tag ntn">Satélite · ${op ? op + (r.plmn ? ' (' + r.plmn + ')' : '') : 'Skylo'}</span>${op ? '' : ' <small class="muted">(inferido)</small>'}`; };
   const AL = { leak: ['💧', 'Vazamento', 'Fluxo contínuo detectado ou alarme de vazamento acionado.'], tamper: ['🔓', 'Violação', 'Tentativa de violação do medidor.'], anom: ['📈', 'Consumo anômalo', 'Consumo por hora acima do limite configurado.'], lowbat: ['🔋', 'Bateria baixa', 'Tensão abaixo do limite.'] };
   const empty = (t) => `<div class="empty-st">${t}</div>`;
   let recs = [], agg = 'h', map, mk;
@@ -44,13 +46,16 @@
     const al = rs.filter((r) => r.type === 'alarm');
     const last = rd[rd.length - 1], any = rs[rs.length - 1];
     $('waitBanner').hidden = rs.length > 0;
+    const st1 = [...rs].reverse().find((r) => r.type === 'event' && r.event === 'stest');
+    const tOn = st1 && st1.value === 1;
+    $('testPill').hidden = !tOn; if (tOn) $('testPill').textContent = 'Modo teste satélite ativo desde ' + dmy(st1.ts) + ' · leitura a cada 2 min';
     if (rs.length && !rd.length) { $('waitBanner').hidden = false; $('waitBanner').textContent = 'A placa já se comunicou, mas ainda não enviou nenhuma leitura de consumo.'; }
     dial(last ? last.totalL : null);
     $('mLiters').textContent = last ? last.totalL.toLocaleString('pt-BR') + ' L' : 'aguardando primeira leitura';
     $('mAge').textContent = last ? 'leitura há ' + ago(last.rx || last.ts) : '';
     $('mSince').textContent = rd.length ? rd.length + ' leitura(s) desde ' + dmy(rd[0].ts) : '';
     const tel = [...rs].reverse().find((r) => r.type === 'telemetry');
-    const st = [['Última comunicação', any ? 'há ' + ago(any.rx || any.ts) : '—'], ['Rede', tel ? tag(netOf(tel)) : '—'], ['Sinal', tel?.rsrp != null ? tel.rsrp + ' dBm' : '—'],
+    const st = [['Última comunicação', any ? 'há ' + ago(any.rx || any.ts) : '—'], ['Rede', tel ? tag(netOf(tel), tel) : '—'], ['Sinal', tel?.rsrp != null ? tel.rsrp + ' dBm' : '—'],
       ['Operadora (PLMN)', tel?.plmn || '—'], ['Bateria', tel?.mv != null ? (tel.mv / 1000).toFixed(2) + ' V' : '—'], ['Alertas ativos (24 h)', al.filter((a) => Date.now() - Date.parse(a.ts) < 86400000).length || (rs.length ? '0' : '—')]];
     $('statGrid').innerHTML = st.map(([k, v]) => `<div><small class="muted">${k}</small><b>${v}</b></div>`).join('');
     $('chart').innerHTML = chart(rd);
@@ -73,7 +78,7 @@
     $('billBody').innerHTML = months.size ? [...months.entries()].reverse().map(([k, m]) => { const c = Math.max(0, m.b - m.a); return `<tr><td>${k.slice(5)}/${k.slice(0, 4)}</td><td class="mono">${m3(m.a)} m³</td><td class="mono">${m3(m.b)} m³</td><td>${m3(c)} m³</td><td>${Number.isFinite(t) ? (c / 1000 * t).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'informe a tarifa'}</td><td>${m.n}</td></tr>`; }).join('')
       : '<tr><td colspan="6" class="muted">Aguardando a primeira leitura do medidor.</td></tr>';
     $('rdCount').textContent = rs.length ? rs.length + ' registro(s)' : '';
-    $('rdBody').innerHTML = rs.length ? rs.slice(-500).reverse().map((r) => `<tr><td class="mono">${dmy(r.ts)}</td><td>${r.seq ?? '—'}</td><td>${r.type === 'telemetry' ? 'leitura' : r.type === 'alarm' ? 'alarme ' + esc((AL[r.event] || [, r.event])[1]) : 'evento ' + esc(r.event || r.type)}</td><td>${tag(netOf(r))}${r.transport === 'udp' ? ' <small class="muted">UDP</small>' : ''}</td><td class="mono">${r.totalL != null ? m3(r.totalL) + ' m³' : '—'}</td><td>${r.deltaL != null ? r.deltaL + ' L' : '—'}</td><td>${r.rsrp != null ? r.rsrp + ' dBm' : '—'}</td><td>${r.late > 0 ? 'atrasada ' + r.late + ' s' : 'tempo real'}</td></tr>`).join('')
+    $('rdBody').innerHTML = rs.length ? rs.slice(-500).reverse().map((r) => `<tr><td class="mono">${dmy(r.ts)}</td><td>${r.seq ?? '—'}</td><td>${r.type === 'telemetry' ? 'leitura' : r.type === 'alarm' ? 'alarme ' + esc((AL[r.event] || [, r.event])[1]) : 'evento ' + esc(r.event || r.type)}</td><td>${tag(netOf(r), r)}${r.tm ? ' <span class="chip ntn">teste</span>' : ''}${r.transport === 'udp' ? ' <small class="muted">UDP</small>' : ''}</td><td class="mono">${r.totalL != null ? m3(r.totalL) + ' m³' : '—'}</td><td>${r.deltaL != null ? r.deltaL + ' L' : '—'}</td><td>${r.rsrp != null ? r.rsrp + ' dBm' : '—'}</td><td>${r.late > 0 ? 'atrasada ' + r.late + ' s' : 'tempo real'}</td></tr>`).join('')
       : '<tr><td colspan="8" class="muted">Aguardando a primeira leitura do medidor.</td></tr>';
     $('foot').textContent = 'Connect Utilities · dados reais do medidor m1 · atualiza a cada 30 s · posição pública arredondada (~100 m)';
   }
