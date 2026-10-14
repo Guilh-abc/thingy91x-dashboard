@@ -1,0 +1,13 @@
+/* Deck theme: Telekom + Skylo NTN Evento 2026. Visual only, additive. */
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&family=Orbitron:wght@600;800&display=swap");
+:root{--bg:#060A1C;--card:#0d1330;--card2:#141a3d;--line:#2a1f4f;--mag:#E20074;--mg:#E20074;--deck-plum:#760A52;--deck-plum2:#4E0A40}
+body{font-family:"Open Sans",Inter,system-ui,sans-serif;background:radial-gradient(1200px 600px at 85% -10%,rgba(118,10,82,.35),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(226,0,116,.12),transparent 60%),#060A1C;background-attachment:fixed}
+h1,h2,h3,.wordmark,.card h2,.card h3,.kpi span,.live span{font-family:Archivo,"Open Sans",sans-serif;letter-spacing:.01em}
+.wordmark{font-weight:800}
+.kpi b,.live b{font-family:Orbitron,Archivo,sans-serif;font-weight:800;letter-spacing:.02em}
+.top{border-bottom:2px solid var(--mag);background:linear-gradient(90deg,rgba(226,0,116,.18),rgba(118,10,82,.10) 40%,transparent)}
+.card,.kpi{border:1px solid var(--line);border-left:4px solid var(--mag);border-radius:14px;background:linear-gradient(160deg,var(--card2),var(--card));box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.card h2,.card h3{text-transform:uppercase;font-size:.95em;font-weight:800;color:#fff}
+.card h2::before,.card h3::before{content:"";display:inline-block;width:18px;height:3px;background:var(--mag);margin-right:8px;vertical-align:middle}
+body.present .wordmark{font-size:34px}
+body.present .kpi b,body.present .live b{font-size:30px}
