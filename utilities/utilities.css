@@ -12,3 +12,4 @@
 .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.kv b{font-family:ui-monospace,Menlo,monospace}
 .grid{grid-template-columns:1fr 1fr}
 @media (max-width:1000px){.u-top,.grid,.kv,.stat-grid{grid-template-columns:1fr}}
+.kv .empty-st{grid-column:1/-1}
