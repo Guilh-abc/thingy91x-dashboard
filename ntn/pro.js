@@ -171,7 +171,7 @@
     document.querySelectorAll('#fPos button').forEach((b) => b.classList.toggle('on', b.dataset.pos === st.pos));
     $('fPeriod').value = st.period; $('fPeriod').disabled = st.src === 'replay'; $('fSw').checked = st.sw;
     P.annotateDelivery(all); drawLog(all); if (window.drawSim) window.drawSim(all); if (window.drawSatSig) window.drawSatSig(all); if (window.Pointing && st.src === 'live') window.Pointing.render('ptBox', all);
-    drawLive(all); drawKpis(rs); drawSwitches(st.sw ? all : rs); drawMap(rs); drawTable(rs);
+    drawLive(all); if (window.drawHero) window.drawHero(all, nowRef(), st.src); drawKpis(rs); drawSwitches(st.sw ? all : rs); drawMap(rs); drawTable(rs);
     const empty = $('empty');
     empty.hidden = rs.length > 0;
     if (!rs.length) empty.innerHTML = st.src === 'live' ? 'Nenhum dado da placa neste período. Verifique se a placa está ligada (app NTN Pro v2.1) ou use <b>Replay da demonstração</b>.' : 'Sem dados de replay.';
