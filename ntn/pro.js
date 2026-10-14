@@ -24,6 +24,7 @@
   const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([-23.55, -46.70], 11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap', className: 'tiles' }).addTo(map);
   const layer = L.layerGroup().addTo(map);
+  window.ntnMap = map; // v49: usado por insights.js
 
   function recs() {
     if (st.src === 'replay') { const all = replay ? replay.records : []; return rpCursor == null ? all : all.filter((r) => Date.parse(r.ts) <= rpCursor); }
@@ -171,7 +172,7 @@
     document.querySelectorAll('#fPos button').forEach((b) => b.classList.toggle('on', b.dataset.pos === st.pos));
     $('fPeriod').value = st.period; $('fPeriod').disabled = st.src === 'replay'; $('fSw').checked = st.sw;
     P.annotateDelivery(all); drawLog(all); if (window.drawSim) window.drawSim(all); if (window.drawSatSig) window.drawSatSig(all); if (window.Pointing && st.src === 'live') window.Pointing.render('ptBox', all);
-    drawLive(all); if (window.drawHero) window.drawHero(all, nowRef(), st.src); drawKpis(rs); drawSwitches(st.sw ? all : rs); drawMap(rs); drawTable(rs);
+    drawLive(all); if (window.drawHero) window.drawHero(all, nowRef(), st.src); if (window.drawTrajeto) try { window.drawTrajeto(all, nowRef(), map); } catch (e) { console.warn('trajeto', e); } if (window.drawInsights) try { window.drawInsights(all, nowRef(), st.src, map); } catch (e) { console.warn('insights', e); } drawKpis(rs); drawSwitches(st.sw ? all : rs); drawMap(rs); drawTable(rs);
     const empty = $('empty');
     empty.hidden = rs.length > 0;
     if (!rs.length) empty.innerHTML = st.src === 'live' ? 'Nenhum dado da placa neste período. Verifique se a placa está ligada (app NTN Pro v2.1) ou use <b>Replay da demonstração</b>.' : 'Sem dados de replay.';

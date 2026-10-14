@@ -72,7 +72,7 @@ export function normalizeIngest(m, rawLen, rxIso, trHint) {
   else if (type === 'satdet') { const v = String(m.v || '').slice(0, 400).split(';').map((x) => x.split(',').map(Number)).filter((a) => a.length === 4 && a.every(Number.isFinite))
       .map(([t, r, q, st]) => ({ t, rsrp: r === 999 ? null : r, snr: q === 127 ? null : q, st }));
     Object.assign(rec, { sess: num(m.id), off: num(m.o), pts: v }); }
-  else Object.assign(rec, { event: str(m.e, 12), value: num(m.x), info: str(m.i, 40), ...(m.p ? { plmn: str(m.p, 8), act: num(m.a) } : {}), ...(num(m.r) != null ? { rsrp: m.r === 999 ? null : num(m.r), snr: m.q === 999 ? null : num(m.q) } : {}) });
+  else Object.assign(rec, { event: str(m.e, 12), value: num(m.x), info: str(m.i, 40), pressTotal: num(m.bc), firstAgoS: num(m.fa), ntnBytes: num(m.nb), ntnMsgs: num(m.nm), ...(m.p ? { plmn: str(m.p, 8), act: num(m.a) } : {}), ...(num(m.r) != null ? { rsrp: m.r === 999 ? null : num(m.r), snr: m.q === 999 ? null : num(m.q) } : {}) });
   return rec;
 }
 /** v37: "cl":"72410,C423,0C5F2C16" (PLMN,TAC hex,ECI hex) -> objeto lte do nRF Cloud ground fix. */
