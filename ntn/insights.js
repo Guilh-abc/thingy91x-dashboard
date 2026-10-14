@@ -122,7 +122,7 @@
     function rota(a, b, t0, min, lento) { for (var m = 0; m <= min; m++) { var f = m / min; var dt = t0 + m * 60000; if (lento && m > min / 2 && m < min / 2 + 8) f = (min / 2) / min + (m - min / 2) * 0.0015; out.push({ type: 'telemetry', ts: new Date(dt).toISOString(), net: 'catm', txNet: 'catm', posSrc: 'gnss', lat: a.lat + (b.lat - a.lat) * Math.min(1, f), lon: a.lon + (b.lon - a.lon) * Math.min(1, f), sim: true }); } }
     function fica(p, t0, min) { for (var m = 0; m <= min; m += 10) out.push({ type: 'telemetry', ts: new Date(t0 + m * 60000).toISOString(), net: m % 30 ? 'catm' : 'ntn', txNet: m % 30 ? 'catm' : 'ntn', posSrc: 'gnss', lat: p.lat + 0.0002, lon: p.lon, late: m % 50 ? 0 : 40, sim: true }); }
     for (var d = 8; d >= 1; d--) { var b = d0.getTime() - d * 86400000; fica(casa, b + 6 * 3600000, 120); rota(casa, trab, b + 8 * 3600000 + 5 * 60000, 35); fica(trab, b + 8 * 3600000 + 45 * 60000, 520); rota(trab, casa, b + 17 * 3600000 + 30 * 60000, 40); fica(casa, b + 18 * 3600000 + 15 * 60000, 200); }
-    var tNow = now - 23 * 60000; fica(casa, tNow - 180 * 60000, 170); rota(casa, trab, tNow - 5 * 60000, 40, true);
+    var tNow = now - 22 * 60000; fica(casa, tNow - 180 * 60000, 170); rota(casa, trab, tNow - 5 * 60000, 40, true);
     out = out.filter(function (r) { return t(r) <= now; });
     out.push({ type: 'event', event: 'b2', ts: new Date(now - 20 * 60000).toISOString(), value: 2, info: 'n2 bt7 fa35 nb412 nm6', net: 'catm', txNet: 'ntn', bytes: 58, sim: true });
     out.push({ type: 'event', event: 'b2', ts: new Date(now - 5 * 60000).toISOString(), value: 1, pressTotal: 8, firstAgoS: 12, ntnBytes: 470, ntnMsgs: 7, net: 'ntn', txNet: 'ntn', bytes: 58, sim: true });
