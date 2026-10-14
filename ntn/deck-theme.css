@@ -19,3 +19,4 @@ body>*{position:relative;z-index:1}
 @keyframes deckFloat{to{transform:translate(-30px,24px) rotate(25deg)}}
 @media (prefers-reduced-motion:reduce){body::before,body::after{animation:none}}
 .deck-fw{position:fixed;right:10px;bottom:8px;z-index:5;font:600 11px Archivo,sans-serif;color:#9aa0ae;opacity:.6;text-decoration:none}.deck-fw:hover{opacity:1;color:#E20074}
+.deck-exportlog{border-color:#E20074!important;color:#fff;background:linear-gradient(90deg,rgba(226,0,116,.35),rgba(118,10,82,.35))!important;font-family:Archivo,sans-serif;font-weight:700}

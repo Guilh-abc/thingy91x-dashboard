@@ -235,6 +235,21 @@
   $('rpPlay').onclick = playReplay;
   $('btnExport').onclick = () => ($('exportMenu').hidden = !$('exportMenu').hidden);
   $('exportMenu').onclick = (e) => { const k = e.target.dataset.x; if (k) { $('exportMenu').hidden = true; doExport(k); } };
+
+  // ---------- exportar log (CSV ; com BOM + JSON), respeita filtros/periodo da vista ----------
+  if ($('btnExportLog')) $('btnExportLog').onclick = () => {
+    const rs = view();
+    const pref = ['ts', 'rx', 'type', 'event', 'seq', 'net', 'txNet', 'transport', 'lat', 'lon', 'acc', 'posSrc', 'gnssAge', 'gnssSats', 'prevRttMs', 'late', 'bytes', 'satOp', 'satTac', 'satCell', 'regSecs', 'rsrp', 'snr', 'plmn'];
+    const keys = new Set(); rs.forEach((r) => Object.keys(r || {}).forEach((k) => keys.add(k)));
+    const cols = [...pref.filter((k) => keys.has(k)), ...[...keys].filter((k) => !pref.includes(k)).sort()];
+    const loc = (v) => { const t = Date.parse(v); return isNaN(t) ? '' : new Date(t).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }); };
+    const esc = (v) => { if (v == null) return ''; const x = typeof v === 'object' ? JSON.stringify(v) : String(v); return /[";\n\r]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; };
+    const head = ['hora_local_sp', 'chegada_local_sp', ...cols];
+    const lines = rs.map((r) => [loc(r.ts), loc(r.rx), ...cols.map((k) => r[k])].map(esc).join(';'));
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '');
+    download(`ntn-log-${stamp}.csv`, '\ufeff' + [head.join(';'), ...lines].join('\r\n'), 'text/csv;charset=utf-8');
+    setTimeout(() => download(`ntn-log-${stamp}.json`, JSON.stringify({ schema: 'ntn-log/1', exportedAt: new Date().toISOString(), filtros: { periodo: st.period, rede: st.net, pos: st.pos }, total: rs.length, records: rs }, null, 1), 'application/json'), 400);
+  };
   $('btnPresent').onclick = async () => {
     document.body.classList.toggle('present');
     try { if (document.body.classList.contains('present')) await document.documentElement.requestFullscreen?.(); else if (document.fullscreenElement) await document.exitFullscreen(); } catch { /* sem permissão */ }
