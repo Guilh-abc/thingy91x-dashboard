@@ -19,7 +19,11 @@
       var refTxt = refs.length ? refs.slice(-3).map(function (x) { return dur(x); }).join(', ') : 'nenhum registro no satélite medido no histórico carregado';
       var rej = (o.rej || []).map(function (c) { return /^\d+$/.test(String(c)) ? 'causa ' + c + ': ' + (EMM[c] || 'código não mapeado') : String(c); });
       el.hidden = false;
-      el.innerHTML = '<div class="bm-banner">🛰 BUSCANDO SATÉLITE SKYLO</div>' +
+      var g = o.gps, gps = '';
+      if (g) gps = g.ok ? '<div class="bm-gps ok">📍 POSIÇÃO GPS: OK (' + (g.src || 'fix') + (g.age != null && g.age >= 0 ? ', fix há ' + dur(g.age * 1000) : '') + ')</div>'
+        : '<div class="bm-gps bad">📍 SEM POSIÇÃO GPS VÁLIDA: usando posição ' + (g.src || 'desconhecida') + (g.km != null ? ' (' + g.km.toFixed(g.km < 10 ? 1 : 0) + ' km da célula atual)' : '') + (g.age === -1 ? ' · GPS sem fix' : '') + '<small>Com GPS interno a placa precisa de um fix antes do attach no satélite. Sem posição correta o modem não sincroniza com o satélite (tempo e efeito Doppler calculados errado).</small></div>';
+      var ret = o.semRetorno ? '<div class="bm-gps bad">⛔ Placa não retornou ao celular após a sonda (fim previsto ' + new Date(o.fimPrev).toLocaleTimeString('pt-BR') + '): reinicie a placa</div>' : o.fimPrev ? '<div class="bm-gps info">Fim previsto da sonda: ' + new Date(o.fimPrev).toLocaleTimeString('pt-BR') + ' (duração pedida + 5 min de margem); depois disso a placa deve voltar ao Cat-M.</div>' : '';
+      el.innerHTML = '<div class="bm-banner">🛰 BUSCANDO SATÉLITE SKYLO</div>' + ret + gps +
         '<div class="hb-row"><div class="hb-crono"><small>Buscando há</small><b>' + dur(now - o.t0) + '</b><span>desde ' + new Date(o.t0).toLocaleTimeString('pt-BR') + (o.iniTxt ? ' · ' + o.iniTxt : '') + '</span></div>' +
         '<div style="flex:1;min-width:240px"><small>Sinal do satélite</small>' + medidor(o.sinal) + '</div>' +
         '<div><small>Tempo de registro já observado (dados reais)</small><b style="font-size:14px">' + refTxt + '</b></div></div>' +
@@ -33,7 +37,7 @@
         '<li><span class="led l1 rap"></span><b>LED1 piscando</b>: buscando Cat-M; aceso = registrado no Cat-M</li>' +
         '<li><span class="led all rap"></span><b>Todos piscando</b>: erro</li></ul><small>Fonte: docs/connect-como-funciona.md</small></div>' +
         '<details class="hb-ts" open><summary><b>Troubleshooting</b></summary><ul>' +
-        ['Céu aberto, com visada para o norte (satélite geoestacionário)', 'Antena voltada para cima', 'Longe de metal: sem teto metálico nem vidro com película metalizada acima', 'Veículo em movimento pode atrasar; se possível, pare em local aberto', 'Aguardar o registro sem reiniciar a placa (pode levar vários minutos; use a referência acima)', 'SIM Deutsche Telekom ativo com perfil NTN', 'Para iniciar ou repetir: segurar o botão 4 por 3 s', 'Bandas NTN habilitadas no modem (23, 255, 256)'].map(function (x) { return '<li><label><input type="checkbox"> ' + x + '</label></li>'; }).join('') + '</ul></details></div>';
+        ['Parar o veículo em céu aberto e aguardar o fix GPS antes de iniciar a sonda', 'Céu aberto, com visada para o norte (satélite geoestacionário)', 'Antena voltada para cima', 'Longe de metal: sem teto metálico nem vidro com película metalizada acima', 'Veículo em movimento pode atrasar; se possível, pare em local aberto', 'Aguardar o registro sem reiniciar a placa (pode levar vários minutos; use a referência acima)', 'SIM Deutsche Telekom ativo com perfil NTN', 'Para iniciar ou repetir: segurar o botão 4 por 3 s', 'Bandas NTN habilitadas no modem (23, 255, 256)'].map(function (x) { return '<li><label><input type="checkbox"> ' + x + '</label></li>'; }).join('') + '</ul></details></div>';
     }
   };
 })();

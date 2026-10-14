@@ -59,6 +59,15 @@
       if (r.type === 'event' && r.event === 'fail') b.rej.push(r.info || 'falha');
     }
     if (b.traf || b.reg) return null; // registrou: estado normal (ntn) assume
+    // v48: posição usada na busca (GPS interno precisa de fix antes do attach NTN)
+    var antes = rs.slice(0, st + 1).reverse(), tel = antes.find(function (r) { return r.type === 'telemetry'; }) || null;
+    var cel = antes.find(function (r) { return r.type === 'telemetry' && /^celula/.test(r.posSrc || '') && r.lat != null; }) || null;
+    var src = ini.posSrc || (tel && tel.posSrc) || null, km = null;
+    if (ini.lat != null && cel && src !== 'celula') { var R = 6371, rad = Math.PI / 180, dLa = (cel.lat - ini.lat) * rad, dLo = (cel.lon - ini.lon) * rad, a = Math.sin(dLa / 2) * Math.sin(dLa / 2) + Math.cos(ini.lat * rad) * Math.cos(cel.lat * rad) * Math.sin(dLo / 2) * Math.sin(dLo / 2); km = 2 * R * Math.asin(Math.sqrt(a)); }
+    var age = tel && tel.gnssAge != null ? tel.gnssAge : null;
+    b.gps = { src: src, age: age, km: km, ok: /^(gnss|injetada|agnss)/.test(src || '') || (age != null && age >= 0 && age < 600) };
+    // v48: fim previsto da sonda (início + duração + 5 min de margem)
+    if (ini.event === 'probe' && ini.value > 0) { b.fimPrev = b.t0 + (ini.value + 5) * 60000; b.semRetorno = now > b.fimPrev; }
     var lastAny = Math.max.apply(null, rs.map(function (r) { return Date.parse(r.rx || r.ts); }));
     b.lastAny = lastAny; b.ativa = now - Math.max(lastAny, b.t0) < LIM_BUSCA; b.expirou = !b.ativa;
     return b;
@@ -71,7 +80,7 @@
   function painelBusca(b, all, now) {
     var el = document.getElementById('heroBusca'); if (!el) return;
     if (!b) { el.hidden = true; return; }
-    if (window.BuscaUI) { window.BuscaUI.render(el, { t0: b.t0, iniTxt: ({ probe: 'sonda NTN iniciada', sw: 'comutação para satélite', sat_start: 'teste satélite iniciado', stest: 'modo teste ligado' }[b.ini.event] || b.ini.event) + (b.ini.event === 'probe' && b.ini.value ? ', ' + b.ini.value + ' min' : ''), sinal: b.sinal, sync: b.sync, reg: b.reg, refs: (REF || []).concat(refsNtn(all)).map(function (x) { return x.regSec * 1000; }), rej: b.rej }); return; }
+    if (window.BuscaUI) { window.BuscaUI.render(el, { t0: b.t0, iniTxt: ({ probe: 'sonda NTN iniciada', sw: 'comutação para satélite', sat_start: 'teste satélite iniciado', stest: 'modo teste ligado' }[b.ini.event] || b.ini.event) + (b.ini.event === 'probe' && b.ini.value ? ', ' + b.ini.value + ' min' : ''), sinal: b.sinal, sync: b.sync, reg: b.reg, refs: (REF || []).concat(refsNtn(all)).map(function (x) { return x.regSec * 1000; }), rej: b.rej, gps: b.gps, fimPrev: b.fimPrev, semRetorno: b.semRetorno }); return; }
     var min = Math.floor((now - b.t0) / 60000), etapa = b.reg ? 3 : b.sync ? 2 : 1;
     var et = ['Buscar', 'Sincronizar', 'Registrar', 'Trafegar'].map(function (n, i) { return '<span class="hb-et' + (i + 1 < etapa ? ' feito' : i + 1 === etapa ? ' atual' : '') + '">' + (i + 1) + '. ' + n + '</span>'; }).join('');
     var refs = (REF || []).concat(refsNtn(all));
@@ -89,11 +98,12 @@
   }
   function fmtT(iso) { return iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'n/d'; }
   window.drawHero = function (all, now, src) {
+    var ate = Date.parse(qs.get('ate') || ''); if (ate) { all = all.filter(function (r) { return t(r) <= ate; }); now = ate; } // v48: vista histórica dos dados reais (?ate=ISO)
     var el = document.getElementById('hero'); if (!el) return;
     var r = state(all, now, src), k = qs.get('estado') && ST[qs.get('estado')] ? qs.get('estado') : r.k, d = ST[k], s = r.s;
     el.className = 'hero ' + d.cls;
-    painelBusca(k === 'search' ? r.b : null, all, now);
-    el.innerHTML = '<div class="hero-ico">' + d.ico + '</div><div class="hero-main"><div class="hero-txt">' + d.txt + '</div><div class="hero-sub">' + d.sub + (src === 'replay' ? ' · REPLAY' : '') + (qs.get('estado') ? ' · ESTADO FORÇADO PARA TESTE' : '') + '</div></div>' +
+    painelBusca((k === 'search' || k === 'noresp') && r.b && r.b.t0 ? r.b : null, all, now);
+    el.innerHTML = '<div class="hero-ico">' + d.ico + '</div><div class="hero-main"><div class="hero-txt">' + d.txt + '</div><div class="hero-sub">' + d.sub + (src === 'replay' ? ' · REPLAY' : '') + (qs.get('estado') ? ' · ESTADO FORÇADO PARA TESTE' : '') + (ate ? ' · VISTA HISTÓRICA DOS DADOS REAIS EM ' + new Date(ate).toLocaleString('pt-BR') : '') + '</div></div>' +
       '<div class="hero-meta"><div><small>No estado atual</small><b>' + (r.b && r.b.t0 ? P.fmtDur((now - r.b.t0) / 1000) : s && s.sinceSec != null ? P.fmtDur(s.sinceSec) : 'n/d') + '</b></div><div><small>Último dado</small><b>' + (s ? fmtT(s.lastRx) : 'n/d') + '</b><span>' + (s ? 'há ' + P.fmtDur(s.ageSec) : '') + '</span></div></div>';
   };
   // modo Apresentação
