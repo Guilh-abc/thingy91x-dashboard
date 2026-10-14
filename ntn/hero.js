@@ -64,14 +64,17 @@
     return b;
   }
   var EMM = { 2: 'IMSI desconhecido na rede', 3: 'UE ilegal (SIM rejeitado)', 6: 'equipamento ilegal', 7: 'serviço EPS não permitido no SIM', 11: 'PLMN não permitida (SIM sem perfil Skylo)', 12: 'área de rastreamento não permitida', 13: 'roaming não permitido nesta área', 14: 'EPS não permitido nesta PLMN', 15: 'sem células adequadas nesta área', 17: 'falha de rede', 22: 'congestionamento' };
+  function refsNtn(recs) { var rs = P.sortRecs(recs), out = [], t0 = null; rs.forEach(function (r) { if (isStart(r)) { if (t0 == null) t0 = t(r); } else if (t0 != null && r.type === 'event' && (r.event === 'sat_reg' || (r.event === 'reg' && (r.net === 'ntn' || /NTN|Skylo/.test(r.info || ''))))) { out.push({ regSec: (t(r) - t0) / 1000, at: r.ts }); t0 = null; } else if (t0 != null && r.type === 'event' && (r.event === 'boot' || (r.event === 'sw' && r.value === 0) || r.event === 'back_catm')) t0 = null; }); return out; }
+  window.HeroBusca = { busca: function (all, now) { return busca(all, now); }, refs: function (a) { return (REF || []).concat(refsNtn(a)); } };
   var REF = null;
-  fetch('replay.json?v=43', { cache: 'force-cache' }).then(function (r) { return r.json(); }).then(function (j) { REF = P.switches(j.records).filter(function (x) { return x.to === 'ntn' && x.ok && x.regSec != null; }); }).catch(function () {});
+  fetch('replay.json?v=43', { cache: 'force-cache' }).then(function (r) { return r.json(); }).then(function (j) { REF = refsNtn(j.records); }).catch(function () {});
   function painelBusca(b, all, now) {
     var el = document.getElementById('heroBusca'); if (!el) return;
     if (!b) { el.hidden = true; return; }
+    if (window.BuscaUI) { window.BuscaUI.render(el, { t0: b.t0, iniTxt: ({ probe: 'sonda NTN iniciada', sw: 'comutação para satélite', sat_start: 'teste satélite iniciado', stest: 'modo teste ligado' }[b.ini.event] || b.ini.event) + (b.ini.event === 'probe' && b.ini.value ? ', ' + b.ini.value + ' min' : ''), sinal: b.sinal, sync: b.sync, reg: b.reg, refs: (REF || []).concat(refsNtn(all)).map(function (x) { return x.regSec * 1000; }), rej: b.rej }); return; }
     var min = Math.floor((now - b.t0) / 60000), etapa = b.reg ? 3 : b.sync ? 2 : 1;
     var et = ['Buscar', 'Sincronizar', 'Registrar', 'Trafegar'].map(function (n, i) { return '<span class="hb-et' + (i + 1 < etapa ? ' feito' : i + 1 === etapa ? ' atual' : '') + '">' + (i + 1) + '. ' + n + '</span>'; }).join('');
-    var refs = (REF || []).concat(P.switches(all).filter(function (x) { return x.to === 'ntn' && x.ok && x.regSec != null; }));
+    var refs = (REF || []).concat(refsNtn(all));
     var refTxt = refs.length ? refs.map(function (x) { return P.fmtDur(x.regSec) + ' (' + new Date(x.at).toLocaleDateString('pt-BR') + ')'; }).slice(-3).join(', ') : 'nenhum registro NTN medido no histórico carregado';
     var rej = b.rej.map(function (c) { return /^\d+$/.test(String(c)) ? 'causa ' + c + ': ' + (EMM[c] || 'código não mapeado') : String(c); });
     el.hidden = false;

@@ -119,7 +119,9 @@
     if (window.drawHeroU) { let runStart = null; for (let i = tel.length - 1; i >= 0 && !isSat(tel[i]); i--) runStart = T(tel[i]);
       const chg = [...rs].reverse().find((r) => r.type === 'event' && ['boot', 'back_catm', 'sw', 'lost', 'reg'].includes(r.event)); if (runStart != null && chg && T(chg) > runStart) runStart = T(chg);
       const key = !rs.length ? 'nodata' : offNow || (!on && !(sNet && age < 1800000)) ? 'off' : sNet ? (sNet.reg ? 'ntn' : 'search') : 'catm';
-      window.drawHeroU({ key, lastNet: lastNetTxt, since: key === 'ntn' ? T(sNet.reg) : key === 'search' ? sNet.start : key === 'catm' ? runStart : null, lastRx: lastAny ? RX(lastAny) : null,
+      window.drawHeroU({ key, lastNet: lastNetTxt, busca: key === 'search' ? { t0: sNet.start, iniTxt: 'teste satélite (botão 4)', sync: sNet.gnss || sNet.search ? 1 : null, reg: sNet.reg ? 1 : null,
+        sinal: (() => { const x = [...sNet.ev].reverse().find((r) => (r.plmn === '90198' || r.type === 'satsum' || r.type === 'satdet' || /^sat_/.test(r.event || '')) && (r.rsrp != null || r.rsrpAvg != null)); return x ? { rsrp: x.rsrp ?? x.rsrpAvg, snr: x.snr ?? x.snrAvg, at: T(x) } : null; })(),
+        refs: ses.filter((x) => x.reg).map((x) => T(x.reg) - x.start), rej: sNet.ev.filter((r) => r.rej != null).map((r) => r.rej) } : null, since: key === 'ntn' ? T(sNet.reg) : key === 'search' ? sNet.start : key === 'catm' ? runStart : null, lastRx: lastAny ? RX(lastAny) : null,
         note: key === 'catm' && tOn ? 'modo teste NTN ligado, sem registro no satélite' : key === 'catm' && lt ? `${OPS[lt.plmn] || 'operadora'} (${lt.plmn || 'n/d'}) · banda ${lt.band || 'n/d'} · ${lt.rsrp ?? 'n/d'} dBm` : '' }); }
 
     $('cChart').innerHTML = consumo(rd);
