@@ -42,7 +42,7 @@ const r3 = (v) => (num(v) != null && v !== 0 ? Math.round(v * 1000) / 1000 : nul
 /** Normaliza uma mensagem compacta da placa (app v2.0). Exportado para testes. */
 export function normalizeIngest(m, rawLen, rxIso, trHint) {
   if (!m || typeof m !== 'object') return null;
-  const type = m.t === 'e' ? 'event' : m.t === 'm' ? 'telemetry' : m.t === 'g' ? 'satsum' : m.t === 'd' ? 'satdet' : null;
+  const type = m.t === 'e' ? 'event' : m.t === 'm' ? 'telemetry' : m.t === 'g' ? 'satsum' : m.t === 'd' ? 'satdet' : m.t === 'a' ? 'alarm' : null;
   if (!type) return null;
   const late = Math.max(0, num(m.l) || 0);
   const k = Array.isArray(m.k) ? m.k.map((x) => num(x) ?? 0) : null;
@@ -60,9 +60,11 @@ export function normalizeIngest(m, rawLen, rxIso, trHint) {
   if (type === 'telemetry') Object.assign(rec, {
     plmn: str(m.p, 8), act: num(m.a), band: str(m.b, 6) || null, rsrp: num(m.r) === 999 ? null : num(m.r), snr: num(m.q) === 999 ? null : num(m.q),
     ce: num(m.c) != null && m.c >= 0 ? m.c : null, mv: num(m.v) != null && m.v >= 0 ? m.v : null, temp: num(m.T) === -99 ? null : num(m.T), regFor: num(m.rg),
+    totalL: num(m.L), deltaL: num(m.dL),
     counters: k ? { tries: k[0], ok: k[1], fail: k[2], switches: k[3] } : null,
     failReasons: Array.isArray(m.f) ? { wait: num(m.f[0]) ?? 0, dns: num(m.f[1]) ?? 0, timeout: num(m.f[2]) ?? 0, other: num(m.f[3]) ?? 0 } : null,
   });
+  else if (type === 'alarm') Object.assign(rec, { event: str(m.e, 12), value: num(m.x), totalL: num(m.L) });
   else if (type === 'satsum') { const tr3 = (x) => (Array.isArray(x) ? x.slice(0, 3).map((v) => (num(v) === 999 ? null : num(v))) : [null, null, null]);
     const [rmin, rmax, ravg] = tr3(m.rm), [qmin, qmax, qavg] = tr3(m.qm);
     Object.assign(rec, { sess: num(m.id), samples: num(m.k), rsrpMin: rmin, rsrpMax: rmax, rsrpAvg: ravg, snrMin: qmin, snrMax: qmax, snrAvg: qavg,
@@ -117,6 +119,16 @@ export default async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   const store = getStore({ name: 'ntn-lab', consistency: 'strong' });
   const url = new URL(req.url);
+  if (req.method === 'GET' && url.searchParams.get('meter')) {
+    // Connect Utilities: leituras/alarmes do medidor (device separado, campo dv)
+    const days = Math.min(62, Math.max(1, parseInt(url.searchParams.get('days') || '31', 10) || 31));
+    const out = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const list = await store.get('meter/' + new Date(Date.now() - i * 86400000).toISOString().slice(0, 10), { type: 'json' }).catch(() => null);
+      if (Array.isArray(list)) out.push(...list.map(publicView));
+    }
+    return json(200, { ok: true, schema: 'connect-meter/1', serverTime: new Date().toISOString(), records: out });
+  }
   if (req.method === 'GET' && url.searchParams.get('pro')) {
     const days = Math.min(14, Math.max(1, parseInt(url.searchParams.get('days') || '2', 10) || 2));
     const out = [];
@@ -128,11 +140,15 @@ export default async (req) => {
   }
   if (req.method === 'POST' && url.searchParams.get('ingest')) {
     // v36: telemetria/eventos da placa (app v2.0). Resposta minima (poucos bytes no satelite).
-    if (!process.env.NTN_LAB_DEVICE_TOKEN) return json(503, { ok: false, error: 'device token not configured' });
-    if (!tokenOk(req.headers.get('authorization'), 'NTN_LAB_DEVICE_TOKEN')) return json(401, { ok: false, error: 'unauthorized' });
+    const auth = req.headers.get('authorization');
+    const okTrk = tokenOk(auth, 'NTN_LAB_DEVICE_TOKEN'), okMeter = tokenOk(auth, 'METER_DEVICE_TOKEN');
+    if (!okTrk && !okMeter) return json(401, { ok: false, error: 'unauthorized' });
     const raw = await req.text();
     if (raw.length > 256) return json(413, { ok: false, error: 'payload > 256 B' });
     let m; try { m = JSON.parse(scrub(raw)); } catch { return json(400, { ok: false, error: 'invalid json' }); }
+    const meterDev = typeof m.dv === 'string' && /^m[0-9a-z]{1,7}$/.test(m.dv) ? m.dv : null;
+    // medidor: token proprio; via relay UDP (HMAC do relay) chega com o token do relay
+    if (meterDev ? !(okMeter || (okTrk && url.searchParams.get('tr') === 'udp')) : !okTrk) return json(401, { ok: false, error: 'unauthorized' });
     const rx = new Date().toISOString();
     const rec = normalizeIngest(m, raw.length, rx, url.searchParams.get('tr'));
     if (!rec) return json(400, { ok: false, error: 'bad message' });
@@ -145,7 +161,8 @@ export default async (req) => {
         else Object.assign(rec, { lat: null, lon: null, acc: null, posSrc: 'celula sem posicao', posErr: f.err });
       }
     }
-    const key = dayKey(rec.ts);
+    if (meterDev) rec.dv = meterDev;
+    const key = meterDev ? 'meter/' + rec.ts.slice(0, 10) : dayKey(rec.ts);
     const list = (await store.get(key, { type: 'json' }).catch(() => null)) || [];
     const dup = rec.seq != null && list.some((x) => x.seq === rec.seq && x.type === rec.type);
     if (!dup) { list.push(rec); await store.setJSON(key, list.slice(-DAY_MAX)); }

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0f1a">
+<meta name="robots" content="noindex">
+<title>Connect Utilities · Medidor IoT Cat-M e Satélite NTN</title>
+<meta property="og:title" content="Connect Utilities · Medidor IoT Cat-M e Satélite NTN">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="../ntn/pro.css?v=47">
+<link rel="stylesheet" href="utilities.css?v=1">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><svg class="wm" viewBox="0 0 44 44" width="40" height="40" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#a45cff"/></linearGradient></defs><rect x="1" y="1" width="42" height="42" rx="12" fill="#111a2e" stroke="url(#cg)" stroke-width="1.5"/><path d="M28.5 14.5a10 10 0 1 0 0 15" fill="none" stroke="url(#cg)" stroke-width="3.2" stroke-linecap="round"/><circle cx="22" cy="22" r="3" fill="#fff"/><path d="M31 11.5a14 14 0 0 1 3.5 5.5M33.5 8.5a18 18 0 0 1 4.5 7" fill="none" stroke="#a45cff" stroke-width="1.8" stroke-linecap="round" opacity=".85"/></svg><div><h1 class="wordmark">Connect <span class="wm2">Utilities</span></h1><small class="tagline">Medidor IoT · <span class="chip catm">Cat-M</span> e <span class="chip ntn">Satélite NTN</span></small></div></div>
+  <div class="actions">
+    <span id="devPill" class="pill">medidor m1</span>
+    <a class="link" href="../ntn/">Rastreador</a>
+    <a class="link" href="../docs/connect-como-funciona.md">Como funciona</a>
+  </div>
+</header>
+<div id="waitBanner" class="wait-banner">Aguardando a primeira leitura do medidor. Esta página mostra apenas dados reais enviados pela placa; ainda não há nenhum.</div>
+<section class="u-top">
+  <div class="card meter">
+    <div class="card-h"><h2>Total acumulado</h2><span id="mAge" class="muted"></span></div>
+    <div class="dial"><div id="dial" class="digits"></div><span class="unit">m³</span></div>
+    <div class="dial-sub"><span id="mLiters" class="muted">—</span><span id="mSince" class="muted"></span></div>
+  </div>
+  <div class="card stat-grid" id="statGrid"></div>
+</section>
+<main class="grid">
+  <section class="card"><div class="card-h"><h2>Consumo</h2><div class="seg" id="aggSeg"><button data-a="h" class="on">Por hora</button><button data-a="d">Por dia</button><button data-a="m">Por mês</button></div></div>
+    <div id="chart" class="u-chart"></div></section>
+  <section class="card"><div class="card-h"><h2>Alertas</h2><span id="alCount" class="pill"></span></div><div id="alerts"></div></section>
+  <section class="card"><div class="card-h"><h2>Local do medidor</h2><span id="posInfo" class="muted"></span></div><div id="map" style="height:300px"></div></section>
+  <section class="card"><div class="card-h"><h2>Conectividade &amp; SIM</h2><span id="simState"></span></div><div id="simGrid" class="kv"></div></section>
+  <section class="card" style="grid-column:1/-1"><div class="card-h"><h2>Faturamento estimado</h2><label class="muted">Tarifa R$/m³ <input id="tariff" type="number" step="0.01" min="0" style="width:80px"></label></div>
+    <div class="table-wrap"><table class="tbl"><thead><tr><th>Mês</th><th>Leitura inicial</th><th>Leitura final</th><th>Consumo</th><th>Valor estimado</th><th>Leituras</th></tr></thead><tbody id="billBody"></tbody></table></div>
+    <small class="muted">Calculado só com as leituras reais recebidas e a tarifa informada (salva neste navegador). Não é fatura oficial.</small></section>
+  <section class="card tbl-card" style="grid-column:1/-1"><div class="card-h"><h2>Leituras e eventos</h2><span id="rdCount" class="muted"></span></div>
+    <div class="table-wrap" style="max-height:420px"><table class="tbl"><thead><tr><th>Hora</th><th>Seq</th><th>Tipo</th><th>Rede (entrega)</th><th>Total</th><th>Consumo</th><th>Sinal</th><th>Atraso</th></tr></thead><tbody id="rdBody"></tbody></table></div></section>
+</main>
+<footer class="foot muted" id="foot"></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="utilities.js?v=1"></script>
+</body>
+</html>
