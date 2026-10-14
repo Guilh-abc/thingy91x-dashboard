@@ -170,7 +170,7 @@
     document.querySelectorAll('#fNet button').forEach((b) => b.classList.toggle('on', b.dataset.net === st.net));
     document.querySelectorAll('#fPos button').forEach((b) => b.classList.toggle('on', b.dataset.pos === st.pos));
     $('fPeriod').value = st.period; $('fPeriod').disabled = st.src === 'replay'; $('fSw').checked = st.sw;
-    P.annotateDelivery(all); drawLog(all); if (window.drawSim) window.drawSim(all); if (window.drawSatSig) window.drawSatSig(all);
+    P.annotateDelivery(all); drawLog(all); if (window.drawSim) window.drawSim(all); if (window.drawSatSig) window.drawSatSig(all); if (window.Pointing && st.src === 'live') window.Pointing.render('ptBox', all);
     drawLive(all); drawKpis(rs); drawSwitches(st.sw ? all : rs); drawMap(rs); drawTable(rs);
     const empty = $('empty');
     empty.hidden = rs.length > 0;

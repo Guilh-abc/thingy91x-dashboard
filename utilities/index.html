@@ -39,6 +39,8 @@
     <div class="sl-2"><div><small class="muted">Sinal do satélite (RSRP, dBm)</small><div id="slChart"></div></div>
       <div class="table-wrap" style="max-height:200px"><table class="tbl"><thead><tr><th>Hora</th><th>Registros, perdas e trocas</th></tr></thead><tbody id="slHist"></tbody></table></div></div>
   </section>
+  <section class="card" id="ptCard" style="grid-column:1/-1"><div class="card-h"><h2>Apontamento do satélite</h2><span class="chip ntn">Skylo · GEO</span></div><div id="ptBox"></div>
+    <small class="muted">Cálculo com a última posição enviada pela placa. Satélite provável: Inmarsat-4 F3 a 97,65° O (Viasat/Inmarsat, banda L), parceiro da Skylo no Brasil; escolha outro candidato acima se necessário.</small></section>
   <section class="card"><div class="card-h"><h2>Consumo</h2><div class="seg" id="aggSeg"><button data-a="h" class="on">Por hora</button><button data-a="d">Por dia</button><button data-a="m">Por mês</button></div></div>
     <div id="chart" class="u-chart"></div></section>
   <section class="card"><div class="card-h"><h2>Alertas</h2><span id="alCount" class="pill"></span></div><div id="alerts"></div></section>
@@ -52,7 +54,8 @@
 </main>
 <footer class="foot muted" id="foot"></footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="../ntn/pointing.js?v=1"></script>
 <script src="sat-live.js?v=1"></script>
-<script src="utilities.js?v=3"></script>
+<script src="utilities.js?v=4"></script>
 </body>
 </html>

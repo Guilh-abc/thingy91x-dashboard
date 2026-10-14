@@ -81,6 +81,7 @@
     $('rdBody').innerHTML = rs.length ? rs.slice(-500).reverse().map((r) => `<tr><td class="mono">${dmy(r.ts)}</td><td>${r.seq ?? '—'}</td><td>${r.type === 'telemetry' ? 'leitura' : r.type === 'alarm' ? 'alarme ' + esc((AL[r.event] || [, r.event])[1]) : 'evento ' + esc(r.event || r.type)}</td><td>${tag(netOf(r), r)}${r.tm ? ' <span class="chip ntn">teste</span>' : ''}${r.transport === 'udp' ? ' <small class="muted">UDP</small>' : ''}</td><td class="mono">${r.totalL != null ? m3(r.totalL) + ' m³' : '—'}</td><td>${r.deltaL != null ? r.deltaL + ' L' : '—'}</td><td>${r.rsrp != null ? r.rsrp + ' dBm' : '—'}</td><td>${r.late > 0 ? 'atrasada ' + r.late + ' s' : 'tempo real'}</td></tr>`).join('')
       : '<tr><td colspan="8" class="muted">Aguardando a primeira leitura do medidor.</td></tr>';
     if (window.drawSatLive) window.drawSatLive(rs);
+    if (window.Pointing) window.Pointing.render('ptBox', rs);
     $('foot').textContent = 'Connect Utilities · dados reais do medidor m1 · atualiza a cada 30 s · posição pública arredondada (~100 m)';
   }
   async function load() { try { const r = await fetch(API + '&t=' + Date.now(), { cache: 'no-store' }); const j = await r.json(); if (j && Array.isArray(j.records)) recs = j.records; } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
