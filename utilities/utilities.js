@@ -9,7 +9,7 @@
   const m3 = (L) => (L / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
   const netOf = (r) => r.txNet || (r.transport === 'udp' ? 'ntn' : 'catm');
   const SAT = { '90198': 'Skylo' };
-  const tag = (n, r) => { if (n !== 'ntn') return '<span class="tag catm">Cat-M</span>'; const op = (r && (r.satOp || SAT[r.plmn])) || null;
+  const tag = (n, r) => { if (n !== 'ntn' || (r && r.plmn && r.plmn !== '90198')) return '<span class="tag catm">Cat-M</span>'; const op = (r && (r.satOp || SAT[r.plmn])) || null;
     return `<span class="tag ntn">Satélite · ${op ? op + (r.plmn ? ' (' + r.plmn + ')' : '') : 'Skylo'}</span>${op ? '' : ' <small class="muted">(inferido)</small>'}`; };
   const AL = { leak: ['💧', 'Vazamento', 'Fluxo contínuo detectado ou alarme de vazamento acionado.'], tamper: ['🔓', 'Violação', 'Tentativa de violação do medidor.'], anom: ['📈', 'Consumo anômalo', 'Consumo por hora acima do limite configurado.'], lowbat: ['🔋', 'Bateria baixa', 'Tensão abaixo do limite.'] };
   const empty = (t) => `<div class="empty-st">${t}</div>`;
@@ -18,6 +18,19 @@
   $('tariff').addEventListener('input', () => { localStorage.setItem('cu.tariff', $('tariff').value); render(); });
   document.querySelectorAll('#aggSeg button').forEach((b) => b.addEventListener('click', () => { agg = b.dataset.a; document.querySelectorAll('#aggSeg button').forEach((x) => x.classList.toggle('on', x === b)); render(); }));
 
+  /* m1.4b: satelite so com PLMN Skylo 90198. Corrige registros de 14/10 11:13:58-11:18:59 (PT) rotulados ntn mas em celula terrestre (TAC C54F, Vivo 72410). */
+  const BAD0 = Date.parse('2026-10-14T14:13:58Z'), BAD1 = Date.parse('2026-10-14T14:18:59Z');
+  function sanitizeNet(list) {
+    return list.map((r0) => {
+      const r = { ...r0 }, t = Date.parse(r.rx || r.ts);
+      const isN = r.net === 'ntn' || r.txNet === 'ntn' || r.transport === 'udp' || ['sat_reg', 'sat_search', 'sat_lost'].includes(r.event) || r.type === 'satsum' || r.type === 'satdet';
+      const terr = (r.plmn && r.plmn !== '90198') || /^c54f$/i.test(r.satTac || r.tac || '') || (t >= BAD0 && t <= BAD1);
+      if (isN && terr) { r.fakeNtn = true; if (r.net === 'ntn') r.net = 'catm'; if (r.txNet === 'ntn' || (r.transport === 'udp' && !r.txNet)) r.txNet = 'catm'; delete r.satOp;
+        if (r.event === 'sat_reg') { r.event = 'reg'; r.info = 'Cat-M (corrigido)'; }
+        if (r.event === 'reg' && /NTN/.test(r.info || '')) r.info = 'Cat-M (corrigido)'; }
+      return r;
+    }).filter((r) => !(r.fakeNtn && (r.type === 'satsum' || r.type === 'satdet')));
+  }
   function dial(L) {
     const s = L == null ? '-----.---' : (L / 1000).toFixed(3).padStart(9, '0');
     $('dial').innerHTML = [...s].map((c, i) => c === '.' ? '<span class="dot">,</span>' : `<span class="${i > s.indexOf('.') ? 'dec' : ''}">${c}</span>`).join('');
@@ -84,6 +97,6 @@
     if (window.Pointing) window.Pointing.render('ptBox', rs);
     $('foot').textContent = 'Connect Utilities · dados reais do medidor m1 · atualiza a cada 30 s · posição pública arredondada (~100 m)';
   }
-  async function load() { try { const r = await fetch(API + '&t=' + Date.now(), { cache: 'no-store' }); const j = await r.json(); if (j && Array.isArray(j.records)) recs = j.records; } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
+  async function load() { try { const r = await fetch(API + '&t=' + Date.now(), { cache: 'no-store' }); const j = await r.json(); if (j && Array.isArray(j.records)) recs = sanitizeNet(j.records); } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
   load(); setInterval(load, 30000);
 })();

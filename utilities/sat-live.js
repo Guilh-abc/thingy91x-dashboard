@@ -8,6 +8,7 @@
   const STEPS = ['GNSS posição', 'Buscando Skylo', 'Registrado', 'Enviando', 'Voltou ao Cat-M'];
   const T = (r) => Date.parse(r.ts);
   window.drawSatLive = function (recs) {
+    recs = (recs || []).filter((r) => !r.fakeNtn && !(r.net === 'ntn' && r.plmn && r.plmn !== '90198'));
     if (!$('slCard')) return;
     const rs = [...recs].sort((a, b) => T(a) - T(b));
     const ev = (r, e) => r.type === 'event' && r.event === e;
