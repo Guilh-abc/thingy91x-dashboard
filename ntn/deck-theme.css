@@ -11,3 +11,11 @@ h1,h2,h3,.wordmark,.card h2,.card h3,.kpi span,.live span{font-family:Archivo,"O
 .card h2::before,.card h3::before{content:"";display:inline-block;width:18px;height:3px;background:var(--mag);margin-right:8px;vertical-align:middle}
 body.present .wordmark{font-size:34px}
 body.present .kpi b,body.present .live b{font-size:30px}
+/* Dynamic geometry, as on the deck slides (decorative only, non-interactive) */
+body::before,body::after{content:"";position:fixed;pointer-events:none;z-index:0;border-radius:50%}
+body::before{width:520px;height:520px;right:-180px;top:-200px;border:2px solid rgba(226,0,116,.22);box-shadow:0 0 0 60px rgba(118,10,82,.06);animation:deckFloat 18s ease-in-out infinite alternate}
+body::after{width:300px;height:300px;left:-120px;bottom:-120px;background:conic-gradient(from 210deg,rgba(226,0,116,.18),transparent 40%);animation:deckFloat 24s ease-in-out infinite alternate-reverse}
+body>*{position:relative;z-index:1}
+@keyframes deckFloat{to{transform:translate(-30px,24px) rotate(25deg)}}
+@media (prefers-reduced-motion:reduce){body::before,body::after{animation:none}}
+.deck-fw{position:fixed;right:10px;bottom:8px;z-index:5;font:600 11px Archivo,sans-serif;color:#9aa0ae;opacity:.6;text-decoration:none}.deck-fw:hover{opacity:1;color:#E20074}
