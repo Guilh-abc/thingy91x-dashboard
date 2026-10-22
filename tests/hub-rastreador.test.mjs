@@ -19,6 +19,6 @@ assert.ok(sel.includes('href="thingy91x/"') && sel.includes('href="../ntn/"') &&
 assert.ok(existsSync(raiz + 'rastreador/thingy91x/index.html'));
 const pn = ler('rastreador/thingy91x/index.html');
 assert.ok(pn.includes('data-pagina="thingy91x"') && pn.includes('../app.js') && pn.includes('id="configBtn"'));
-assert.ok(/ntn-v54/.test(ler('service-worker.js')));
+assert.ok(/ntn-v55/.test(ler('service-worker.js')));
 assert.ok(/\/thingy91x \/rastreador\/thingy91x\/ 301/.test(ler('_redirects')));
 console.log('ok  - hub, seleção de rastreador, status com fallback e redirecionamentos');

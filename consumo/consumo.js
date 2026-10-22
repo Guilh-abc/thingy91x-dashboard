@@ -4,16 +4,24 @@
 (function(){
 var on=/(netlify\.app|pages\.dev)$/.test(location.hostname);
 var B=(on?'':'https://thingy91x-x-dashboard.netlify.app')+'/.netlify/functions/ntn-lab';
-var CHIPS={tracker:'Rastreador (chip do NTN)',meter:'Medidor (chip do Utilities)'};
-var recs=[];
-function devOf(r){return r.dv&&/^m/.test(r.dv)?'meter':'tracker'}
+var CHIPS={tracker:'Rastreador (chip do NTN)',meter:'Medidor (chip do Utilities)',thingy:'Thingy:91X (chip Telekom Cat-M)'};
+var recs=[],thRecs=[],thEst='carregando',thT=0;
+/* Thingy:91X: bytes estimados (mensagens + location history do nRF Cloud, chave deste navegador); só Cat-M. */
+function thingy(){var T=window.ThingyDados;if(!T){thEst='falha';return Promise.resolve()}
+ if(thEst==='ok'&&Date.now()-thT<300000)return Promise.resolve();
+ var ok=0,f=function(p){return p.then(function(x){ok++;return x}).catch(function(e){if(e&&e.message==='sem chave')throw e;return []})};
+ return Promise.all([f(T.mensagens(40)),f(T.localizacoes(40))]).then(function(r){if(!ok)throw new Error('falha');
+  thRecs=T.envios(r[0],r[1]).map(function(e){return {rx:new Date(e.t).toISOString(),seq:e.tipo+e.t,dv:'thingy',net:'catm',bytes:e.b,est:1}});thEst='ok';thT=Date.now()})
+ .catch(function(e){thEst=e&&e.message==='sem chave'?'sem chave':'falha'})}
+function devOf(r){return r.dv==='thingy'?'thingy':r.dv&&/^m/.test(r.dv)?'meter':'tracker'}
 function isSat(r){var n=(r.txNet||r.net||'').toLowerCase();return n&&n!=='catm'&&n!=='lte'&&n!=='ltem'}
 function fb(b){if(b==null)return 'sem dados';if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';return (b/1048576).toFixed(2)+' MB'}
 function fd(s){return new Date(s).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' (BRT)'}
 async function get(q){var r=await fetch(B+q+'&t='+Date.now(),{cache:'no-store'});var j=await r.json();if(window.Pwa)window.Pwa.noteData(j);return Array.isArray(j.records)?j.records:[]}
 async function load(){
- try{var a=await Promise.all([get('?pro=1&days=14'),get('?meter=1&days=62')]);var m={};
+ try{var a=await Promise.all([get('?pro=1&days=14'),get('?meter=1&days=62'),thingy()]);var m={};
   a[0].concat(a[1]).forEach(function(r){if(typeof r.bytes!=='number')return;m[r.rx+'|'+r.seq+'|'+devOf(r)]=r});
+  thRecs.forEach(function(r){m[r.rx+'|'+r.seq+'|thingy']=r});
   recs=Object.values(m).sort(function(x,y){return Date.parse(x.rx)-Date.parse(y.rx)});
   document.getElementById('st').textContent='atualizado '+fd(new Date())+' · próxima em 45 s';
  }catch(e){document.getElementById('st').textContent='falha ao ler a API: '+e.message}
@@ -24,14 +32,18 @@ function renderM(){
  var el=(now-start)/864e5,rest=dim-el,sel=document.getElementById('dev').value;
  var mon=recs.filter(function(r){return Date.parse(r.rx)>=start});
  var tb='';Object.keys(CHIPS).forEach(function(k){var rs=mon.filter(function(r){return devOf(r)===k});
+  if(k==='thingy'&&thEst!=='ok'){tb+='<tr><td>'+CHIPS[k]+'</td><td colspan="5">'+(thEst==='sem chave'?'sem chave <a class="btn btn-outline btn-sm" href="../rastreador/thingy91x/?config=1">Cadastrar chave</a>':thEst==='carregando'?'carregando...':'sem dado (falha ao ler o nRF Cloud)')+'</td></tr>';return}
   if(!rs.length){tb+='<tr><td>'+CHIPS[k]+'</td><td colspan="5">sem dados</td></tr>';return}
   var c=0,s=0;rs.forEach(function(r){isSat(r)?s+=r.bytes:c+=r.bytes});
-  tb+='<tr><td>'+CHIPS[k]+'</td><td>'+rs.length+'</td><td>'+fb(c)+'</td><td>'+(s?fb(s):'0 B')+'</td><td>'+fb(c+s)+'</td><td>'+fd(rs[rs.length-1].rx)+'</td></tr>'});
+  var es=k==='thingy'?'*':'';
+  tb+='<tr><td>'+CHIPS[k]+'</td><td>'+rs.length+'</td><td>'+fb(c)+es+'</td><td>'+(k==='thingy'?'0 B (não se aplica)':s?fb(s):'0 B')+'</td><td>'+fb(c+s)+es+'</td><td>'+fd(rs[rs.length-1].rx)+'</td></tr>'});
  document.getElementById('tb').innerHTML=tb;
  var f=mon.filter(function(r){return sel==='all'||devOf(r)===sel});
  var tot=0,sat=0;f.forEach(function(r){tot+=r.bytes;if(isSat(r))sat+=r.bytes});
+ var E=f.some(function(r){return r.est})?'*':'';
  var rate=el>0?tot/el:0,proj=tot+rate*rest,last=f.length?fd(f[f.length-1].rx):'sem dados';
- document.getElementById('cards').innerHTML=[['Total no mês',f.length?fb(tot):'sem dados'],['Satélite no mês',f.length?fb(sat):'sem dados'],['Média diária',f.length?fb(Math.round(rate)):'sem dados'],['Projeção do mês',f.length?fb(Math.round(proj)):'sem dados'],['Dias decorridos / restantes',el.toFixed(1)+' / '+rest.toFixed(1)],['Última mensagem',last]].map(function(c){return '<div class="card">'+c[0]+'<b>'+c[1]+'</b></div>'}).join('');
+ document.getElementById('cards').innerHTML=[['Total no mês',f.length?fb(tot)+E:'sem dados'],['Satélite no mês',f.length?fb(sat):'sem dados'],['Média diária',f.length?fb(Math.round(rate))+E:'sem dados'],['Projeção do mês',f.length?fb(Math.round(proj))+E:'sem dados'],['Dias decorridos / restantes',el.toFixed(1)+' / '+rest.toFixed(1)],['Última mensagem',last]].map(function(c){return '<div class="card">'+c[0]+'<b>'+c[1]+'</b></div>'}).join('');
+ var nt=document.getElementById('estNota');if(nt)nt.hidden=!E;
  limAlert(f.length?proj:null);
  var cv=document.getElementById('cv'),g=cv.getContext('2d'),W=cv.width,H=cv.height,P=40;g.clearRect(0,0,W,H);
  if(!f.length){g.fillStyle='#94a3b8';g.font='16px sans-serif';g.fillText('sem dados neste mês',P,H/2);return}
@@ -58,12 +70,12 @@ function renderP(){
  document.getElementById('projbox').style.display=mode==='mes'?'':'none';
  var sel=document.getElementById('dev').value,S=period(),a=S[0][0],z=S[S.length-1][1];
  slots=S.map(function(s){return {a:s[0],b:s[1],l:s[2],c:0,s:0,n:0}});
- var hr=new Array(24).fill(0),c=0,st=0,n=0;
+ var hr=new Array(24).fill(0),c=0,st=0,n=0,E='';
  recs.forEach(function(r){var t=Date.parse(r.rx);if(t<a||t>=z||(sel!=='all'&&devOf(r)!==sel))return;
   for(var i=0;i<slots.length;i++){if(t>=slots[i].a&&t<slots[i].b){isSat(r)?slots[i].s+=r.bytes:slots[i].c+=r.bytes;slots[i].n++;break}}
-  isSat(r)?st+=r.bytes:c+=r.bytes;n++;hr[bd(t).h]+=r.bytes});
+  if(r.est)E='*';isSat(r)?st+=r.bytes:c+=r.bytes;n++;hr[bd(t).h]+=r.bytes});
  var pk=hr.indexOf(Math.max.apply(null,hr)),hrs=Math.max(1,(Math.min(z,Date.now())-a)/36e5);
- document.getElementById('pcards').innerHTML=(n?[['Total',fb(c+st)],['Satélite',fb(st)],['Cat-M',fb(c)],['Mensagens',n],['Hora de pico',String(pk).padStart(2,'0')+'h ('+fb(hr[pk])+')'],['Média por hora',fb(Math.round((c+st)/hrs))]]:[['Período','sem dados']]).map(function(x){return '<div class="card">'+x[0]+'<b>'+x[1]+'</b></div>'}).join('');
+ document.getElementById('pcards').innerHTML=(n?[['Total',fb(c+st)+E],['Satélite',fb(st)],['Cat-M',fb(c)+E],['Mensagens',n],['Hora de pico',String(pk).padStart(2,'0')+'h ('+fb(hr[pk])+')'],['Média por hora',fb(Math.round((c+st)/hrs))]]:[['Período','sem dados']]).map(function(x){return '<div class="card">'+x[0]+'<b>'+x[1]+'</b></div>'}).join('');
  var cv=document.getElementById('bars'),g=cv.getContext('2d'),W=cv.width,Hh=cv.height,P=46;g.clearRect(0,0,W,Hh);
  if(!n){g.fillStyle='#94a3b8';g.font='16px sans-serif';g.fillText('sem dados neste período',P,Hh/2);return}
  var mx=Math.max.apply(null,slots.map(function(s){return s.c+s.s}))||1,bw=(W-2*P)/slots.length,ev=Math.ceil(slots.length/24);

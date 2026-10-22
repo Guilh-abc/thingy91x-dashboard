@@ -4,12 +4,15 @@
   function swUrl(loc) {
     // No GitHub Pages o site fica em /thingy91x-dashboard/; no localhost, na raiz servida.
     const base = /\/thingy91x-dashboard\//.test(loc.pathname) ? '/thingy91x-dashboard/' : '/';
-    return { url: base + 'service-worker.js?v=39', scope: base };
+    return { url: base + 'service-worker.js?v=40', scope: base };
   }
   function register() {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
     const s = swUrl(location);
-    navigator.serviceWorker.register(s.url, { scope: s.scope }).catch((e) => console.warn('pwa: service worker não registrado', e));
+    // Nova versão: o SW novo assume (skipWaiting + claim) e a página recarrega uma vez para não ficar com arquivos velhos.
+    const tinha = !!navigator.serviceWorker.controller; let recarregou = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (tinha && !recarregou) { recarregou = true; location.reload(); } });
+    navigator.serviceWorker.register(s.url, { scope: s.scope, updateViaCache: 'none' }).then((r) => r.update()).catch((e) => console.warn('pwa: service worker não registrado', e));
   }
   // H3: "DD/MM HH:MM" no horário de Brasília
   function fmtCachedAt(iso) {

@@ -27,9 +27,10 @@ body.apresentacao .wrap{max-width:none;padding:16px 34px}body.apresentacao h1{fo
 </head><body><div class="wrap">
 <nav class="sh-velho"><a href="../app/">Início do sistema</a><a href="../ntn/">Rastreador</a><a href="../utilities/">Utilities</a><a href="./"><b>Consumo</b></a><a href="../relatorio-demo/">Relatório (demo)</a><button id="btnPdfC" class="btn" title="Relatório do período para imprimir ou salvar em PDF" style="float:right;margin-left:6px">⎙ Relatório PDF</button><button id="btnCsvC" class="btn" title="Baixa os totais do período em CSV (Excel)" style="float:right;margin-left:6px">⇩ Exportar CSV</button><button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com os totais e gráficos. Esc para sair" style="float:right">◉ Modo Apresentação</button></nav>
 <h1>Consumo de dados por chip</h1>
-<p>Dispositivo: <select id="dev"><option value="all">Todos</option><option value="tracker">Rastreador (NTN)</option><option value="meter">Medidor (Utilities)</option></select>
+<p>Dispositivo: <select id="dev"><option value="all">Todos</option><option value="tracker">Rastreador (NTN)</option><option value="meter">Medidor (Utilities)</option><option value="thingy">Thingy:91X (Telekom Cat-M)</option></select>
 <span class="muted" id="st">carregando...</span></p>
 <div class="cards" id="cards"></div>
+<p class="muted" id="estNota" hidden>* estimado: inclui o Thingy:91X, calculado pelo tamanho das mensagens e posições do nRF Cloud; não é a fatura da operadora.</p>
 <h2>Por chip e transporte (mês atual)</h2>
 <table><thead><tr><th>Chip</th><th>Mensagens</th><th>Cat-M</th><th>Satélite (NTN/Skylo)</th><th>Total</th><th>Última mensagem</th></tr></thead><tbody id="tb"></tbody></table>
 <h2>Consumo por período</h2>
@@ -54,9 +55,9 @@ body.apresentacao .wrap{max-width:none;padding:16px 34px}body.apresentacao h1{fo
 <div class="aviso"><b>Origem do número.</b> Dados ao vivo da mesma API usada pelas páginas Rastreador e Utilities (função ntn-lab), atualizados a cada 45 s, sem cache. Os bytes são o tamanho do payload de cada mensagem recebida pelo servidor (campo bytes). Isso é uma <b>estimativa</b>: não inclui cabeçalhos de rede, TLS, retransmissões, registro na rede nem mensagens perdidas. O valor cobrado é o medido pela operadora. Limite da API: o rastreador devolve no máximo os últimos 14 dias e o medidor os últimos 62 dias, sempre contados a partir de hoje (a API não aceita data de início). Períodos fora dessa janela aparecem incompletos ou como "sem dados". A API não informa o ICCID; cada chip é identificado pelo dispositivo em que está instalado. Sem mensagens no mês, o chip aparece como "sem dados".</div>
 </div>
 <script src="../api-core.js?v=3"></script>
-<script src="../pwa.js?v=4"></script>
+<script src="../pwa.js?v=5"></script>
 <script src="../apresentacao.js?v=2"></script>
-<script src="consumo.js?v=7"></script><script src="../thingy-dados.js?v=2"></script><script src="consumo-thingy.js?v=2"></script><script src="../icons.js?v=3"></script>
+<script src="consumo.js?v=8"></script><script src="../thingy-dados.js?v=3"></script><script src="consumo-thingy.js?v=2"></script><script src="../icons.js?v=3"></script>
 <script src="../roles.js?v=2"></script>
 <script src="../shell.js?v=5" data-pagina="consumo"></script>
 </body></html>

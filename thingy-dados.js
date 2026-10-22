@@ -11,10 +11,18 @@
   function locMsg(x) { var t = Date.parse(x.recordedAt || x.insertedAt); return { _loc: 1, receivedAt: x.insertedAt, message: { appId: 'LOC_' + (x.serviceType || 'OUTRO'), ts: t } }; }
   function mascara(v) { v = String(v || ''); return v.length > 4 ? '****' + v.slice(-4) : null; }
   /* Puro: totais de hoje, 7 e 30 dias, por dia, média diária, projeção do mês e mensagens por tipo. */
+  function juntar(msgs, locs) {
+    var gm = (msgs || []).filter(function (m) { return (m.message || {}).appId === 'GNSS'; }).map(tm);
+    return (msgs || []).concat((locs || []).map(locMsg).filter(function (m) { return m.message.appId !== 'LOC_GNSS' || !gm.some(function (t) { return Math.abs(t - m.message.ts) <= 60000; }); }));
+  }
+  /* Envios individuais (mesma deduplicação do medidor): { t, b, tipo }, ordenados por tempo. */
+  function envios(msgs, locs) {
+    return juntar(msgs, locs).map(function (m) { return { t: tm(m), b: tam(m), tipo: (m.message || {}).appId || 'outro' }; })
+      .filter(function (e) { return !isNaN(e.t); }).sort(function (a, b) { return a.t - b.t; });
+  }
   function medidor(msgs, agora, locs) {
     /* Posição GNSS que já veio como mensagem GNSS (até 60 s) não é contada duas vezes. */
-    var gm = (msgs || []).filter(function (m) { return (m.message || {}).appId === 'GNSS'; }).map(tm);
-    msgs = (msgs || []).concat((locs || []).map(locMsg).filter(function (m) { return m.message.appId !== 'LOC_GNSS' || !gm.some(function (t) { return Math.abs(t - m.message.ts) <= 60000; }); }));
+    msgs = juntar(msgs, locs);
     agora = agora || Date.now(); var hoje = dia(agora), porDia = {}, tipos = {}, t7 = 0, t30 = 0, th = 0, mes = 0, m0 = hoje.slice(0, 7);
     (msgs || []).forEach(function (m) {
       var t = tm(m); if (isNaN(t) || t > agora + 60000) return; var b = tam(m), d = dia(t), a = (m.message || {}).appId || 'outro';
@@ -70,5 +78,5 @@
     return fetch(BASE + '/.netlify/functions/nrfcloud/devices/' + encodeURIComponent(c.dev), { headers: c.hd, cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) { var m = JSON.stringify(d || {}).match(/"iccid"\s*:\s*"(\d{10,22})/i); return m ? mascara(m[1]) : null; }).catch(function () { return null; });
   }
-  root.ThingyDados = { TAM_LOC: TAM_LOC, tudo: tudo, localizacoes: localizacoes, medidor: medidor, mensagens: mensagens, iccid: iccid, mascara: mascara, tam: tam };
+  root.ThingyDados = { TAM_LOC: TAM_LOC, tudo: tudo, localizacoes: localizacoes, medidor: medidor, envios: envios, mensagens: mensagens, iccid: iccid, mascara: mascara, tam: tam };
 })(typeof window !== 'undefined' ? window : globalThis);
