@@ -24,3 +24,8 @@ const d4 = H.resumo([], m, { semChave: true }, agora);
 assert.deepEqual(d4.sol.map((x) => x[0]), ['Thingy:91X', 'Rastreador NTN', 'Medidor Utilities']); assert.equal(d4.mat.hoje['Rastreador NTN'].catm, 0); assert.ok(d4.mat.hoje['Thingy:91X'].semDado);
 assert.equal(d4.sis[2].rsrp, -95); assert.equal(d4.sis[0].rsrp, null); assert.equal(H.qualidade(-80), 'bom'); assert.equal(d4.alPor['Medidor Utilities'], 1);
 console.log('ok  - hub v7');
+const loc = [{ serviceType: 'GNSS', recordedAt: '2026-10-22T12:00:30Z', insertedAt: '2026-10-22T12:00:31Z' }, { serviceType: 'WIFI', recordedAt: '2026-10-22T13:00:00Z', insertedAt: '2026-10-22T13:00:01Z' }, { serviceType: 'GNSS', recordedAt: '2026-10-21T13:00:00Z', insertedAt: '2026-10-21T13:00:01Z' }];
+const md2 = t.ThingyDados.medidor([], agora, loc); assert.equal(md2.hoje, 193 + 74); assert.equal(md2.d7, 193 * 2 + 74);
+const gm = [{ message: { appId: 'GNSS', data: {}, ts: Date.parse('2026-10-22T12:00:00Z') } }];
+assert.equal(t.ThingyDados.medidor(gm, agora, loc).tipos.find((x) => x.tipo === 'LOC_GNSS').n, 1, 'GNSS duplicado não conta');
+console.log('ok  - consumo Thingy com localização');

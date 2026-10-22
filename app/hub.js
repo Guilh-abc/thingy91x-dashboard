@@ -93,7 +93,7 @@
       'X-Memfault-Org': ls('nrf_org_slug') || 'telekom', 'X-Memfault-Project': ls('nrf_project_slug') || 'nrf-project' };
     if (mail) hd['X-User-Email'] = mail; if (ls('nrf_team_api_key')) hd['X-Nrf-Team-Key'] = ls('nrf_team_api_key');
     var j = function (u) { return tempo(fetch(NRF + u, { headers: hd, cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }), 15000).catch(function () { return null; }); };
-    var td = root.ThingyDados ? root.ThingyDados.mensagens(7).then(function (ms) { return root.ThingyDados.medidor(ms, Date.now()); }).catch(function () { return null; }) : Promise.resolve(null);
+    var td = root.ThingyDados ? root.ThingyDados.tudo(7).then(function (r) { return r.d; }).catch(function () { return null; }) : Promise.resolve(null);
     return Promise.all([j('/devices/' + encodeURIComponent(dev)), j('/location/history?deviceId=' + encodeURIComponent(dev) + '&pageLimit=1&pageSort=desc')]).then(function (r) {
       var lp = r[1] && r[1].items && r[1].items[0], tl = lp ? Date.parse(lp.recordedAt || lp.insertedAt) : null;
       var ts = root.StatusCartoes && r[0] ? root.StatusCartoes.ultimaData(r[0]) : null;

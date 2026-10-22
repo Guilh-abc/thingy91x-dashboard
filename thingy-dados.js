@@ -4,10 +4,17 @@
   var TZ = 'America/Sao_Paulo', D = 86400000;
   function dia(t) { return new Date(t).toLocaleDateString('sv-SE', { timeZone: TZ }); }
   function tm(m) { var g = m.message || {}; return g.ts ? +g.ts : Date.parse(m.receivedAt); }
-  function tam(m) { var s = JSON.stringify(m.message || {}); return typeof TextEncoder !== 'undefined' ? new TextEncoder().encode(s).length : s.length; }
+  function tam(m) { if (m._loc) return TAM_LOC[m.message.appId.slice(4)] || 74; var s = JSON.stringify(m.message || {}); return typeof TextEncoder !== 'undefined' ? new TextEncoder().encode(s).length : s.length; }
+  /* Bytes estimados por posição do histórico de localização (ver docs/consumo-thingy.md):
+     GNSS = média real das mensagens GNSS do aparelho; Wi-Fi e célula = tamanho real do resultado guardado (piso). */
+  var TAM_LOC = { GNSS: 193, WIFI: 74, MCELL: 73, SCELL: 73 };
+  function locMsg(x) { var t = Date.parse(x.recordedAt || x.insertedAt); return { _loc: 1, receivedAt: x.insertedAt, message: { appId: 'LOC_' + (x.serviceType || 'OUTRO'), ts: t } }; }
   function mascara(v) { v = String(v || ''); return v.length > 4 ? '****' + v.slice(-4) : null; }
   /* Puro: totais de hoje, 7 e 30 dias, por dia, média diária, projeção do mês e mensagens por tipo. */
-  function medidor(msgs, agora) {
+  function medidor(msgs, agora, locs) {
+    /* Posição GNSS que já veio como mensagem GNSS (até 60 s) não é contada duas vezes. */
+    var gm = (msgs || []).filter(function (m) { return (m.message || {}).appId === 'GNSS'; }).map(tm);
+    msgs = (msgs || []).concat((locs || []).map(locMsg).filter(function (m) { return m.message.appId !== 'LOC_GNSS' || !gm.some(function (t) { return Math.abs(t - m.message.ts) <= 60000; }); }));
     agora = agora || Date.now(); var hoje = dia(agora), porDia = {}, tipos = {}, t7 = 0, t30 = 0, th = 0, mes = 0, m0 = hoje.slice(0, 7);
     (msgs || []).forEach(function (m) {
       var t = tm(m); if (isNaN(t) || t > agora + 60000) return; var b = tam(m), d = dia(t), a = (m.message || {}).appId || 'outro';
@@ -41,10 +48,27 @@
     }
     return pag(null);
   }
+  function localizacoes(dias, agora) {
+    var c = cab(); if (!c) return Promise.reject(new Error('sem chave'));
+    agora = agora || Date.now(); var out = [];
+    function pag(tok) {
+      var q = new URLSearchParams({ deviceId: c.dev, pageLimit: 100, start: new Date(agora - dias * D).toISOString(), end: new Date(agora).toISOString() });
+      if (tok) q.set('pageNextToken', tok);
+      return fetch(BASE + '/.netlify/functions/nrfcloud/location/history?' + q, { headers: c.hd, cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (j) { var it = j.items || []; out = out.concat(it); return j.pageNextToken && it.length && out.length < 20000 ? pag(j.pageNextToken) : out; });
+    }
+    return pag(null);
+  }
+  /* Tudo que o aparelho envia: mensagens + histórico de localização. Falha em uma fonte não zera a outra. */
+  function tudo(dias, agora) {
+    agora = agora || Date.now(); if (!cab()) return Promise.reject(new Error('sem chave'));
+    var ok = 0, f = function (p) { return p.then(function (x) { ok++; return x; }).catch(function () { return []; }); };
+    return Promise.all([f(mensagens(dias, agora)), f(localizacoes(dias, agora))]).then(function (r) { if (!ok) throw new Error('falha'); return { msgs: r[0], locs: r[1], d: medidor(r[0], agora, r[1]) }; });
+  }
   function iccid() {
     var c = cab(); if (!c) return Promise.resolve(null);
     return fetch(BASE + '/.netlify/functions/nrfcloud/devices/' + encodeURIComponent(c.dev), { headers: c.hd, cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) { var m = JSON.stringify(d || {}).match(/"iccid"\s*:\s*"(\d{10,22})/i); return m ? mascara(m[1]) : null; }).catch(function () { return null; });
   }
-  root.ThingyDados = { medidor: medidor, mensagens: mensagens, iccid: iccid, mascara: mascara, tam: tam };
+  root.ThingyDados = { TAM_LOC: TAM_LOC, tudo: tudo, localizacoes: localizacoes, medidor: medidor, mensagens: mensagens, iccid: iccid, mascara: mascara, tam: tam };
 })(typeof window !== 'undefined' ? window : globalThis);
