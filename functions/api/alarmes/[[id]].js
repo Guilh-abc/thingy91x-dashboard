@@ -1,7 +1,7 @@
 // /api/alarmes: GET (admin/leitor) lista; POST cria, PUT /:id edita (inclui ativar/desativar), DELETE /:id exclui (só admin).
 // POST /api/alarmes/teste (admin): e-mail de teste. POST /api/alarmes/avaliar: cron (header X-Cron-Token) ou admin.
 import { sessao, json } from '../../_lib/acesso.js';
-import { CHAVE, SISTEMAS, GATILHOS, validar, avaliar, emailHtml, enviar, brt } from '../../_lib/alarmes.js';
+import { CHAVE, SISTEMAS, GATILHOS, validar, avaliar, emailHtml, enviar, brt, distM } from '../../_lib/alarmes.js';
 
 const NRF = 'https://api.nrfcloud.com/v1', DEV = '50423451-3737-4337-80fc-110bddf418ff';
 const ler = async (env) => JSON.parse((await env.NTN_ROLES.get(CHAVE)) || '[]');
@@ -17,7 +17,7 @@ async function leituraThingy(env) {
   const a = it[0]; if (!a) return null;
   const d = { ts: Date.parse(a.insertedAt), lat: Number(a.lat), lon: Number(a.lon) };
   const b = it[1];
-  if (b) { const dt = (d.ts - Date.parse(b.insertedAt)) / 3600e3; if (dt > 0 && dt < 1) { const { distM } = await import('../../_lib/alarmes.js'); d.vel_kmh = distM(d, { lat: +b.lat, lon: +b.lon }) / 1000 / dt; } }
+  if (b) { const dt = (d.ts - Date.parse(b.insertedAt)) / 3600e3; if (dt > 0 && dt < 1) { d.vel_kmh = distM(d, { lat: +b.lat, lon: +b.lon }) / 1000 / dt; } }
   return d;
 }
 // Fontes no servidor: só o Thingy:91X hoje. NTN, Utilities e Consumo ainda não têm leitura server-side (ficam "sem fonte").
