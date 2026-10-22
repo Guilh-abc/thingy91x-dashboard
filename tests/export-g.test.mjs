@@ -24,7 +24,7 @@ console.log('\n=== G3 Utilities ===');
   ok('colunas do design com totalL e deltaL', /CSV_U = \['ts', 'rx', 'type', 'net', 'totalL', 'deltaL', 'rsrp', 'snr', 'late', 'bytes', 'event', 'info'\]/.test(js));
   ok('usa toCSV e printReport do api-core', /ApiCore\.toCSV\(/.test(js) && /ApiCore\.printReport\(/.test(js));
   ok('sem tarifa no export', !/tariff/.test(js.slice(js.indexOf('G3:'), js.indexOf('async function load'))));
-  ok('versões novas', /api-core\.js\?v=([2-9]|\d\d)/.test(html) && /utilities\.js\?v=15/.test(html));
+  ok('versões novas', /api-core\.js\?v=([2-9]|\d\d)/.test(html) && /utilities\.js\?v=(1[5-9]|[2-9]\d)/.test(html));
 }
 console.log('\n=== G4 Consumo ===');
 {

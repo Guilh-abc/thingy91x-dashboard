@@ -136,6 +136,7 @@
       ['ICCID', sp?.ic ? '•••• •••• ' + esc(sp.ic) : '—'], ['IMSI', sp?.im ? esc(sp.im.replace(/^(\d{5}).*…/, '$1 ••• ')) : '—'], ['APN', '<small class="muted">não reportado pela placa</small>'],
       ['Intervalo de envio', ivMin ? '~' + Math.round(ivMin) + ' min (medido)' : '—'], ['Alimentação', lt?.mv != null ? (lt.mv / 1000).toFixed(2) + ' V' + (lt.temp != null ? ' · ' + lt.temp + ' °C' : '') : '—'],
       ['Último boot', boot ? dmy(T(boot)) : '—']].map(([k, v]) => `<div><span class="muted">${k}</span><b>${v}</b></div>`).join('') : empty('Aguardando a primeira comunicação da placa.');
+    if (window.AlertsPanel) window.AlertsPanel.render(rs); // regras A a E, média móvel e Histórico de Alertas
     const lk = window.AlertsU ? window.AlertsU.render('alertLeak', rs) : null; // E2: RF-04.2
     $('alCount').textContent = (al.length + (lk && lk.on ? 1 : 0)) || '';
     $('alerts').innerHTML = al.length ? al.slice(-20).reverse().map((a) => { const d = AL[a.event] || ['⚠️', a.event, '']; return `<div class="al"><i>${d[0]}</i><div><b>${esc(d[1])}</b> <span class="muted">${dmy(a.ts)}</span><br><small class="muted">${esc(d[2])}</small></div></div>`; }).join('')

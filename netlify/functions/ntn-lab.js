@@ -115,6 +115,29 @@ async function cellFix(store, lte) {
 /** Versao publica: posicao arredondada (~100 m). */
 export function publicView(rec) { return { ...rec, lat: r3(rec.lat), lon: r3(rec.lon) }; }
 
+
+/* Média móvel do medidor (Utilities): para cada leitura, média das 24 leituras anteriores por métrica
+   e desvio percentual do valor atual. Campo novo e opcional "rolling" (compatível para trás).
+   devPct é null quando a média é zero (não há porcentagem real a calcular). Exportado para testes. */
+export const ROLLING_METRICS = ['deltaL', 'rsrp', 'snr'];
+export const ROLLING_WINDOW = 24;
+export function rollingStat(previousValues, currentValue) {
+  const window = previousValues.slice(-ROLLING_WINDOW);
+  if (!window.length || num(currentValue) == null) return null;
+  const mean = window.reduce((a, b) => a + b, 0) / window.length;
+  return { mean: Math.round(mean * 10) / 10, n: window.length, devPct: mean !== 0 ? Math.round(((currentValue - mean) / Math.abs(mean)) * 1000) / 10 : null };
+}
+/** Anota rolling em cada telemetria (em ordem) que ainda não tem; preserva o que já foi gravado. */
+export function withRolling(records) {
+  const prev = Object.fromEntries(ROLLING_METRICS.map((m) => [m, []]));
+  return records.map((r) => {
+    if (!r || r.type !== 'telemetry') return r;
+    const rolling = {};
+    for (const m of ROLLING_METRICS) { rolling[m] = (r.rolling && r.rolling[m]) || rollingStat(prev[m], r[m]); if (num(r[m]) != null) prev[m].push(r[m]); }
+    return { ...r, rolling };
+  });
+}
+
 export default async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   const store = getStore({ name: 'ntn-lab', consistency: 'strong' });
@@ -127,7 +150,13 @@ export default async (req) => {
       const list = await store.get('meter/' + new Date(Date.now() - i * 86400000).toISOString().slice(0, 10), { type: 'json' }).catch(() => null);
       if (Array.isArray(list)) out.push(...list.map(publicView));
     }
-    return json(200, { ok: true, schema: 'connect-meter/1', serverTime: new Date().toISOString(), records: out });
+    // rolling: média móvel das 24 leituras anteriores e desvio % (campo opcional, calculado se ainda não gravado)
+    out.sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts));
+    const records = withRolling(out);
+    // ?metric=deltaL|rsrp|snr: série histórica da métrica (valor, média, desvio) para o gráfico de linha
+    const metric = url.searchParams.get('metric');
+    const series = ROLLING_METRICS.includes(metric) ? records.filter((r) => r.type === 'telemetry' && num(r[metric]) != null).map((r) => ({ ts: r.ts, seq: r.seq, value: r[metric], ...(r.rolling[metric] || {}) })) : undefined;
+    return json(200, { ok: true, schema: 'connect-meter/1', serverTime: new Date().toISOString(), records, ...(series ? { metric, series } : {}) });
   }
   if (req.method === 'GET' && url.searchParams.get('pro')) {
     const days = Math.min(14, Math.max(1, parseInt(url.searchParams.get('days') || '2', 10) || 2));
@@ -165,6 +194,13 @@ export default async (req) => {
     const key = meterDev ? 'meter/' + rec.ts.slice(0, 10) : dayKey(rec.ts);
     const list = (await store.get(key, { type: 'json' }).catch(() => null)) || [];
     const dup = rec.seq != null && list.some((x) => x.seq === rec.seq && x.type === rec.type);
+    // medidor: grava a média móvel e o desvio % junto da leitura (usa o dia anterior se faltar histórico)
+    if (meterDev && rec.type === 'telemetry' && !dup) {
+      let history = list.filter((x) => x.type === 'telemetry');
+      if (history.length < ROLLING_WINDOW) { const y = await store.get('meter/' + new Date(Date.parse(rec.ts) - 86400000).toISOString().slice(0, 10), { type: 'json' }).catch(() => null);
+        if (Array.isArray(y)) history = [...y.filter((x) => x.type === 'telemetry'), ...history]; }
+      rec.rolling = withRolling([...history.slice(-ROLLING_WINDOW), rec]).pop().rolling;
+    }
     if (!dup) { list.push(rec); await store.setJSON(key, list.slice(-DAY_MAX)); }
     return new Response('{"ok":1}', { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
   }
