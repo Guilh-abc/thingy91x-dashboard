@@ -37,3 +37,13 @@
 .gauge{width:84px;flex:none}
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.u2{grid-template-columns:1fr}.span2,.span3{grid-column:auto}}
 @media (max-width:560px){.kpis{grid-template-columns:1fr;margin:12px}.u2,.tech{margin-left:12px;margin-right:12px}.kpi .big{font-size:26px}.tlrow{grid-template-columns:1fr}}
+
+/* C2/C3: saude ao vivo (RF-02) */
+.hb{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;font-size:13px;background:#1e293b;color:#e2e8f0;margin:6px 12px}
+.hb-dot{width:10px;height:10px;border-radius:50%}
+.hb--online .hb-dot{background:#22c55e;box-shadow:0 0 6px #22c55e}
+.hb--atrasado .hb-dot{background:#eab308}
+.hb--parado .hb-dot{background:#ef4444}
+.hb-age{opacity:.75}
+.hb-banner{position:sticky;top:0;z-index:999;background:#facc15;color:#1c1917;padding:10px 14px;font-weight:600;display:flex;gap:12px;align-items:center;justify-content:center}
+.hb-dismiss{background:#1c1917;color:#fff;border:0;border-radius:6px;padding:4px 10px;cursor:pointer}

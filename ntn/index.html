@@ -11,7 +11,7 @@
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="pro.css?v=47">
+<link rel="stylesheet" href="pro.css?v=48">
 <link rel="stylesheet" href="hero.css?v=49">
 <link rel="stylesheet" href="deck-theme.css?v=3">
 </head>
@@ -31,6 +31,7 @@
     <a class="link" href="../consumo/">Consumo</a>
   </div>
 </header>
+<div id="healthBadge"></div>
 <div id="replayBanner" class="replay-banner" hidden>
   <b>REPLAY</b> <span id="replayTitle"></span>
   <span class="rp-ctl"><button id="rpPlay" class="btn sm">▶ Reproduzir</button><select id="rpSpeed"><option value="30">30×</option><option value="60" selected>60×</option><option value="120">120×</option></select><span id="rpClock" class="mono"></span></span>
@@ -101,8 +102,10 @@
   </section>
 </main>
 <div id="empty" class="empty" hidden></div>
-<footer class="foot muted">nRF9151 DK · modem mfw_nrf9151-ntn_1.0.1 · app NTN Pro v2.3 · mensagens ≤ 256 B, ≥ 30 s em NTN · <span id="foot"></span></footer>
+<footer class="foot muted">nRF9151 DK · modem mfw_nrf9151-ntn_1.0.1 · painel <span id="footPanelVer">v?</span> · app <span id="footAppVer">v?</span> · mensagens ≤ 256 B, ≥ 30 s em NTN · <span id="foot"></span></footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="../api-core.js?v=1"></script>
+<script src="../health-badge.js?v=1"></script>
 <script src="pro-core.js?v=47"></script>
 <script src="sim.js?v=47"></script>
 <script src="satsig.js?v=47"></script>
@@ -111,7 +114,7 @@
 <script src="hero.js?v=50"></script>
 <script src="trajeto.js?v=50"></script>
 <script src="insights.js?v=51"></script>
-<script src="pro.js?v=53"></script>
+<script src="pro.js?v=56"></script>
 <a class="deck-fw" href="firmware.html">Firmware</a>
 </body>
 </html>

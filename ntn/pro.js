@@ -1,8 +1,8 @@
 /* nRF9151 NTN Pro (v37) — UI. Lógica em pro-core.js (window.NtnPro). */
 (() => {
+  const PANEL_VERSION = '2.4'; // versão do painel NTN Pro; atualizar a cada release
   const P = window.NtnPro;
   const onNetlify = /netlify\.app$/i.test(location.hostname) || /^(localhost|127\.)/.test(location.hostname);
-  const API = (onNetlify ? '' : 'https://thingy91x-x-dashboard.netlify.app') + '/.netlify/functions/ntn-lab';
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const hhmm = (iso) => (iso ? new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—');
@@ -164,6 +164,7 @@
     $('lgBody').innerHTML = lgRows.slice(0, 1500).map(({ r, lat }) => `<tr${r.deliveredNet === 'ntn' ? ' style="background:rgba(155,77,255,.16)"' : ''}><td class="mono">${dmy(r.ts)}</td><td class="mono">${dmy(r.rx || r.ts)}</td><td>${r.seq ?? '—'}</td><td>${netTag(r.net)}</td><td>${netTag(r.deliveredNet, r)}</td><td>${(r.transport || 'https').toUpperCase()}</td><td>${r.type === 'event' ? 'evento' : 'telemetria'}</td><td>${esc(lgDesc(r))}</td><td>${r.bytes ?? '—'}</td><td>${lat != null ? P.fmtMs(lat) : '—'}</td><td>${r.late > 0 ? '<span class="tag late">' + P.fmtDur(r.late) + '</span>' : 'tempo real'}</td></tr>`).join('');
   }
   function render() {
+    if (window.HealthBadge) { HealthBadge.init('healthBadge', {}); HealthBadge.update(live); } // RF-02
     const rs = view();
     const all = st.src === 'replay' ? recs() : live;
     $('replayBanner').hidden = st.src !== 'replay';
@@ -182,9 +183,8 @@
 
   async function loadLive() {
     try {
-      const r = await fetch(API + '?pro=1&days=7&t=' + Date.now(), { cache: 'no-store' });
-      const j = await r.json();
-      if (j && Array.isArray(j.records)) { live = j.records; lastLoad = new Date().toISOString(); }
+      // B2: busca via nucleo comum (api-core.js)
+      live = await window.ApiCore.fetchTracker(14); lastLoad = new Date().toISOString();
     } catch (e) { console.warn('ntn-pro: falha ao carregar', e); }
     if (st.src === 'live') render();
   }
@@ -262,6 +262,17 @@
     if (st.src === 'replay') await loadReplay();
     await loadLive();
     render();
+    // A2: versão do painel (constante PANEL_VERSION) e firmware da aplicação (campo 'app'
+    // da telemetria, enviado pelo firmware). Se o campo ainda não existe nos dados, exibe
+    // "sem dados" — nunca um valor inventado. O modem (mfw_nrf9151-ntn_1.0.1) já está
+    // fixo no rodapé e vem do evento boot.info; não duplicar aqui.
+    const appRec = [...live].reverse().find((r) => r.app);
+    const appVer = appRec ? (/^v/i.test(appRec.app) ? appRec.app : 'v' + appRec.app) : 'sem dados';
+    const pv = $('footPanelVer'); if (pv) pv.textContent = 'v' + PANEL_VERSION;
+    const av = $('footAppVer');   if (av) av.textContent = appVer;
+    // A3: Poll 15 s intencional: permite que a troca de rede (Cat-M para NTN e volta)
+    // apareça rapidamente na demo ao vivo. Utilities usa 30 s (suficiente para o medidor).
+    // Consumo usa 45 s (dados historicos, sem urgencia de tempo real).
     setInterval(loadLive, 15000);
   })();
   window.__ntnPro = { st, render, get live() { return live; } };
