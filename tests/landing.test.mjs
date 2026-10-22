@@ -10,7 +10,7 @@ const landing = ler('index.html');
 assert.match(landing, /IoT <b>Cat-M \+ NTN<\/b>/);
 assert.doesNotMatch(landing, /BMW|Telecom/i);
 assert.match(landing, /Dados de exemplo/);
-assert.match(landing, /e-mail e o código que chega na caixa de entrada/);
+assert.match(landing, /entre com sua conta Google ou receba um código por e-mail/);
 assert.match(landing, /href="entrar\/"/);
 assert.doesNotMatch(landing, /<script[^>]+src="(?!icons\.js)/, 'landing só carrega icons.js');
 assert.doesNotMatch(landing, /api\/|netlify|nrfcloud/i, 'landing sem chamadas de dados');
