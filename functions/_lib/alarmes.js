@@ -75,15 +75,52 @@ export function avaliar(r, d, agora = Date.now()) {
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 // itens: [{ sistema, regra, quando, valor }]
 export function emailHtml(itens, teste) {
-  const linhas = itens.map((i) => `<tr><td style="padding:10px;border-bottom:1px solid #e5e7eb"><b style="color:#b91c1c">${esc(i.regra)}</b><br><span style="color:#6b7280">${esc(i.sistema)}</span></td><td style="padding:10px;border-bottom:1px solid #e5e7eb">${esc(i.quando)}</td><td style="padding:10px;border-bottom:1px solid #e5e7eb">${esc(i.valor)}</td></tr>`).join('');
-  return `<div style="font-family:Arial,sans-serif;max-width:640px;color:#111827">${teste ? '<p style="background:#dbeafe;color:#1e40af;padding:8px 12px;border-radius:6px"><b>TESTE</b>: e-mail de validação do formato. Os valores abaixo são dados de exemplo.</p>' : ''}<h2 style="margin:8px 0">IoT Cat-M + NTN: alarme disparado</h2><table style="border-collapse:collapse;width:100%;font-size:14px"><tr style="background:#f3f4f6;text-align:left"><th style="padding:10px">O que disparou</th><th style="padding:10px">Quando</th><th style="padding:10px">Valor</th></tr>${linhas}</table><p style="color:#6b7280;font-size:12px">Gerencie em https://ntn-plataforma.pages.dev/alarmes/</p></div>`;
+  const linhas = itens.map((i) => `<tr><td style="padding:10px;border-bottom:1px solid #e5e7eb"><b style="color:#b91c1c">${esc(i.regra)}</b><br><span style="color:#6b7280">${esc(i.sistema)}</span><br><a href="${BASE}${PAINEL[chaveSis(i.sistema)] || '/app/'}" style="color:#1d4ed8">Abrir painel</a></td><td style="padding:10px;border-bottom:1px solid #e5e7eb">${esc(i.quando)}</td><td style="padding:10px;border-bottom:1px solid #e5e7eb">${esc(i.valor)}</td></tr>`).join('');
+  return `<div style="font-family:Arial,sans-serif;max-width:640px;color:#111827">${teste ? '<p style="background:#dbeafe;color:#1e40af;padding:8px 12px;border-radius:6px"><b>TESTE</b>: e-mail de validação do formato. Os valores abaixo são dados de exemplo.</p>' : ''}<h2 style="margin:8px 0">IoT Cat-M + NTN: alarme disparado</h2><table style="border-collapse:collapse;width:100%;font-size:14px"><tr style="background:#f3f4f6;text-align:left"><th style="padding:10px">O que disparou</th><th style="padding:10px">Quando</th><th style="padding:10px">Valor</th></tr>${linhas}</table><p style="color:#6b7280;font-size:12px">Relatório em PDF anexo. Gerencie em https://ntn-plataforma.pages.dev/alarmes/</p></div>`;
 }
-export async function enviar(env, assunto, html) {
+export async function enviar(env, assunto, html, anexos) {
   if (!env.RESEND_API_KEY) return { ok: false, falta: 'RESEND_API_KEY' };
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: env.ALARMES_FROM || 'IoT Cat-M + NTN <onboarding@resend.dev>', to: [DESTINO], subject: assunto, html })
+    body: JSON.stringify({ from: env.ALARMES_FROM || 'IoT Cat-M + NTN <onboarding@resend.dev>', to: [DESTINO], subject: assunto, html, ...(anexos ? { attachments: anexos } : {}) })
   });
   const j = await r.json().catch(() => ({}));
   return { ok: r.ok, status: r.status, id: j.id || null, erro: r.ok ? null : j.message || 'falha' };
+}
+
+export const BASE = 'https://ntn-plataforma.pages.dev';
+export const PAINEL = { thingy91x: '/rastreador/thingy91x/', ntn: '/ntn/', utilities: '/utilities/', consumo: '/consumo/' };
+const chaveSis = (nome) => Object.keys(SISTEMAS).find((k) => SISTEMAS[k].nome === nome);
+// PDF mínimo (A4, Helvetica WinAnsi), sem dependências. linhas: [{ t, tam, cor:[r,g,b] }]
+export function pdfBase64(linhas) {
+  const pe = (s) => String(s).replace(/[^\x20-\xff]/g, ' ').replace(/[\\()]/g, (c) => '\\' + c);
+  let y = 800, ops = '';
+  for (const l of linhas) {
+    const tam = l.tam || 11; if (l.esp) y -= l.esp;
+    const c = l.cor || [0.07, 0.09, 0.15];
+    ops += `BT /F1 ${tam} Tf ${c.join(' ')} rg 50 ${y} Td (${pe(l.t)}) Tj ET\n`;
+    y -= tam + 6; if (y < 50) break;
+  }
+  const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+    `<< /Length ${ops.length} >>\nstream\n${ops}endstream`, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'];
+  let pdf = '%PDF-1.4\n', off = [];
+  objs.forEach((o, i) => { off.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const x = pdf.length;
+  pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + off.map((o) => String(o).padStart(10, '0') + ' 00000 n \n').join('') + `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF`;
+  let bin = ''; for (let i = 0; i < pdf.length; i++) bin += String.fromCharCode(pdf.charCodeAt(i) & 255);
+  return btoa(bin);
+}
+export function relatorioPdf(itens, teste, agora = Date.now()) {
+  const L = [{ t: 'IoT Cat-M + NTN', tam: 20, cor: [0.11, 0.31, 0.85] }, { t: 'Tecnologia  |  Relatório de alarme', tam: 11, cor: [0.42, 0.45, 0.5] }, { t: 'Gerado em ' + brt(agora), tam: 10, cor: [0.42, 0.45, 0.5] }];
+  if (teste) L.push({ t: 'TESTE: Dados de exemplo', tam: 13, cor: [0.11, 0.31, 0.85], esp: 8 });
+  const porSis = {};
+  itens.forEach((i) => { (porSis[i.sistema] = porSis[i.sistema] || []).push(i); });
+  for (const s of Object.keys(porSis)) {
+    L.push({ t: s, tam: 14, esp: 12 });
+    for (const i of porSis[s]) { L.push({ t: 'Alarme: ' + i.regra, cor: [0.73, 0.11, 0.11] }); L.push({ t: 'Quando: ' + i.quando }); L.push({ t: 'Valor: ' + i.valor }); if (i.resumo) i.resumo.forEach((r) => L.push({ t: r, tam: 10, cor: [0.42, 0.45, 0.5] })); }
+    L.push({ t: 'Painel: ' + BASE + (PAINEL[chaveSis(s)] || '/app/'), tam: 10, cor: [0.11, 0.31, 0.85] });
+  }
+  L.push({ t: 'Sem coordenadas exatas, identificadores completos ou custos neste relatório.', tam: 9, cor: [0.42, 0.45, 0.5], esp: 14 });
+  return pdfBase64(L);
 }

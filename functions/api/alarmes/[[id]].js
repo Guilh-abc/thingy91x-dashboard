@@ -1,7 +1,7 @@
 // /api/alarmes: GET (admin/leitor) lista; POST cria, PUT /:id edita (inclui ativar/desativar), DELETE /:id exclui (só admin).
 // POST /api/alarmes/teste (admin): e-mail de teste. POST /api/alarmes/avaliar: cron (header X-Cron-Token) ou admin.
 import { sessao, json } from '../../_lib/acesso.js';
-import { CHAVE, SISTEMAS, GATILHOS, validar, avaliar, emailHtml, enviar, brt, distM } from '../../_lib/alarmes.js';
+import { CHAVE, SISTEMAS, GATILHOS, validar, avaliar, emailHtml, enviar, brt, distM, relatorioPdf } from '../../_lib/alarmes.js';
 
 const NRF = 'https://api.nrfcloud.com/v1', DEV = '50423451-3737-4337-80fc-110bddf418ff';
 const ler = async (env) => JSON.parse((await env.NTN_ROLES.get(CHAVE)) || '[]');
@@ -54,12 +54,12 @@ async function rodar(env) {
     const res = avaliar(r, f[r.sistema], agora);
     r.ultimoValor = res ? res.valor : null; r.ultimaAvaliacao = agora; r.estado = res ? (res.disparou ? 'disparado' : 'ok') : 'sem fonte';
     if (res && res.disparou) {
-      if (!r.notificadoEm || agora - r.notificadoEm > REPETIR_MS) { itens.push({ r, sistema: SISTEMAS[r.sistema].nome, regra: r.nome, quando: brt(agora), valor: res.valor }); r.ultimoDisparo = { em: agora, valor: res.valor }; }
+      if (!r.notificadoEm || agora - r.notificadoEm > REPETIR_MS) { const fd = f[r.sistema] || {}; itens.push({ r, resumo: [fd.ts ? 'Última leitura recebida: ' + brt(fd.ts) : null, 'Posição usada só para o cálculo, arredondada e não exibida.'].filter(Boolean), sistema: SISTEMAS[r.sistema].nome, regra: r.nome, quando: brt(agora), valor: res.valor }); r.ultimoDisparo = { em: agora, valor: res.valor }; }
       r.disparadoEm = r.disparadoEm || agora;
     } else if (res) { r.disparadoEm = null; r.notificadoEm = null; }
   }
   let envio = null;
-  if (itens.length) { envio = await enviar(env, `Alarme: ${itens.map((i) => i.regra).join(', ')}`, emailHtml(itens, false)); if (envio.ok) itens.forEach((i) => { i.r.notificadoEm = agora; }); }
+  if (itens.length) { envio = await enviar(env, `Alarme: ${itens.map((i) => i.regra).join(', ')}`, emailHtml(itens, false), [{ filename: 'relatorio-alarme.pdf', content: relatorioPdf(itens, false, agora) }]); if (envio.ok) itens.forEach((i) => { i.r.notificadoEm = agora; }); }
   await gravar(env, regras);
   return { avaliadas: regras.filter((r) => r.ativo).length, disparos: itens.map((i) => ({ id: i.r.id, regra: i.regra, valor: i.valor })), envio: envio && { ok: envio.ok, falta: envio.falta, id: envio.id, status: envio.status } };
 }
@@ -89,7 +89,7 @@ export async function onRequest({ request, env, params }) {
       { sistema: SISTEMAS.utilities.nome, regra: 'Consumo anômalo', quando: q, valor: 'Consumo anômalo detectado' },
       { sistema: SISTEMAS.consumo.nome, regra: 'Dados acima', quando: q, valor: '12 MB/dia (limite 10)' }
     ];
-    const r = await enviar(env, '[TESTE] Alarme IoT Cat-M + NTN', emailHtml(ex, true));
+    const r = await enviar(env, '[TESTE] Alarme IoT Cat-M + NTN', emailHtml(ex, true), [{ filename: 'relatorio-alarme-teste.pdf', content: relatorioPdf(ex, true) }]);
     return json(r, r.ok ? 200 : r.falta ? 503 : 502);
   }
   const lista = await ler(env);
