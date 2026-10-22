@@ -6,12 +6,12 @@
 @media(max-width:800px){.hero{flex-wrap:wrap}.hero-meta{width:100%}}
 .colap.fechada > :not(.card-h){display:none!important}.colap-btn{margin-left:auto;background:transparent;border:1px solid #555;color:inherit;border-radius:6px;padding:2px 10px;cursor:pointer;font-size:12px}
 .colap.fechada .colap-btn::after{content:' ▸'}.colap:not(.fechada) .colap-btn::after{content:' ▾'}
-body.apresentacao #live,body.apresentacao main.grid > section:not(.map-card),body.apresentacao .actions > :not(#btnPres2):not(#srcSeg){display:none!important}
+body.apresentacao #live,body.apresentacao main.grid > section:not(.map-card),body.apresentacao .actions > :not(#btnApresentacao):not(#srcSeg){display:none!important}
 body.apresentacao main.grid{display:block}body.apresentacao #map{height:60vh}
-#btnPres2.on{background:#E20074;color:#fff}
+#btnApresentacao.on{background:#E20074;color:#fff}
 /* utilities (v7) */
 body.apresentacao main.u2 > section:not(:has(#map)):not(:has(#cChart)),body.apresentacao .tech{display:none!important}
-body.apresentacao:has(main.u2) .actions > :not(#btnPres2){display:none!important}
+body.apresentacao:has(main.u2) .actions > :not(#btnApresentacao){display:none!important}
 .hero.search{background:#c98a12;animation:hbs 2.4s ease-in-out infinite}@keyframes hbs{50%{filter:brightness(1.18)}}
 .hbusca{margin:0 16px 12px;padding:14px 18px;border-radius:12px;background:#2a2110;border:1px solid #c98a12;color:#f3e6c8;font-family:Inter,system-ui,sans-serif}
 .hb-row{display:flex;flex-wrap:wrap;gap:24px}.hb-row small{display:block;opacity:.8;font-size:12px}.hb-row b{font-size:20px;display:block}.hb-row span{font-size:12px;opacity:.8}

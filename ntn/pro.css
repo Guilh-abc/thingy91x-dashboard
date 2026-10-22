@@ -59,3 +59,22 @@ body.present .live,body.present .kpis,body.present .grid{margin-left:34px;margin
 .hb-age{opacity:.75}
 .hb-banner{position:sticky;top:0;z-index:999;background:#facc15;color:#1c1917;padding:10px 14px;font-weight:600;display:flex;gap:12px;align-items:center;justify-content:center}
 .hb-dismiss{background:#1c1917;color:#fff;border:0;border-radius:6px;padding:4px 10px;cursor:pointer}
+
+/* D2: linha do tempo de comutações (switch-timeline.js, RF-03) */
+.sw-item{display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid #ffffff12;list-style:none}
+.sw-time{font-family:ui-monospace,monospace;font-size:13px}.sw-time small{display:block;color:#8a94a6}
+.sw-arrow b{color:#c8a2ff}.sw-item--catm .sw-arrow b{color:#8fb6ff}
+.sw-why,.sw-gnss{font-size:12px;color:#9aa4b5}
+.sw-result{font-size:13px;margin-top:2px}.sw-result--ok{color:#2fd27a}.sw-result--fail{color:#ff5470;font-weight:600}.sw-result--pend{color:#ffb020}
+.sw-map-btn{background:transparent;border:1px solid #ffffff33;color:inherit;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;white-space:nowrap}
+.sw-map-btn--off{opacity:.5;cursor:default;border-style:dashed}
+
+/* E: alertas calculados no navegador (RF-04) */
+.al--warn,.al--danger{margin:10px 24px;padding:10px 14px;border-radius:12px;font-weight:600;font-size:15px}
+.al--warn{background:#ff8a0022;border:1px solid #ff8a00;color:#ffb35c}
+.al--danger{background:#ff547022;border:1px solid #ff5470;color:#ff8da0}
+
+/* F1: Modo Apresentação (RF-05) */
+body.apresentacao .tech,body.apresentacao #logCard,body.apresentacao footer{display:none!important}
+body.apresentacao .hero{font-size:2rem}body.apresentacao #map{height:60vh}
+#btnApresentacao.on{background:#E20074;color:#fff}

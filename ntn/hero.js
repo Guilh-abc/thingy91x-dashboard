@@ -106,11 +106,7 @@
     el.innerHTML = '<div class="hero-ico">' + d.ico + '</div><div class="hero-main"><div class="hero-txt">' + d.txt + '</div><div class="hero-sub">' + d.sub + (src === 'replay' ? ' · REPLAY' : '') + (qs.get('estado') ? ' · ESTADO FORÇADO PARA TESTE' : '') + (ate ? ' · VISTA HISTÓRICA DOS DADOS REAIS EM ' + new Date(ate).toLocaleString('pt-BR') : '') + '</div></div>' +
       '<div class="hero-meta"><div><small>No estado atual</small><b>' + (r.b && r.b.t0 ? P.fmtDur((now - r.b.t0) / 1000) : s && s.sinceSec != null ? P.fmtDur(s.sinceSec) : 'n/d') + '</b></div><div><small>Último dado</small><b>' + (s ? fmtT(s.lastRx) : 'n/d') + '</b><span>' + (s ? 'há ' + P.fmtDur(s.ageSec) : '') + '</span></div></div>';
   };
-  // modo Apresentação
-  function setPres(on) { document.body.classList.toggle('apresentacao', on); var b = document.getElementById('btnPres2'); if (b) b.classList.toggle('on', on); setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 100); }
-  var btn = document.getElementById('btnPres2');
-  if (btn) btn.onclick = function () { setPres(!document.body.classList.contains('apresentacao')); };
-  if (qs.get('modo') === 'apresentacao') setPres(true);
+  // F1: modo Apresentação agora em ../apresentacao.js (botão único btnApresentacao)
   // seções recolhíveis (fechadas por padrão)
   var saved = {}; try { saved = JSON.parse(localStorage.getItem(LS_COL) || '{}'); } catch (e) {}
   document.querySelectorAll('main.grid > section.card').forEach(function (c, i) {

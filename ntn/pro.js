@@ -25,6 +25,8 @@
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap', className: 'tiles' }).addTo(map);
   const layer = L.layerGroup().addTo(map);
   window.ntnMap = map; // v49: usado por insights.js
+  // D2: "ver no mapa" da linha do tempo de comutações
+  document.addEventListener('sw:focusMap', (e) => { const d = e.detail || {}; if (isFinite(d.lat) && isFinite(d.lon)) { map.setView([d.lat, d.lon], 16); document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
 
   function recs() {
     if (st.src === 'replay') { const all = replay ? replay.records : []; return rpCursor == null ? all : all.filter((r) => Date.parse(r.ts) <= rpCursor); }
@@ -123,12 +125,10 @@
     ].join('');
   }
   function drawSwitches(rs) {
+    // D2: lista pelo componente compartilhado (RF-03); contagem segue P.switches
     const sw = P.switches(rs);
     $('swCount').textContent = sw.length + ' comutação(ões)';
-    $('swList').innerHTML = sw.length ? sw.slice().reverse().map((s) => {
-      const res = s.ok === true ? `<span class="ok">registrou em ${P.fmtDur(s.regSec)}</span>` : s.ok === false ? `<span class="bad">falhou${s.failWhy ? ' (' + esc(s.failWhy) + ')' : ''}</span>` : '<span class="pend">aguardando registro…</span>';
-      return `<li><span class="mono">${hhmm(s.at)}</span><span><span class="arrow">${s.to === 'ntn' ? 'Cat-M → <span style="color:#c8a2ff">Satélite</span>' : 'Satélite → <span style="color:#8fb6ff">Cat-M</span>'}</span><br><small>${esc(s.why)}${s.fixSec != null ? ' · fix GNSS ' + (s.fixSec < 0 ? 'falhou' : P.fmtDur(s.fixSec)) : ''}</small></span>${res}</li>`;
-    }).join('') : '<li class="muted">Nenhuma comutação no período.</li>';
+    if (window.SwitchTimeline) window.SwitchTimeline.render('swList', window.SwitchTimeline.build(rs));
     // faixa proporcional ao tempo em cada rede
     const all = P.sortRecs(rs); if (all.length < 2) { $('swBar').innerHTML = ''; return; }
     const t0 = Date.parse(all[0].ts), t1 = Math.max(Date.parse(all[all.length - 1].ts), t0 + 1);
@@ -173,7 +173,7 @@
     document.querySelectorAll('#fPos button').forEach((b) => b.classList.toggle('on', b.dataset.pos === st.pos));
     $('fPeriod').value = st.period; $('fPeriod').disabled = st.src === 'replay'; $('fSw').checked = st.sw;
     P.annotateDelivery(all); drawLog(all); if (window.drawSim) window.drawSim(all); if (window.drawSatSig) window.drawSatSig(all); if (window.Pointing && st.src === 'live') window.Pointing.render('ptBox', all);
-    drawLive(all); if (window.drawHero) window.drawHero(all, nowRef(), st.src); if (window.drawTrajeto) try { window.drawTrajeto(all, nowRef(), map); } catch (e) { console.warn('trajeto', e); } if (window.drawInsights) try { window.drawInsights(all, nowRef(), st.src, map); } catch (e) { console.warn('insights', e); } drawKpis(rs); drawSwitches(st.sw ? all : rs); drawMap(rs); drawTable(rs);
+    drawLive(all); if (window.drawHero) window.drawHero(all, nowRef(), st.src); if (window.drawTrajeto) try { window.drawTrajeto(all, nowRef(), map); } catch (e) { console.warn('trajeto', e); } if (window.drawInsights) try { window.drawInsights(all, nowRef(), st.src, map); } catch (e) { console.warn('insights', e); } if (window.AlertsUI) try { window.AlertsUI.render('alertVeic', all, nowRef()); } catch (e) { console.warn('alertas', e); } drawKpis(rs); drawSwitches(st.sw ? all : rs); drawMap(rs); drawTable(rs);
     const empty = $('empty');
     empty.hidden = rs.length > 0;
     if (!rs.length) empty.innerHTML = st.src === 'live' ? 'Nenhum dado da placa neste período. Verifique se a placa está ligada (app NTN Pro v2.1) ou use <b>Replay da demonstração</b>.' : 'Sem dados de replay.';
@@ -250,13 +250,12 @@
     download(`ntn-log-${stamp}.csv`, '\ufeff' + [head.join(';'), ...lines].join('\r\n'), 'text/csv;charset=utf-8');
     setTimeout(() => download(`ntn-log-${stamp}.json`, JSON.stringify({ schema: 'ntn-log/1', exportedAt: new Date().toISOString(), filtros: { periodo: st.period, rede: st.net, pos: st.pos }, total: rs.length, records: rs }, null, 1), 'application/json'), 400);
   };
-  $('btnPresent').onclick = async () => {
-    document.body.classList.toggle('present');
-    try { if (document.body.classList.contains('present')) await document.documentElement.requestFullscreen?.(); else if (document.fullscreenElement) await document.exitFullscreen(); } catch { /* sem permissão */ }
-    setTimeout(() => map.invalidateSize(), 300);
-  };
-  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) document.body.classList.remove('present'); setTimeout(() => map.invalidateSize(), 300); });
-  if (params.get('present') === '1') document.body.classList.add('present');
+  // F1: botão único de Modo Apresentação (tela cheia + layout compacto); ao ativar inicia o replay real de 14/10
+  if (window.Apresentacao) window.Apresentacao.init({ onStart: async () => {
+    stopReplay(); st.src = 'replay'; rpCursor = null; fitted = false;
+    try { await loadReplay(); render(); playReplay(); } catch (e) { console.warn('replay', e); }
+  } });
+  if (params.get('present') === '1' && window.Apresentacao) window.Apresentacao.on(true);
 
   (async () => {
     if (st.src === 'replay') await loadReplay();
