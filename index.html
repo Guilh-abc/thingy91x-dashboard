@@ -1,508 +1,110 @@
-<!DOCTYPE html>
-<html lang="pt-BR" data-pagina-real>
+<!doctype html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <script>
-(function () {
-  var b = document.createElement('base');
-  b.href = /github\.io$/i.test(location.hostname) ? '/thingy91x-dashboard/' : '/';
-  var first = document.head.firstChild;
-  document.head.insertBefore(b, first);
-})();
-</script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#E20074">
-    <meta name="description" content="Dashboard Thingy:91X · rastreador IoT via nRF Cloud">
-    <title>Thingy:91X · Deutsche Telekom IoT</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="icon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=33">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <style>
-    .ntn-nav{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:10px 22px;background:#0b0f1a;border-bottom:1px solid #26304a;font:600 14px/1.45 Inter,system-ui,sans-serif;position:relative;z-index:1000}
-    .ntn-nav-brand{font-weight:800;color:#e8ecf6;margin-right:6px}
-    .ntn-nav-brand em{font-style:normal;background:linear-gradient(90deg,#7fb0ff,#c79bff);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .ntn-nav a{color:#8e9ab5;text-decoration:none;padding:3px 10px;border-radius:999px;border:1px solid transparent}
-    .ntn-nav a:hover{color:#e8ecf6;border-color:#26304a;background:#182036}
-    .ntn-nav a[aria-current]{color:#e8ecf6;background:#182036;border-color:#26304a}
-    .ntn-nav a small{font-weight:500;color:#8e9ab5}
-    </style>
-    <link rel="stylesheet" href="alerts-panel.css?v=3">
-    <style>.intel-root{margin:16px 0;padding:16px;border:1px solid #e9ecef;border-radius:12px;background:#fff;color:#1f2733;position:relative;z-index:0}.intel-root .card-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.intel-root .seg button.on{background:#e8f0fe;color:#1f6fe5}</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NTN Plataforma | Rastreamento e IoT sob medida</title>
+<meta name="description" content="Plataforma IoT para rastreamento, medição, consumo de dados, alertas inteligentes e relatórios, com Cat-M e LTE.">
+<meta name="theme-color" content="#0b1530">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="design-tokens.css?v=2">
+<link rel="stylesheet" href="landing.css?v=1">
 </head>
 <body>
-    <nav class="ntn-nav" aria-label="Plataforma Connect NTN">
-        <span class="ntn-nav-brand">Connect <em>NTN</em></span>
-        <a href="./" aria-current="page"><b>Início</b> <small>placa Cat-M Telekom</small></a>
-        <a href="ntn/">Rastreador</a>
-        <a href="utilities/">Utilities</a>
-        <a href="consumo/">Consumo</a>
-        <a href="ntn/?modo=apresentacao&amp;rot=10">Demonstração</a>
-        <a href="relatorio-demo/">Relatório (demo)</a>
-    </nav>
-    <div class="app">
-        <header class="header">
-            <div class="header-left">
-                <div class="logo-wrap">
-                    <svg class="logo-t" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#E20074"/><path d="M10 8h12v4h-4v12h-4V12H10V8z" fill="white"/></svg>
-                    <span class="logo-text">Thingy:91X</span>
-                </div>
-                <span class="badge">Deutsche Telekom IoT</span>
-            </div>
-            <div class="header-right">
-                <div class="connection-status status" id="connectionStatus">
-                    <span class="dot" id="connDot"></span>
-                    <span class="label" id="connLabel">Conectando...</span>
-                </div>
-                <button class="btn btn-ghost btn-config" id="configBtn" aria-label="Configurações">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                </button>
-            </div>
-        </header>
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+<header class="barra">
+  <a class="marca" href="./" aria-label="NTN Plataforma, início">
+    <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0984e3"/><circle cx="16" cy="16" r="3.2" fill="#fff"/><path d="M9.5 16a6.5 6.5 0 0 1 13 0M6 16a10 10 0 0 1 20 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/></svg>
+    <span>NTN <b>Plataforma</b></span>
+  </a>
+  <nav aria-label="Seções">
+    <a href="#recursos">Recursos</a><a href="#como">Como funciona</a><a href="#papeis">Acesso</a>
+    <a class="btn btn-primary btn-sm" href="entrar/"><svg class="ico" aria-hidden="true"><use href="#i-entrar"></use></svg>Entrar</a>
+  </nav>
+</header>
 
-        <main class="main">
-            <!-- Hero Card -->
-            <section class="hero-card">
-                <div class="hero-main">
-                    <div class="device-identity">
-                        <div class="alias-row">
-                            <h1 id="deviceName" class="alias-display" title="Clique para editar o nome operacional" contenteditable="true" spellcheck="false">Asset Tracker</h1>
-                            <button type="button" class="btn btn-ghost btn-sm alias-edit-btn" id="aliasEditBtn" title="Editar nome operacional" aria-label="Editar nome">✎</button>
-                        </div>
-                        <section class="situacao-band" id="situacaoBand" aria-label="Situação inteligente">
-                            <div class="situacao-grid">
-                                <div class="sit-cell" id="sitCellEstado">
-                                    <span class="sit-label">Estado</span>
-                                    <span class="sit-value" id="sitEstado">n/d</span>
-                                </div>
-                                <div class="sit-cell" id="sitCellOnde">
-                                    <span class="sit-label">Onde</span>
-                                    <span class="sit-value" id="sitOnde">n/d</span>
-                                </div>
-                                <div class="sit-cell" id="sitCellRisco">
-                                    <span class="sit-label">Risco</span>
-                                    <span class="sit-value" id="sitRisco">n/d</span>
-                                    <span class="sit-reason" id="sitRiscoReason"></span>
-                                </div>
-                                <div class="sit-cell sit-cell-acao" id="sitCellAcao">
-                                    <span class="sit-label">Ação</span>
-                                    <span class="sit-value" id="sitAcao">n/d</span>
-                                </div>
-                            </div>
-                            <div class="sit-sparks" id="sitSparks" aria-label="Sparklines recentes">
-                                <div class="spark-item">
-                                    <span class="spark-label">Bat</span>
-                                    <span class="spark-svg" id="sparkBatSit"></span>
-                                </div>
-                                <div class="spark-item">
-                                    <span class="spark-label">RSRP</span>
-                                    <span class="spark-svg" id="sparkRsrpSit"></span>
-                                </div>
-                            </div>
-                            <div class="sit-alertas-wrap">
-                                <span class="sit-alertas-title">Alertas</span>
-                                <ul class="sit-alertas" id="sitAlertas" aria-label="Alertas operacionais"></ul>
-                            </div>
-                        </section>
-                        <p class="situacao-line" id="situacaoLine" hidden title="legado">n/d</p>
-                        <div class="fleet-row">
-                            <select id="deviceSelect" aria-label="Selecionar dispositivo"></select>
-                            <button class="btn btn-ghost btn-sm" id="refreshFleet">↻ Frota</button>
-                            <span class="chip" id="fleetCount">n/d</span>
-                        </div>
-                        <div class="device-meta">
-                            <span class="uuid-row">
-                                <span class="chip chip-uuid" id="deviceId" title="UUID / Device ID">n/d</span>
-                                <button type="button" class="btn btn-ghost btn-sm btn-copy" id="copyDeviceId" title="Copiar UUID" aria-label="Copiar UUID">Copiar</button>
-                            </span>
-                            <span class="chip" id="firmwareVersion">n/d</span>
-                            <span class="chip" id="lastSeen">n/d</span>
-                            <span class="chip chip-source" id="dataSourceBadge" title="Origem dos sensores">n/d</span>
-                        </div>
-                    </div>
-                    <div class="hero-gps">
-                        <div class="gps-primary">
-                            <span class="label">Posição</span>
-                            <div class="coords-row">
-                                <div class="coords" id="gpsCoords">Sem fix: conecte o USB ou aguarde scan Wi‑Fi/célula</div>
-                                <span class="loc-source-badge" id="gpsSourceBadge" hidden>n/d</span>
-                            </div>
-                            <div class="gps-meta">
-                                <span id="gpsAcc">n/d</span>
-                                <span>·</span>
-                                <span id="gpsSats">n/d</span>
-                                <span class="data-age" id="gpsAge" title="Idade do dado de posição">n/d</span>
-                            </div>
-                            <div class="gps-details">
-                                <span>Lat <strong id="gpsLat">n/d</strong></span>
-                                <span>Lon <strong id="gpsLon">n/d</strong></span>
-                                <span>Alt <strong id="gpsAlt">n/d</strong></span>
-                                <span>Vel <strong id="gpsSpeed">n/d</strong></span>
-                            </div>
-                        </div>
-                        <div class="gps-actions">
-                            <button class="btn btn-primary" id="centerMap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg> Centralizar</button>
-                            <button class="btn btn-outline" id="toggleTrail"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Trilha: <span id="trailStatus">ON</span></button>
-                            <select id="trailRange" aria-label="Período da trilha">
-                                <option value="24">24h</option>
-                                <option value="168" selected>7d</option>
-                                <option value="720">30d</option>
-                                <option value="2160">90d</option>
-                            </select>
-                            <span id="trailPoints" class="trail-points" title="Pontos da trilha (nuvem + local)">Trilha ON · 0 pts · 0 km</span>
-                            <span id="trailIntel" class="trail-intel" title="Resumo da trilha (hoje)">Resumo da trilha: n/d</span>
-                            <span class="trail-hint" title="Cada ponto guarda o estado do device naquele minuto">Clique num ponto da trilha</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Grid Cards -->
-            <div class="grid" id="grid">
-                <!-- Environment -->
-                <article class="card card-env">
-                    <header class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-                        <h2>Ambiente</h2>
-                        <span class="data-age" id="envAge" title="Idade do dado de ambiente">n/d</span>
-                    </header>
-                    <div class="card-body">
-                        <div class="metric metric-large">
-                            <span class="value" id="tempValue">n/d</span>
-                            <span class="unit">°C</span>
-                            <span class="metric-label">Temperatura</span>
-                        </div>
-                        <div class="metric-row">
-                            <div class="metric">
-                                <span class="value" id="humValue">n/d</span>
-                                <span class="unit">%</span>
-                                <span class="metric-label">Umidade</span>
-                            </div>
-                            <div class="metric">
-                                <span class="value" id="pressValue">n/d</span>
-                                <span class="unit">hPa</span>
-                                <span class="metric-label">Pressão</span>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- Motion -->
-                <article class="card card-motion">
-                    <header class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                        <h2>Movimento</h2>
-                    </header>
-                    <div class="card-body">
-                        <p class="card-empty-hint" id="motionEmptyHint" hidden></p>
-                        <div class="axis-row">
-                            <div class="axis"><span class="axis-label">X</span><span class="axis-value" id="accelX">n/d</span></div>
-                            <div class="axis"><span class="axis-label">Y</span><span class="axis-value" id="accelY">n/d</span></div>
-                            <div class="axis"><span class="axis-label">Z</span><span class="axis-value" id="accelZ">n/d</span></div>
-                        </div>
-                        <div class="metric">
-                            <span class="value" id="steps">n/d</span>
-                            <span class="metric-label">Passos</span>
-                        </div>
-                        <div class="metric" id="motionSpeedWrap" hidden>
-                            <span class="value" id="motionSpeed">n/d</span>
-                            <span class="metric-label">Deslocamento (GNSS)</span>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- Battery -->
-                <article class="card card-battery">
-                    <header class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M23 10h-2M1 10H23"/></svg>
-                        <h2>Bateria</h2>
-                        <span class="data-age" id="batteryAge" title="Idade do dado de bateria">n/d</span>
-                    </header>
-                    <div class="card-body">
-                        <div class="battery-wrap">
-                            <div class="battery-outer" id="batteryOuter">
-                                <div class="battery-fill" id="batteryFill"></div>
-                            </div>
-                            <span class="battery-pct" id="batteryValue">n/d</span>
-                        </div>
-                        <div class="battery-details">
-                            <span id="batteryVoltage">n/d</span>
-                            <span id="batteryCharging" class="chip chip-success"></span>
-                        </div>
-                        <p class="battery-autonomia" id="batteryAutonomia" title="Estimativa a partir do histórico da trilha (só com amostras reais)">Autonomia estimada: sem histórico suficiente</p>
-                        <div class="spark-row" title="Bateria recente (trilha)">
-                            <span class="spark-label">Histórico</span>
-                            <span class="spark-svg" id="sparkBat"></span>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- Network -->
-                <article class="card card-network" id="cardNetwork">
-                    <header class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M12 19v-4M12 3v2M19 12h-4M3 12h2"/></svg>
-                        <h2>Rede</h2>
-                        <span class="data-age" id="netAge" title="Idade do dado de rede">n/d</span>
-                    </header>
-                    <div class="card-body">
-                        <div class="connectivity-strip" id="connectivityStrip" aria-live="polite">
-                            <div class="conn-strip-title">Conectividade</div>
-                            <div class="conn-strip-grid">
-                                <div class="conn-strip-item">
-                                    <span class="conn-strip-label">Estado nuvem</span>
-                                    <span class="conn-strip-value" id="stripCloud">n/d</span>
-                                </div>
-                                <div class="conn-strip-item">
-                                    <span class="conn-strip-label">Rede celular</span>
-                                    <span class="conn-strip-value" id="stripCell">n/d</span>
-                                </div>
-                                <div class="conn-strip-item">
-                                    <span class="conn-strip-label">Qualidade</span>
-                                    <span class="conn-strip-value" id="stripQuality">n/d</span>
-                                </div>
-                                <div class="conn-strip-item">
-                                    <span class="conn-strip-label">Último poll</span>
-                                    <span class="conn-strip-value" id="stripLastPoll">n/d</span>
-                                </div>
-                                <div class="conn-strip-item">
-                                    <span class="conn-strip-label" title="Hora do dado mais recente que o aparelho enviou à nuvem (posição, sensores, last_seen ou shadow). Passe o mouse no valor para ver a fonte.">Último dado do aparelho (nuvem)</span>
-                                    <span class="conn-strip-value" id="stripNetAge">n/d</span>
-                                </div>
-                                <div class="conn-strip-item">
-                                    <span class="conn-strip-label">Fonte da rede</span>
-                                    <span class="conn-strip-value" id="stripNetSrc">n/d</span>
-                                </div>
-                                <div class="conn-strip-item">
-                                    <span class="conn-strip-label">Intervalo poll</span>
-                                    <span class="conn-strip-value" id="stripPollMs">n/d</span>
-                                </div>
-                            </div>
-                            <div class="conn-strip-actions">
-                                <button type="button" class="btn btn-primary btn-sm" id="refreshNowBtn">Atualizar agora</button>
-                                <span class="conn-strip-status" id="stripRefreshStatus" hidden></span>
-                            </div>
-                            <p class="conn-strip-hint" id="stripHint" hidden></p>
-                        </div>
-                        <p class="card-empty-hint" id="netEmptyHint" hidden></p>
-                        <div class="net-grid" id="netGrid">
-                            <div class="net-item"><span class="net-label">Operadora</span><span class="net-value" id="operator">n/d</span></div>
-                            <div class="net-item"><span class="net-label">MCC/MNC</span><span class="net-value" id="netMccMnc">n/d</span></div>
-                            <div class="net-item"><span class="net-label">Network Mode</span><span class="net-value" id="netMode">n/d</span></div>
-                            <div class="net-item"><span class="net-label">Band atual</span><span class="net-value" id="netBand">n/d</span></div>
-                            <div class="net-item net-item-wide"><span class="net-label">Bandas suportadas</span><span class="net-value" id="netSupportedBands">n/d</span></div>
-                            <div class="net-item"><span class="net-label">Area Code (TAC)</span><span class="net-value" id="netTac">n/d</span></div>
-                            <div class="net-item"><span class="net-label">Cell ID</span><span class="net-value" id="netCellId">n/d</span></div>
-                            <div class="net-item"><span class="net-label">UE Mode</span><span class="net-value" id="netUeMode">n/d</span></div>
-                            <div class="net-item"><span class="net-label">IP</span><span class="net-value" id="netIp">n/d</span></div>
-                            <div class="net-item net-item-spark"><span class="net-label">RSRP</span><span class="net-value" id="rsrp">n/d</span><span class="spark-svg spark-inline" id="sparkRsrp" title="RSRP recente"></span></div>
-                            <div class="net-item"><span class="net-label">RSRQ</span><span class="net-value" id="rsrq">n/d</span></div>
-                            <div class="net-item"><span class="net-label">SNR</span><span class="net-value" id="netSnr">n/d</span></div>
-                            <div class="net-item"><span class="net-label">Wi‑Fi</span><span class="net-value" id="netWifi">n/d</span></div>
-                            <div class="net-item"><span class="net-label">IMEI</span><span class="net-value" id="netImei">n/d</span></div>
-                            <div class="net-item"><span class="net-label">ICCID (SIM)</span><span class="net-value" id="netIccid">n/d</span></div>
-                            <div class="net-item"><span class="net-label">IMSI</span><span class="net-value" id="netImsi">n/d</span></div>
-                            <div class="net-item"><span class="net-label">Fonte</span><span class="net-value" id="netSource">n/d</span></div>
-                            <div class="net-item net-item-wide"><span class="net-label">Serviço / trail</span><span class="net-value" id="serviceType">n/d</span></div>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- Fleet -->
-                <article class="card card-fleet" style="grid-column: 1 / -1;">
-                    <header class="card-header">
-                        <h2>🚚 Frota</h2>
-                        <div class="log-actions"><button class="btn btn-ghost btn-sm" id="pollFleet">Atualizar frota</button></div>
-                    </header>
-                    <div class="card-body"><div class="fleet-grid" id="fleetGrid"></div></div>
-                </article>
-
-                <!-- Commands -->
-                <article class="card card-cmd">
-                    <header class="card-header"><h2>📡 Comandos → dispositivo</h2></header>
-                    <div class="card-body">
-                        <div class="form-group"><label for="cmdLed">LED (Asset Tracker: config.led)</label>
-                            <select id="cmdLed"><option value="">n/d</option><option value="red">Vermelho</option><option value="green">Verde</option><option value="blue">Azul</option><option value="off">Desligar</option></select></div>
-                        <div class="form-group"><label for="cmdGpsInterval">Intervalo GPS (s)</label>
-                            <input type="number" id="cmdGpsInterval" placeholder="ex: 60" min="10" max="86400" /></div>
-                        <div class="form-group"><label for="cmdBuzzer">Buzzer</label>
-                            <select id="cmdBuzzer"><option value="">n/d</option><option value="on">Ligar</option><option value="off">Desligar</option></select></div>
-                        <div class="form-group"><label for="cmdCustom">JSON desired custom</label>
-                            <input type="text" id="cmdCustom" placeholder='{"config":{"flip":true}}' /></div>
-                        <div class="cmd-row">
-                            <button class="btn btn-primary btn-sm" id="sendDesired">Enviar desired</button>
-                            <button class="btn btn-ghost btn-sm" id="sendPing">Ping (c2d)</button>
-                        </div>
-                        <p class="modal-hint">Usa PATCH /devices/{id}/state. Requer API key com escrita.</p>
-                    </div>
-                </article>
-
-                <!-- Geofence -->
-                <article class="card card-geo">
-                    <header class="card-header"><h2>⭕ Geofence</h2></header>
-                    <div class="card-body">
-                        <div class="form-group"><label for="geoRadius">Raio (m)</label>
-                            <input type="number" id="geoRadius" value="500" min="50" max="50000" /></div>
-                        <div class="cmd-row">
-                            <button class="btn btn-primary btn-sm" id="geoSet">Usar posição atual</button>
-                            <button class="btn btn-ghost btn-sm" id="geoClear">Limpar</button>
-                        </div>
-                        <div class="conn-item"><span class="conn-label">Estado</span><span class="conn-value" id="geoState">Sem cerca definida.</span></div>
-                    </div>
-                </article>
-
-                <!-- FOTA -->
-                <article class="card card-fota">
-                    <header class="card-header"><h2>⬆️ FOTA</h2>
-                        <div class="log-actions"><button class="btn btn-ghost btn-sm" id="refreshFota">Atualizar</button></div>
-                    </header>
-                    <div class="card-body">
-                        <div class="form-group"><label for="fotaList">Firmwares disponíveis</label><select id="fotaList"><option value="">n/d</option></select></div>
-                        <div class="form-group"><label for="fotaType">Tipo</label>
-                            <select id="fotaType"><option value="APP">APP</option><option value="MODEM">MODEM</option><option value="BOOT">BOOT</option></select></div>
-                        <div class="cmd-row"><button class="btn btn-primary btn-sm" id="createFota">Criar job FOTA</button></div>
-                        <div id="fotaJobs" class="fota-jobs">n/d</div>
-                    </div>
-                </article>
-
-                <!-- Messages / Export -->
-                <article class="card card-msgs" style="grid-column: 1 / -1;">
-                    <header class="card-header"><h2>💬 Mensagens recentes &amp; Export</h2>
-                        <div class="log-actions">
-                            <button class="btn btn-ghost btn-sm" id="exportCsv">CSV msgs</button>
-                            <button class="btn btn-ghost btn-sm" id="exportGeo">GeoJSON trilha</button>
-                            <button class="btn btn-ghost btn-sm" id="exportShadow">Shadow JSON</button>
-                        </div>
-                    </header>
-                    <div class="card-body"><div id="msgTable" class="msg-table">n/d</div></div>
-                </article>
-
-                <!-- Map -->
-                <article class="card card-map" style="grid-column: 1 / -1;">
-                    <header class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/><circle cx="12" cy="11" r="3"/></svg>
-                        <h2>Localização</h2>
-                    </header>
-                    <div class="card-body map-body" id="map"></div>
-                    <div class="playback-bar" id="playbackBar" aria-label="Playback da trilha">
-                        <button type="button" class="btn btn-outline btn-sm" id="playbackPlay" title="Play/Pause">▶</button>
-                        <select id="playbackSpeed" aria-label="Velocidade do playback" title="Velocidade">
-                            <option value="1" selected>1×</option>
-                            <option value="5">5×</option>
-                        </select>
-                        <input type="range" id="playbackScrub" min="0" max="0" value="0" step="1" aria-label="Posição na trilha" disabled />
-                        <span class="playback-chip" id="playbackChip" title="Ponto do playback (fantasma)">Sem trilha</span>
-                    </div>
-                </article>
-
-                <!-- Connection + Log -->
-                <article class="card card-log" style="grid-column: 1 / -1;">
-                    <header class="card-header">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                        <h2>Conexão &amp; Log do dispositivo</h2>
-                        <div class="log-actions">
-                            <select id="logFilter" aria-label="Filtrar log">
-                                <option value="all">Tudo</option>
-                                <option value="info">Info</option>
-                                <option value="ok">OK</option>
-                                <option value="warn">Avisos</option>
-                                <option value="err">Erros</option>
-                                <option value="api">API</option>
-                            </select>
-                            <label class="autoscroll"><input type="checkbox" id="logAutoscroll" checked /> Auto-rolar</label>
-                            <button class="btn btn-ghost btn-sm" id="exportLog">Exportar</button>
-                            <button class="btn btn-ghost btn-sm" id="clearLog">Limpar</button>
-                        </div>
-                    </header>
-                    <div class="card-body">
-                        <div class="conn-grid">
-                            <div class="conn-item"><span class="conn-label">Estado</span><span class="conn-value" id="connState">n/d</span></div>
-                            <div class="conn-item"><span class="conn-label">Último visto</span><span class="conn-value" id="connLastSeen">n/d</span></div>
-                            <div class="conn-item"><span class="conn-label">Última mensagem</span><span class="conn-value" id="connLastMsg">n/d</span></div>
-                            <div class="conn-item"><span class="conn-label">Mensagens (poll)</span><span class="conn-value" id="connMsgCount">n/d</span></div>
-                            <div class="conn-item"><span class="conn-label">Latência API</span><span class="conn-value" id="connLatency">n/d</span></div>
-                            <div class="conn-item"><span class="conn-label">Poll</span><span class="conn-value" id="connPoll">10s</span></div>
-                        </div>
-                        <div class="log-panel" id="logPanel" aria-live="polite"></div>
-                    </div>
-                </article>
-            </div>
-        </main>
-        <section id="intelCard" class="card intel-root"></section>
-
-
-    <!-- Sticky auth banner (mobile) -->
-    <div id="authBanner" class="auth-banner" hidden role="status">
-        <span class="auth-banner-text">Sem acesso à nuvem</span>
-        <button type="button" class="btn btn-primary btn-sm" id="authBannerBtn">Configurar agora</button>
+<main id="conteudo">
+  <section class="hero">
+    <div class="hero-txt">
+      <span class="badge badge-info"><svg class="ico" aria-hidden="true"><use href="#i-rede"></use></svg>Cat-M e LTE</span>
+      <h1>Seus veículos, medidores e ativos em um só painel.</h1>
+      <p>Rastreamento, medição e alertas inteligentes com firmware e plataforma próprios, ajustados à sua operação.</p>
+      <div class="cta">
+        <a class="btn btn-primary btn-grande" href="entrar/"><svg class="ico" aria-hidden="true"><use href="#i-entrar"></use></svg>Entrar na plataforma</a>
+        <a class="btn btn-grande btn-claro" href="#recursos">Conhecer os recursos</a>
+      </div>
+      <p class="dica"><svg class="ico" aria-hidden="true"><use href="#i-email"></use></svg>Sem senha: digite seu e-mail e o código que chega na caixa de entrada.</p>
     </div>
-
-        <footer class="footer">
-            <span>Deutsche Telekom AG · IoT Dashboard</span>
-            <span id="version">v1.0.0</span>
-        </footer>
+    <div class="hero-prev" aria-label="Prévia ilustrativa com dados de exemplo">
+      <span class="exemplo">Dados de exemplo</span>
+      <div class="pv-kpis">
+        <div><svg class="ico" aria-hidden="true"><use href="#i-carro"></use></svg><b>12</b><small>veículos online</small></div>
+        <div><svg class="ico" aria-hidden="true"><use href="#i-rota"></use></svg><b>384 km</b><small>rodados hoje</small></div>
+        <div class="al"><svg class="ico" aria-hidden="true"><use href="#i-alerta"></use></svg><b>3</b><small>alertas</small></div>
+      </div>
+      <svg class="pv-mapa" viewBox="0 0 320 150" role="img" aria-label="Mapa ilustrativo">
+        <rect width="320" height="150" rx="12" fill="#13224a"/>
+        <g stroke="#22356b" stroke-width="7" stroke-linecap="round"><path d="M10 120H310M10 40H310M70 10V140M230 10V140"/></g>
+        <path d="M30 120H70V40H230V80" fill="none" stroke="#2fd27a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M230 80V120H290" fill="none" stroke="#ff5470" stroke-width="4" stroke-dasharray="8 5" stroke-linecap="round"/>
+        <circle cx="230" cy="80" r="7" fill="#2f7cf6" stroke="#fff" stroke-width="3"/>
+      </svg>
+      <svg class="pv-graf" viewBox="0 0 320 50" aria-hidden="true"><polyline points="0,40 30,34 60,36 90,22 120,26 150,14 180,20 210,10 240,18 270,8 300,12 320,6" fill="none" stroke="#2f7cf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
+  </section>
 
-    <!-- Config Modal -->
-    <div class="modal" id="configModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <header class="modal-header">
-                <h2 id="modalTitle">Configuração Memfault / nRF Cloud</h2>
-                <button class="modal-close" id="closeModal" aria-label="Fechar"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            </header>
-            <div class="modal-body">
-                <p class="modal-hint">Duas chaves: Memfault (status/FW) e Simple Token da equipe (GPS/sensores/trilha). OAT sozinho <strong>não</strong> lê ListMessages. Simple Token é opcional no celular se a escrita estiver configurada no Netlify.</p>
-                <div class="form-group">
-                    <label for="userEmail">E-mail Memfault <span class="optional">(para User API Key)</span></label>
-                    <input type="email" id="userEmail" placeholder="seu@email.com" autocomplete="username" />
-                </div>
-                <div class="form-group">
-                    <label for="apiKey">User API Key / OAT <span class="required">*</span></label>
-                    <input type="text" id="apiKey" placeholder="User API Key (perfil) ou oat_…" autocomplete="off" spellcheck="false" />
-                </div>
-                <div class="form-group">
-                    <label for="teamApiKey">API Key da equipe (Simple Token) <span class="optional">GPS / sensores: opcional no celular se a escrita estiver no Netlify</span></label>
-                    <input type="text" id="teamApiKey" placeholder="~40 chars hex: User Account → Current Team Details (nao Project Key)" autocomplete="off" spellcheck="false" />
-                    <p class="modal-hint modal-hint-sm">Escrita (shadow/c2d): no github.io pode usar <code>NRF_TEAM_WRITE_TOKEN</code> no Netlify sem colar Simple Token aqui. Leitura de GPS/msgs ainda pode precisar da chave no aparelho.</p>
-                </div>
-                <div class="form-group">
-                    <label for="orgSlug">Organization slug</label>
-                    <input type="text" id="orgSlug" placeholder="telekom" value="telekom" />
-                </div>
-                <div class="form-group">
-                    <label for="projectSlug">Project slug</label>
-                    <input type="text" id="projectSlug" placeholder="nrf-project" value="nrf-project" />
-                </div>
-                <div class="form-group">
-                    <label for="deviceIdInput">Device ID (UUID / CoAP client ID)</label>
-                    <input type="text" id="deviceIdInput" placeholder="50423451-3737-4337-80fc-110bddf418ff" />
-                </div>
-                <p class="modal-link" id="mobileAuthHint" style="color:#E20074;font-weight:600">No celular: as chaves não sincronizam com o Mac: use <strong>Copiar link pro celular</strong> no Mac, ou cole as chaves aqui.</p>
-                <p class="modal-warn" id="pairingWarn">O link contém segredos: use só no seu telefone.</p>
-                <div id="configError" class="config-error" hidden role="alert"></div>
-                <p class="modal-link">Memfault: perfil → User API Key (com e-mail) ou Admin → Organization Auth Tokens (OAT, e-mail vazio). GPS/sensores: menu ☰ → User Account → Current Team Details → API key (hex). Docs: <a href="https://docs.memfault.com/docs/legacy-nrfcloud/tokens-and-keys.md" target="_blank" rel="noopener">tokens e keys</a>.</p>
-            </div>
-            <footer class="modal-footer">
-                <button class="btn btn-outline" id="copyPairingLink" type="button">Copiar link pro celular</button>
-                <button class="btn btn-ghost" id="cancelConfig">Cancelar</button>
-                <button class="btn btn-primary" id="saveConfig">Salvar e Conectar</button>
-            </footer>
-        </div>
+  <section id="recursos" class="secao">
+    <h2>O que a plataforma faz</h2>
+    <p class="sub">Tudo o que a operação precisa, em telas simples.</p>
+    <div class="grade">
+      <article><svg class="ico" aria-hidden="true"><use href="#i-local"></use></svg><h3>Rastreamento</h3><p>Posição, trilha e reprodução do dia no mapa.</p></article>
+      <article><svg class="ico" aria-hidden="true"><use href="#i-medicao"></use></svg><h3>Utilities e medição</h3><p>Leituras de medidores com média móvel e tendência.</p></article>
+      <article><svg class="ico" aria-hidden="true"><use href="#i-grafico"></use></svg><h3>Consumo de dados</h3><p>Uso por chip e por período, com projeção do mês.</p></article>
+      <article class="al"><svg class="ico" aria-hidden="true"><use href="#i-alerta"></use></svg><h3>Alertas inteligentes</h3><p>Desvios, quedas e falta de sinal avisados na hora.</p></article>
+      <article class="ok"><svg class="ico" aria-hidden="true"><use href="#i-rota"></use></svg><h3>Rotas habituais</h3><p>Aprende trajetos e horários e destaca o que foge do padrão.</p></article>
+      <article><svg class="ico" aria-hidden="true"><use href="#i-pdf"></use></svg><h3>Relatórios PDF e CSV</h3><p>Exportação pronta para enviar ou abrir no Excel.</p></article>
+      <article><svg class="ico" aria-hidden="true"><use href="#i-rede"></use></svg><h3>Cat-M e LTE</h3><p>Conectividade de baixo consumo, com chip incluso.</p></article>
+      <article><svg class="ico" aria-hidden="true"><use href="#i-bateria"></use></svg><h3>Saúde do dispositivo</h3><p>Bateria, sinal e temperatura acompanhados todos os dias.</p></article>
     </div>
+  </section>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="presence-core.js?v=32"></script>
-    <script src="app.js?v=35"></script>
-    <script src="utilities/alert-rules.js?v=3"></script>
-    <script src="movement-rules.js?v=4"></script>
-    <script src="utilities/alerts-panel.js?v=3"></script>
-    <script src="root-alerts.js?v=2"></script>
-<script src="icons.js?v=1"></script>
-<script src="roles.js?v=1"></script>
+  <section class="secao prev2" aria-label="Prévia com dados de exemplo">
+    <h2>Prévia <span class="exemplo">Dados de exemplo</span></h2>
+    <div class="grade3">
+      <div class="mini"><small><svg class="ico" aria-hidden="true"><use href="#i-relogio"></use></svg>Saída típica</small><b>07h50</b><svg viewBox="0 0 120 30" aria-hidden="true"><g fill="#0984e3"><rect x="2" y="12" width="12" height="18" rx="2"/><rect x="18" y="8" width="12" height="22" rx="2"/><rect x="34" y="4" width="12" height="26" rx="2"/><rect x="50" y="10" width="12" height="20" rx="2"/><rect x="66" y="6" width="12" height="24" rx="2"/><rect x="82" y="22" width="12" height="8" rx="2"/><rect x="98" y="27" width="12" height="3" rx="2"/></g></svg></div>
+      <div class="mini"><small><svg class="ico" aria-hidden="true"><use href="#i-medicao"></use></svg>Consumo hoje</small><b>850 L</b><svg viewBox="0 0 120 30" aria-hidden="true"><polyline points="0,26 20,22 40,24 60,14 80,16 100,8 120,10" fill="none" stroke="#00b894" stroke-width="3" stroke-linecap="round"/></svg></div>
+      <div class="mini al"><small><svg class="ico" aria-hidden="true"><use href="#i-desvio"></use></svg>Desvio de rota</small><b>+6 km</b><svg viewBox="0 0 120 30" aria-hidden="true"><path d="M0 22H60V8H120" fill="none" stroke="#d63031" stroke-width="3" stroke-dasharray="6 4"/></svg></div>
+    </div>
+  </section>
+
+  <section id="como" class="secao">
+    <h2>Como funciona</h2>
+    <ol class="passos">
+      <li><span>1</span><svg class="ico" aria-hidden="true"><use href="#i-carro"></use></svg><h3>Instalamos o dispositivo</h3><p>Equipamento com chip Cat-M ou LTE, testado no seu local.</p></li>
+      <li><span>2</span><svg class="ico" aria-hidden="true"><use href="#i-rede"></use></svg><h3>Os dados chegam sozinhos</h3><p>Posição, leituras e saúde do aparelho entram na plataforma.</p></li>
+      <li><span>3</span><svg class="ico" aria-hidden="true"><use href="#i-entrar"></use></svg><h3>Você acompanha e decide</h3><p>Painéis, alertas e relatórios no celular ou no computador.</p></li>
+    </ol>
+  </section>
+
+  <section id="papeis" class="secao">
+    <h2>Quem acessa o quê</h2>
+    <div class="papeis">
+      <article><svg class="ico" aria-hidden="true"><use href="#i-admin"></use></svg><h3>Admin</h3><p>Vê todos os painéis com dados reais, exporta relatórios e gerencia quem tem acesso.</p></article>
+      <article><svg class="ico" aria-hidden="true"><use href="#i-viewer"></use></svg><h3>Viewer</h3><p>Acompanha a demonstração do relatório, sem exportar e sem dados reais.</p></article>
+    </div>
+    <div class="entrar-box">
+      <div><h3><svg class="ico" aria-hidden="true"><use href="#i-email"></use></svg>Como entrar</h3><p>Digite seu e-mail e o código que chega na caixa de entrada. Sem senha para lembrar.</p></div>
+      <a class="btn btn-primary btn-grande" href="entrar/"><svg class="ico" aria-hidden="true"><use href="#i-entrar"></use></svg>Entrar</a>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <span>NTN Plataforma · rastreamento e IoT sob medida</span>
+  <span>As prévias desta página usam dados de exemplo.</span>
+  <a href="relatorio-demo/">Relatório (demo)</a>
+</footer>
+<script src="icons.js?v=2"></script>
 </body>
 </html>

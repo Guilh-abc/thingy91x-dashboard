@@ -12,7 +12,7 @@
 
   function loadApiCoreIsolated() {
     if (window.ApiCore) return Promise.resolve(window.ApiCore);
-    return fetch('api-core.js?v=3').then(function (r) { return r.text(); }).then(function (src) {
+    return fetch('../api-core.js?v=3').then(function (r) { return r.text(); }).then(function (src) {
       var box = {}; new Function('window', 'module', 'location', src)(box, undefined, window.location); // escopo próprio, sem colidir com app.js
       return box.ApiCore;
     });
