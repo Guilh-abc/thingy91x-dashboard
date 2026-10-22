@@ -26,7 +26,7 @@
   var VERDE = 'var(--cor-ok)', VERM = 'var(--cor-alerta)', AZUL = 'var(--cor-info)', CINZA = 'var(--cor-neutro)';
 
   var CAPS = [
-    ['camadas', 'Cruzamento de geoposição com local', 'Identifica onde o veículo esteve e que tipo de lugar é.', '', I('local', 'c-info') + ' -23,9 / -45,1 (fictício) ' + I('trabalho', 'c-ok') + ' <b>Trabalho</b>'],
+    ['camadas', 'Cruzamento de geoposição com local', 'Identifica onde o veículo esteve e que tipo de lugar é.', '', I('local', 'c-info') + ' ponto P7 do mapa fictício ' + I('trabalho', 'c-ok') + ' <b>Trabalho</b>'],
     ['casa', 'Rotas habituais casa e trabalho', 'Aprende o horário típico de saída e a duração do trajeto.', 'ok', I('relogio', 'c-ok') + ' Saída típica <b>07h50</b> · <b>25 min</b>'],
     ['viagem', 'Viagens longas detectadas', 'Separa viagens fora da rotina pela distância e duração.', '', I('rota', 'c-info') + ' Vila Aurora a Serra Azul · <b>180 km</b>'],
     ['permanencia', 'Paradas e permanência', 'Mostra quanto tempo ficou em cada lugar.', '', I('academia', 'c-info') + ' Academia <b>55 min</b>'],
