@@ -1,5 +1,5 @@
 /* pwa.js: PWA comum aos três painéis (RF-07). Script clássico: window.Pwa e module.exports.
-   H2: registro do service worker. H3: banner de dados salvos quando offline. */
+   H2: registro do service worker. H3: banner de dados salvos quando offline. H4: botão Instalar app. */
 (function (root) {
   function swUrl(loc) {
     // No GitHub Pages o site fica em /thingy91x-dashboard/; no localhost, na raiz servida.
@@ -34,7 +34,31 @@
   // Chamado pelo api-core.js e pelo consumo.js com o JSON da API.
   function noteData(j) { if (j && j.__cachedAt) showOffline(j.__cachedAt); else hideOffline(); return j; }
   if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('online', hideOffline);
-  const Pwa = { swUrl, register, fmtCachedAt, bannerText, showOffline, hideOffline, noteData };
+  // H4: botão "Instalar app" só quando o navegador oferecer a instalação.
+  let deferred = null;
+  function installButton(create) {
+    if (typeof document === 'undefined') return null;
+    let b = document.getElementById('btnInstalar');
+    if (!b && create) {
+      const host = document.querySelector('header .actions') || document.querySelector('nav');
+      if (!host) return null;
+      b = document.createElement('button'); b.id = 'btnInstalar'; b.className = 'btn'; b.type = 'button';
+      b.textContent = '⊕ Instalar app'; b.title = 'Instala o painel como aplicativo, com acesso offline aos últimos dados';
+      if (host.tagName === 'NAV') b.style.cssText = 'float:right;margin-left:6px';
+      b.addEventListener('click', async () => {
+        if (!deferred) return;
+        const ev = deferred; deferred = null; b.hidden = true;
+        try { ev.prompt(); await ev.userChoice; } catch (e) { console.warn('pwa: instalação cancelada', e); }
+      });
+      host.insertBefore(b, host.firstChild);
+    }
+    return b;
+  }
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; const b = installButton(true); if (b) b.hidden = false; });
+    window.addEventListener('appinstalled', () => { deferred = null; const b = installButton(false); if (b) b.remove(); });
+  }
+  const Pwa = { swUrl, register, fmtCachedAt, bannerText, showOffline, hideOffline, noteData, installButton };
   if (typeof window !== 'undefined') { window.Pwa = Pwa; if (typeof document !== 'undefined') register(); }
   if (typeof module !== 'undefined' && module.exports) module.exports = Pwa;
 })(typeof window !== 'undefined' ? window : globalThis);
