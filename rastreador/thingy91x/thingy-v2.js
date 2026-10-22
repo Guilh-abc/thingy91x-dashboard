@@ -44,13 +44,13 @@
     var h = Math.sin(dl / 2) * Math.sin(dl / 2) + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dn / 2) * Math.sin(dn / 2); return 2 * R * Math.asin(Math.sqrt(h)); }
   function diaBR(t) { return new Date(t).toLocaleDateString('sv-SE', { timeZone: TZ }); }
   /* Puro: histórico dos últimos `dias` dias a partir das posições reais. Viagem = sequência de pontos sem intervalo > 20 min
-     que soma ao menos 0,5 km. Lacuna = mais de 1 h sem posição. */
+     que soma ao menos 0,5 km; parado 15 min encerra a viagem. Lacuna = mais de 1 h sem posição. */
   function historico(locs, dias, agora) {
     agora = agora || Date.now(); dias = dias || 7;
     var ini = agora - dias * 864e5, GAP = 20 * 6e4;
     var ls = (locs || []).filter(function (x) { return num(x.lat) != null && num(x.lon) != null && tLoc(x) >= ini && tLoc(x) <= agora; })
       .map(function (x) { return { t: tLoc(x), p: [num(x.lat), num(x.lon)], u: num(x.uncertainty) }; }).sort(function (a, b) { return a.t - b.t; });
-    var vs = [], cur = null, lac = [], kmDia = {}, ptsDia = {};
+    var vs = [], cur = null, par = 0, lac = [], kmDia = {}, ptsDia = {};
     for (var d = 0; d < dias; d++) { var k = diaBR(agora - (dias - 1 - d) * 864e5); kmDia[k] = 0; ptsDia[k] = 0; }
     ls.forEach(function (x, i) {
       var k = diaBR(x.t); if (k in ptsDia) ptsDia[k]++;
@@ -59,7 +59,9 @@
       if (!a || x.t - a.t > GAP) { if (cur) vs.push(cur); cur = { de: x.t, ate: x.t, km: 0, n: 1 }; return; }
       var dk = km(a.p, x.p), lim = Math.max(0.05, ((a.u || 0) + (x.u || 0)) / 1000);
       if (dk > lim) { cur.km += dk; if (k in kmDia) kmDia[k] += dk; }
-      cur.ate = x.t; cur.n++;
+      par = dk < 0.2 ? par + (x.t - a.t) : 0;
+      if (par >= 15 * 6e4) { vs.push(cur); cur = { de: x.t, ate: x.t, km: 0, n: 1 }; par = 0; return; } // parado 15 min encerra a viagem
+      if (dk >= 0.2) cur.ate = x.t; cur.n++;
     });
     if (cur) vs.push(cur);
     vs = vs.filter(function (v) { return v.km >= 0.5; }).reverse();
