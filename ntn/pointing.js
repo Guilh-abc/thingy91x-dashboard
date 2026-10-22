@@ -33,9 +33,9 @@
     for (let a = 0; a < 360; a += 15) { const r1 = a % 90 ? 80 : 74, x1 = 100 + r1 * Math.sin(a * Math.PI / 180), y1 = 100 - r1 * Math.cos(a * Math.PI / 180), x2 = 100 + 88 * Math.sin(a * Math.PI / 180), y2 = 100 - 88 * Math.cos(a * Math.PI / 180); g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#3b4a70" stroke-width="${a % 90 ? 1 : 2}"/>`; }
     [['N', 0], ['L', 90], ['S', 180], ['O', 270]].forEach(([t, a]) => { g += `<text x="${100 + 64 * Math.sin(a * Math.PI / 180)}" y="${104 - 64 * Math.cos(a * Math.PI / 180)}" text-anchor="middle" font-size="13" font-weight="700" fill="${t === 'N' ? '#ff5470' : '#8e9ab5'}">${t}</text>`; });
     const rr = 80 * (1 - Math.max(0, el) / 90) + 8, sx = 100 + rr * Math.sin(az * Math.PI / 180), sy = 100 - rr * Math.cos(az * Math.PI / 180);
-    g += `<line x1="100" y1="100" x2="${sx}" y2="${sy}" stroke="url(#pg)" stroke-width="4" stroke-linecap="round"/><circle cx="${sx}" cy="${sy}" r="9" fill="#a45cff" stroke="#fff" stroke-width="2"/><text x="${sx}" y="${sy + 3.5}" text-anchor="middle" font-size="9">🛰</text></g>`;
+    g += `<line x1="100" y1="100" x2="${sx}" y2="${sy}" stroke="url(#pg)" stroke-width="4" stroke-linecap="round"/><circle cx="${sx}" cy="${sy}" r="9" fill="#3d8bff" stroke="#fff" stroke-width="2"/><text x="${sx}" y="${sy + 3.5}" text-anchor="middle" font-size="9">🛰</text></g>`;
     if (heading != null) g += '<path d="M100 6 l7 14 h-14z" fill="#fff"/>';
-    return `<svg viewBox="0 0 200 200" style="width:100%;max-width:230px"><defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#a45cff"/></linearGradient></defs><circle cx="100" cy="100" r="3" fill="#fff"/>${g}</svg>`;
+    return `<svg viewBox="0 0 200 200" style="width:100%;max-width:230px"><defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#3d8bff"/></linearGradient></defs><circle cx="100" cy="100" r="3" fill="#fff"/>${g}</svg>`;
   }
   function render(id, recs) {
     const el = document.getElementById(id); if (!el) return;

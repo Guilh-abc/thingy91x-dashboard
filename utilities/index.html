@@ -11,16 +11,16 @@
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="../ntn/pro.css?v=53">
-<link rel="stylesheet" href="utilities.css?v=9">
-<link rel="stylesheet" href="../ntn/hero.css?v=51">
+<link rel="stylesheet" href="../ntn/pro.css?v=54">
+<link rel="stylesheet" href="utilities.css?v=11">
+<link rel="stylesheet" href="../ntn/hero.css?v=52">
 <link rel="stylesheet" href="../ntn/deck-theme.css?v=3">
 <link rel="stylesheet" href="../design-tokens.css?v=2">
 <link rel="stylesheet" href="../shell.css?v=4">
 </head>
 <body>
 <header class="top">
-  <div class="brand"><svg class="wm" viewBox="0 0 44 44" width="40" height="40" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#a45cff"/></linearGradient></defs><rect x="1" y="1" width="42" height="42" rx="12" fill="#111a2e" stroke="url(#cg)" stroke-width="1.5"/><path d="M28.5 14.5a10 10 0 1 0 0 15" fill="none" stroke="url(#cg)" stroke-width="3.2" stroke-linecap="round"/><circle cx="22" cy="22" r="3" fill="#fff"/><path d="M31 11.5a14 14 0 0 1 3.5 5.5M33.5 8.5a18 18 0 0 1 4.5 7" fill="none" stroke="#a45cff" stroke-width="1.8" stroke-linecap="round" opacity=".85"/></svg><div><h1 class="wordmark">Utilities</h1><small class="tagline">Medidor IoT · <span class="chip catm">Cat-M</span> e <span class="chip ntn">Satélite NTN</span></small></div></div>
+  <div class="brand"><svg class="wm" viewBox="0 0 44 44" width="40" height="40" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#3d8bff"/></linearGradient></defs><rect x="1" y="1" width="42" height="42" rx="12" fill="#111a2e" stroke="url(#cg)" stroke-width="1.5"/><path d="M28.5 14.5a10 10 0 1 0 0 15" fill="none" stroke="url(#cg)" stroke-width="3.2" stroke-linecap="round"/><circle cx="22" cy="22" r="3" fill="#fff"/><path d="M31 11.5a14 14 0 0 1 3.5 5.5M33.5 8.5a18 18 0 0 1 4.5 7" fill="none" stroke="#3d8bff" stroke-width="1.8" stroke-linecap="round" opacity=".85"/></svg><div><h1 class="wordmark">Utilities</h1><small class="tagline">Medidor IoT · <span class="chip catm">Cat-M</span> e <span class="chip ntn">Satélite NTN</span></small></div></div>
   <div class="actions">
     <span id="testPill" class="chip ntn" hidden style="padding:4px 12px"></span>
     <span id="devPill" class="pill">medidor m1</span>
@@ -28,9 +28,21 @@
     <button id="btnPdfU" class="btn" title="Relatório para imprimir ou salvar em PDF">⎙ Relatório PDF</button>
     <button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com status, KPIs, consumo e mapa. Esc para sair">◉ Modo Apresentação</button>
     <a class="link sh-velho" href="../app/">Início do sistema</a>
-    <a class="link ajuda" id="linkAjuda" href="../docs/connect-como-funciona.md" title="Como funciona" aria-label="Como funciona"></a>
+    <button type="button" class="btn ajuda" id="linkAjuda" title="Como funciona" aria-label="Como funciona" aria-haspopup="dialog" aria-controls="dlgAjuda"></button>
   </div>
 </header>
+<dialog id="dlgAjuda" class="dlg-ajuda" aria-labelledby="dlgAjudaT">
+  <h2 id="dlgAjudaT">Como funciona</h2>
+  <ul>
+    <li>O medidor envia a leitura pelo Cat-M (chip Telekom) e usa o satélite NTN Skylo quando não há rede terrestre.</li>
+    <li>Leituras saem a cada 1 h e alarmes (vazamento, consumo anômalo, violação, bateria baixa) saem na hora.</li>
+    <li>Vazamento é fluxo contínuo por 60 min; consumo anômalo é mais de 500 L em 1 h; bateria baixa é abaixo de 3,3 V.</li>
+    <li>O GNSS liga só até obter a primeira posição e depois desliga para poupar bateria, então a posição do mapa é a última obtida.</li>
+    <li>Posições aparecem arredondadas em cerca de 100 m e o ICCID fica mascarado.</li>
+    <li>O total acumulado fica salvo na placa e não zera ao reiniciar.</li>
+  </ul>
+  <form method="dialog"><button class="btn btn-primary" value="fechar">Fechar</button></form>
+</dialog>
 <div id="healthBadge"></div>
 <div id="waitBanner" class="wait-banner">Aguardando a primeira leitura do medidor. Esta página mostra apenas dados reais enviados pela placa; ainda não há nenhum.</div>
 <section id="hero" class="hero off" aria-live="polite"></section>
@@ -38,7 +50,7 @@
 <section class="kpis" id="kpis" aria-label="Indicadores principais"></section>
 <main class="u2">
   <section class="card span2"><div class="card-h"><h2>Consumo</h2><div class="seg" id="aggSeg"><button data-a="i" class="on">Por envio</button><button data-a="h">Por hora</button><button data-a="d">Por dia</button></div></div>
-    <div id="cChart" class="chart"></div><div class="legend"><span><i style="background:linear-gradient(#3d8bff,#a45cff)"></i>litros no intervalo (barras)</span><span><i class="ln" style="background:#2fd27a"></i>total acumulado (linha)</span></div></section>
+    <div id="cChart" class="chart"></div><div class="legend"><span><i style="background:#3d8bff"></i>litros no intervalo (barras)</span><span><i class="ln" style="background:#2fd27a"></i>total acumulado (linha)</span></div></section>
   <section class="card"><div class="card-h"><h2>Identidade do dispositivo</h2><span class="pill">m1</span></div><div id="idCard" class="idk"></div></section>
   <section class="card span2"><div class="card-h"><h2>Sinal ao longo do tempo</h2><small class="muted">RSRP (dBm) · cor = rede</small></div>
     <div id="sChart" class="chart"></div><div class="legend"><span><i style="background:#2f7cf6"></i>Cat-M</span><span><i style="background:#2fd27a"></i>Satélite Skylo (90198)</span><span><i style="background:#2fd27a33;border:1px solid #2fd27a"></i>faixa boa (&ge; −95)</span></div></section>
@@ -80,10 +92,10 @@
 <footer class="foot muted" id="foot"></footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="../api-core.js?v=3"></script>
-<script src="../pwa.js?v=5"></script>
+<script src="../pwa.js?v=6"></script>
 <script src="../health-badge.js?v=1"></script>
-<script src="../ntn/pointing.js?v=2"></script>
-<script src="sat-live.js?v=4"></script>
+<script src="../ntn/pointing.js?v=3"></script>
+<script src="sat-live.js?v=5"></script>
 <script src="../ntn/busca-ui.js?v=56"></script>
 <script src="../apresentacao.js?v=2"></script>
 <script src="../status-desligado.js?v=2"></script>
@@ -92,7 +104,7 @@
 <script src="alerts-u.js?v=2"></script>
 <script src="alert-rules.js?v=3"></script>
 <script src="alerts-panel.js?v=3"></script>
-<script src="utilities.js?v=20"></script>
+<script src="utilities.js?v=21"></script>
 <a class="deck-fw" href="../ntn/firmware.html">Firmware</a>
 <script src="../icons.js?v=4"></script>
 <script src="../roles.js?v=2"></script>

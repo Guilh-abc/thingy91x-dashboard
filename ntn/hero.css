@@ -26,7 +26,7 @@ body.apresentacao #heroBusca .hb-ts{display:none}
 .hb-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:800px){.hb-cols{grid-template-columns:1fr}}
 .hb-led ul{list-style:none;padding:0;margin:6px 0;font-size:13px}.hb-led li{margin:5px 0;display:flex;gap:8px;align-items:center}
 .led{width:14px;height:14px;border-radius:50%;display:inline-block;flex:none;background:#2fd27a;box-shadow:0 0 8px currentColor}
-.led.l2{background:#a45cff}.led.l4{background:#ffd54a}.led.l1{background:#3d8bff}.led.all{background:#ff5470}
+.led.l2{background:#3d8bff}.led.l4{background:#ffd54a}.led.l1{background:#3d8bff}.led.all{background:#ff5470}
 .led.rap{animation:lr .4s steps(2) infinite}.led.len{animation:lr 1.6s steps(2) infinite}@keyframes lr{50%{opacity:.15}}
 body.apresentacao #heroBusca .hb-ts{display:block}
 .bm-gps{padding:10px 14px;border-radius:10px;font-weight:800;font-size:18px;margin-bottom:10px}.bm-gps small{display:block;font-weight:500;font-size:13px;margin-top:4px;opacity:.9}.bm-gps.ok{background:#166534;color:#fff}.bm-gps.bad{background:#c81e1e;color:#fff;animation:hb 1.4s infinite}.bm-gps.info{background:#3a2f18;font-weight:600;font-size:14px}

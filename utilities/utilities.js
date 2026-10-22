@@ -16,7 +16,10 @@
   const tag = (r) => isSat(r) ? '<span class="tag ntn">Satélite · Skylo (90198)</span>' : '<span class="tag catm">Cat-M</span>';
   const AL = { leak: ['💧', 'Vazamento', 'Fluxo contínuo ou alarme de vazamento.'], tamper: ['🔓', 'Violação', 'Tentativa de violação do medidor.'], anom: ['📈', 'Consumo anômalo', 'Consumo por hora acima do limite.'], lowbat: ['🔋', 'Bateria baixa', 'Tensão abaixo do limite.'] };
   const empty = (t) => `<div class="empty-st">${t}</div>`;
-  let recs = [], agg = 'i', map, mk, fT = 'all', fN = 'all';
+  /* Ajuda: <dialog> nativo (foco preso, Esc fecha); devolve o foco ao botão. */
+  { const bt = document.getElementById('linkAjuda'), dl = document.getElementById('dlgAjuda');
+    if (bt && dl) { bt.addEventListener('click', () => { if (dl.showModal) dl.showModal(); else dl.setAttribute('open', ''); }); dl.addEventListener('close', () => bt.focus()); dl.addEventListener('click', (e) => { if (e.target === dl) dl.close(); }); } }
+  let recs = [], agg = 'i', map, mk, circ, fT = 'all', fN = 'all';
   document.addEventListener('sw:focusMap', (e) => { const d = e.detail || {}; if (map && isFinite(d.lat) && isFinite(d.lon)) { map.setView([d.lat, d.lon], 16); document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
   $('tariff').value = localStorage.getItem('cu.tariff') || '';
   $('tariff').addEventListener('input', () => { localStorage.setItem('cu.tariff', $('tariff').value); render(); });
@@ -142,11 +145,15 @@
     $('alerts').innerHTML = al.length ? al.slice(-20).reverse().map((a) => { const d = AL[a.event] || ['⚠️', a.event, '']; return `<div class="al"><i>${d[0]}</i><div><b>${esc(d[1])}</b> <span class="muted">${dmy(a.ts)}</span><br><small class="muted">${esc(d[2])}</small></div></div>`; }).join('')
       : empty('Nenhum alerta. Monitorados: vazamento, consumo anômalo, violação e bateria baixa.');
     /* mapa */
-    const pos = [...rs].reverse().find((r) => r.lat != null && r.lon != null && r.posSrc === 'gnss') || [...rs].reverse().find((r) => r.lat != null && r.lon != null);
+    /* Melhor fonte: fix GNSS mais recente; 'salva' é o último fix guardado na placa e reenviado (não é posição nova). */
+    const comPos = rs.filter((r) => r.lat != null && r.lon != null), gnss = comPos.filter((r) => r.posSrc === 'gnss').pop(), ult = comPos[comPos.length - 1];
+    const pos = gnss || ult;
     if (!map && window.L) { map = L.map('map', { zoomControl: false, attributionControl: true }).setView([-15.8, -47.9], 3); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map); }
-    if (pos && map) { const ll = [pos.lat, pos.lon]; if (!mk) { mk = L.circleMarker(ll, { radius: 9, color: '#fff', weight: 2, fillColor: '#7a6cff', fillOpacity: 1 }).addTo(map); L.circle(ll, { radius: 100, color: '#7a6cff', weight: 1, fillOpacity: 0.1 }).addTo(map); map.setView(ll, 15); } else mk.setLatLng(ll);
-      $('posInfo').textContent = `${pos.lat.toFixed(3)}, ${pos.lon.toFixed(3)} · ~100 m`; }
-    else $('posInfo').textContent = 'aguardando posição GNSS';
+    if (pos && map) { const ll = [pos.lat, pos.lon], nova = !mk || mk.getLatLng().lat !== pos.lat || mk.getLatLng().lng !== pos.lon;
+      if (!mk) { mk = L.circleMarker(ll, { radius: 9, color: '#fff', weight: 2, fillColor: '#3d8bff', fillOpacity: 1 }).addTo(map); circ = L.circle(ll, { radius: 100, color: '#3d8bff', weight: 1, fillOpacity: 0.1 }).addTo(map); map.setView(ll, 15); }
+      else if (nova) { mk.setLatLng(ll); circ.setLatLng(ll); map.panTo(ll); }
+      $('posInfo').textContent = textoPos(pos, gnss, ult); }
+    else $('posInfo').textContent = 'sem posição recebida ainda';
     /* sim histórico */
     const sims = rs.filter((r) => r.event === 'sim');
     $('simGrid').innerHTML = '';
@@ -178,14 +185,25 @@
     if (agg === 'i') { for (let i = 1; i < rd.length; i++) { const d = rd[i].totalL - rd[i - 1].totalL; b.push({ t: T(rd[i]), v: Math.max(0, d), tot: rd[i].totalL, k: hm(T(rd[i])) }); } b = b.slice(-60); }
     else { const m = new Map(); for (let i = 1; i < rd.length; i++) { const d = new Date(T(rd[i])); const k = agg === 'h' ? d.toLocaleDateString('sv-SE') + ' ' + String(d.getHours()).padStart(2, '0') : d.toLocaleDateString('sv-SE'); const o = m.get(k) || { v: 0, tot: 0, t: T(rd[i]) }; o.v += Math.max(0, rd[i].totalL - rd[i - 1].totalL); o.tot = rd[i].totalL; m.set(k, o); }
       b = [...m.entries()].map(([k, o]) => ({ ...o, k: agg === 'h' ? k.slice(11) + 'h' : k.slice(8) + '/' + k.slice(5, 7) })).slice(agg === 'h' ? -48 : -31); }
-    const H = 230, L = 44, R = 50, B = 22, mx = Math.max(10, ...b.map((x) => x.v)), t0 = Math.min(...b.map((x) => x.tot)), t1 = Math.max(...b.map((x) => x.tot), t0 + 10), bw = (W - L - R) / b.length;
-    const y = (v) => H - B - (v / mx) * (H - B - 12), y2 = (v) => H - B - ((v - t0) / (t1 - t0)) * (H - B - 12);
-    let g = ''; for (let k = 0; k <= 4; k++) { const v = (mx * k) / 4, tv = t0 + ((t1 - t0) * k) / 4; g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#ffffff10"/><text x="${L - 5}" y="${y(v) + 4}" font-size="10" fill="#8e9ab5" text-anchor="end">${Math.round(v)}</text><text x="${W - R + 5}" y="${y(v) + 4}" font-size="10" fill="#2fd27a">${nf(Math.round(tv))}</text>`; }
-    b.forEach((o, i) => { const h = Math.max(o.v ? 2 : 0, H - B - y(o.v)), x = L + i * bw; g += `<rect x="${x + 1}" y="${H - B - h}" width="${Math.max(2, bw - 2)}" height="${h}" rx="2" fill="url(#ug)"><title>${o.k}: ${o.v} L · total ${nf(o.tot)} L</title></rect>`;
+    const H = 230, L = 44, R = 56, B = 22, TOP = 24, mx = Math.max(10, ...b.map((x) => x.v)), bw = (W - L - R) / b.length;
+    /* eixo direito: folga de ~5% e ticks redondos (1, 2 ou 5 × 10^n) */
+    const a0 = Math.min(...b.map((x) => x.tot)), a1 = Math.max(...b.map((x) => x.tot)), sp = Math.max(a1 - a0, 10), st = passo((sp * 1.1) / 4);
+    const t0 = Math.floor((a0 - sp * 0.05) / st) * st, t1 = Math.ceil((a1 + sp * 0.05) / st) * st;
+    const y = (v) => H - B - (v / mx) * (H - B - TOP), y2 = (v) => H - B - ((v - t0) / (t1 - t0)) * (H - B - TOP);
+    let g = ''; for (let k = 0; k <= 4; k++) { const v = (mx * k) / 4; g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#ffffff10"/><text x="${L - 5}" y="${y(v) + 4}" font-size="10" fill="#8e9ab5" text-anchor="end">${Math.round(v)}</text>`; }
+    for (let tv = t0; tv <= t1 + st / 2; tv += st) g += `<text x="${W - R + 5}" y="${y2(tv) + 4}" font-size="10" fill="#2fd27a">${nf(Math.round(tv))}</text>`;
+    b.forEach((o, i) => { const h = Math.max(o.v ? 2 : 0, H - B - y(o.v)), x = L + i * bw; g += `<rect x="${x + 1}" y="${H - B - h}" width="${Math.max(2, bw - 2)}" height="${h}" rx="2" fill="#3d8bff"><title>${o.k}: ${o.v} L · total ${nf(o.tot)} L</title></rect>`;
       if (i % Math.ceil(b.length / 10) === 0) g += `<text x="${x + bw / 2}" y="${H - 6}" font-size="10" fill="#8e9ab5" text-anchor="middle">${o.k}</text>`; });
     g += `<path d="${b.map((o, i) => (i ? 'L' : 'M') + (L + i * bw + bw / 2).toFixed(1) + ' ' + y2(o.tot).toFixed(1)).join('')}" fill="none" stroke="#2fd27a" stroke-width="2.2"/>`;
-    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%"><defs><linearGradient id="ug" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#a45cff"/></linearGradient></defs>${g}<text x="${L}" y="9" font-size="10" fill="#8e9ab5">L no intervalo</text><text x="${W - R + 5}" y="9" font-size="10" fill="#2fd27a">total L</text></svg>`;
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%">${g}<text x="${L}" y="9" font-size="10" fill="#8e9ab5">L no intervalo</text><text x="${W - R + 5}" y="9" font-size="10" fill="#2fd27a">total L</text></svg>`;
   }
+  function textoPos(pos, gnss, ult) {
+    const fonte = pos.posSrc === 'gnss' ? 'posição GNSS' : pos.posSrc === 'salva' ? 'última posição GNSS guardada na placa' : pos.posSrc === 'cell' || pos.posSrc === 'celula' ? 'posição aproximada por torre de celular' : 'posição de fonte não informada';
+    let t = `${fonte}, precisão ~100 m (arredondada), de ${dmy(gnss ? gnss.ts || gnss.rx : pos.ts || pos.rx)}`;
+    if (gnss && ult && ult.posSrc === 'salva' && T(ult) > T(gnss)) t += `; repetida pela placa até ${hm(T(ult))} (sem fix novo)`;
+    return t;
+  }
+  function passo(x) { const p = Math.pow(10, Math.floor(Math.log10(x))), f = x / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
   function sinal(rs, tel) {
     const pts = tel.filter((r) => r.rsrp != null).map((r) => ({ t: T(r), v: r.rsrp, s: r.snr, n: isSat(r) }));
     rs.filter((r) => r.event === 'sat_reg' && r.rsrp != null).forEach((r) => pts.push({ t: T(r), v: r.rsrp, s: r.snr, n: true }));

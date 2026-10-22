@@ -4,7 +4,7 @@
    - Fontes Google e Leaflet (unpkg): Stale While Revalidate.
    - API ntn-lab: Network First; só GET com status 200 vai para o cache, com __cachedAt (ISO) injetado no JSON.
    - Tiles, Valhalla, OSRM, nRF Cloud e qualquer POST: direto da rede, nunca em cache. */
-const VERSION = 'ntn-v55';
+const VERSION = 'ntn-v56';
 const STATIC = VERSION + '-static';
 const CDN = VERSION + '-cdn';
 const API_CACHE = VERSION + '-api';
@@ -41,6 +41,8 @@ self.addEventListener('install', (e) => {
     await self.skipWaiting();
   })());
 });
+
+self.addEventListener('message', (e) => { if (e.data === 'SKIP_WAITING') self.skipWaiting(); });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {

@@ -32,8 +32,8 @@
       g += `<rect x="${x1}" y="${H - B + 6}" width="${Math.max(1, x2 - x1)}" height="10" fill="${BC[band(p.st)]}"><title>${dur(p.t)} · CEREG ${p.st}</title></rect>`; });
     for (let v = Math.ceil(rlo / 10) * 10; v <= rhi; v += 10) g += `<line x1="${L}" x2="${W - R}" y1="${yr(v)}" y2="${yr(v)}" stroke="#ffffff12"/><text x="${L - 6}" y="${yr(v) + 4}" text-anchor="end" font-size="10" fill="#8e9ab5">${v}</text>`;
     const path = (k, y) => { let d = '', pen = false; pts.forEach((p) => { if (p[k] == null) { pen = false; return; } d += (pen ? 'L' : 'M') + x(p.t).toFixed(1) + ' ' + y(p[k]).toFixed(1); pen = true; }); return d; };
-    g += `<path d="${path('rsrp', yr)}" fill="none" stroke="#a45cff" stroke-width="2.2"/><path d="${path('snr', yq)}" fill="none" stroke="#3d8bff" stroke-width="1.6" stroke-dasharray="4 3"/>`;
-    pts.forEach((p) => { if (p.rsrp != null) g += `<circle cx="${x(p.t)}" cy="${yr(p.rsrp)}" r="2.6" fill="#a45cff"><title>${dur(p.t)}: RSRP ${p.rsrp} dBm · SNR ${p.snr ?? '—'} dB · CEREG ${p.st}</title></circle>`; });
+    g += `<path d="${path('rsrp', yr)}" fill="none" stroke="#3d8bff" stroke-width="2.2"/><path d="${path('snr', yq)}" fill="none" stroke="#3d8bff" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+    pts.forEach((p) => { if (p.rsrp != null) g += `<circle cx="${x(p.t)}" cy="${yr(p.rsrp)}" r="2.6" fill="#3d8bff"><title>${dur(p.t)}: RSRP ${p.rsrp} dBm · SNR ${p.snr ?? '—'} dB · CEREG ${p.st}</title></circle>`; });
     if (s.sum?.tReg != null) g += `<line x1="${x(s.sum.tReg)}" x2="${x(s.sum.tReg)}" y1="${T}" y2="${H - B}" stroke="#2fd27a" stroke-dasharray="3 3"/><text x="${x(s.sum.tReg) + 4}" y="${T + 10}" font-size="10" fill="#2fd27a">registrou ${dur(s.sum.tReg)}</text>`;
     for (let k = 0; k <= 4; k++) { const t = (tmax * k) / 4; g += `<text x="${x(t)}" y="${H - 2}" text-anchor="middle" font-size="10" fill="#8e9ab5">${dur(Math.round(t))}</text>`; }
     for (let v = Math.ceil(qlo / 5) * 5; v <= qhi; v += 5) g += `<text x="${W - R + 6}" y="${yq(v) + 4}" font-size="10" fill="#3d8bff">${v}</text>`;

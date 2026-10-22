@@ -69,8 +69,8 @@
       const lo = Math.min(-140, ...pts.map((p) => p.r)), hi = Math.max(-90, ...pts.map((p) => p.r));
       const x = (t) => L + ((t - t0) / (t1 - t0)) * (W - L - 8), y = (v) => 8 + (1 - (v - lo) / (hi - lo)) * (H - B - 8);
       let g = ''; for (let v = Math.ceil(lo / 10) * 10; v <= hi; v += 10) g += `<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#ffffff10"/><text x="${L - 4}" y="${y(v) + 3}" font-size="9" fill="#8e9ab5" text-anchor="end">${v}</text>`;
-      g += `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + x(p.t).toFixed(1) + ' ' + y(p.r).toFixed(1)).join('')}" fill="none" stroke="#a45cff" stroke-width="2"/>`;
-      pts.forEach((p) => (g += `<circle cx="${x(p.t)}" cy="${y(p.r)}" r="2.5" fill="#a45cff"><title>${dmy(p.t)} RSRP ${p.r} dBm SNR ${p.q ?? '—'} dB</title></circle>`));
+      g += `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + x(p.t).toFixed(1) + ' ' + y(p.r).toFixed(1)).join('')}" fill="none" stroke="#3d8bff" stroke-width="2"/>`;
+      pts.forEach((p) => (g += `<circle cx="${x(p.t)}" cy="${y(p.r)}" r="2.5" fill="#3d8bff"><title>${dmy(p.t)} RSRP ${p.r} dBm SNR ${p.q ?? '—'} dB</title></circle>`));
       g += `<text x="${L}" y="${H - 4}" font-size="9" fill="#8e9ab5">${dmy(t0)}</text><text x="${W - 8}" y="${H - 4}" font-size="9" fill="#8e9ab5" text-anchor="end">${dmy(t1)}</text>`;
       $('slChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%">${g}</svg>`; }
     const L14 = { sat_start: () => 'teste satélite iniciado (Cat-M)', gnss_ok: (r) => 'GNSS ok em ' + dur(r.value) + ' · ' + esc(r.info || ''), gnss_fail: (r) => '<span style="color:#ffb547">GNSS sem fix</span> · ' + esc(r.info || ''),
