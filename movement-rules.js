@@ -15,9 +15,9 @@
     };
     var RULES = {
       A: { color: 'red', label: 'Deslocamento acima da média' },
-      B: { color: 'yellow', label: 'Queda de deslocamento' },
+      B: { color: 'yellow', label: 'Queda de deslocamento em movimento' },
       C: { color: 'orange', label: 'Tendência fora do padrão' },
-      D: { color: 'purple', label: 'Movimento noturno atípico' },
+      D: { color: 'red', label: 'Movimento noturno atípico' },
       E: { color: 'grey', label: 'Sem posições' }
     };
     var ABOVE_PCT = 20, BELOW_PCT = 30, CONSECUTIVE = 5, NIGHT_FACTOR = 1.5, STALE_FACTOR = 2;
@@ -60,25 +60,31 @@
         return o;
       });
     }
+    function fmtDur(min) { if (min < 60) return min + ' min'; var d = Math.floor(min / 1440), h = Math.floor((min % 1440) / 60); return d ? d + (d === 1 ? ' dia' : ' dias') + (h ? ' e ' + h + ' h' : '') : h + ' h' + (min % 60 ? ' ' + (min % 60) + ' min' : ''); }
     function nTxt(n) { return n >= 24 ? 'das últimas 24 posições' : 'de ' + n + (n === 1 ? ' posição' : ' posições'); }
 
     /* A, B, C, D sobre distância e velocidade. */
     function evaluateReadings(list) {
       var fired = [], streak = { distM: 0, speedKmh: 0 }, nightDist = [], prevRule = { distM: {}, speedKmh: {} };
+      var prevO = null;
       list.forEach(function (o) {
         var t = Date.parse(o.ts);
+        /* v3: parado (deslocamento abaixo de 50 m) é estado normal: B e C não disparam. B só quando estava em
+           movimento e continua se movendo bem abaixo da média (queda real), nunca numa parada. */
+        var moving = typeof o.distM === 'number' && o.distM >= STOP_RADIUS_M, wasMoving = !!(prevO && typeof prevO.distM === 'number' && prevO.distM >= STOP_RADIUS_M);
+        prevO = o;
         ['distM', 'speedKmh'].forEach(function (m) {
           var s = o.rolling[m], v = o[m], label = METRICS[m].label.toLowerCase(), base = { metric: m, at: t, seq: o.seq, value: v };
           if (typeof v !== 'number' || !s || !(s.mean > 0) || s.devPct == null) { streak[m] = 0; prevRule[m] = {}; return; }
           // A e B: ativos enquanto durar; no histórico só o início da sequência (ver onlyStreakStarts)
-          var isA = s.devPct > ABOVE_PCT, isB = s.devPct < -BELOW_PCT;
+          var isA = s.devPct > ABOVE_PCT && moving, isB = s.devPct < -BELOW_PCT && moving && wasMoving;
           base.streakStartA = !prevRule[m].A; base.streakStartB = !prevRule[m].B; prevRule[m] = { A: isA, B: isB };
           // A: distância ou velocidade mais de 20% acima da média móvel -> vermelho
           if (isA) fired.push(assign(base, { rule: 'A', threshold: r1(s.mean * 1.2), message: METRICS[m].label + ' ' + Math.round(s.devPct) + '% acima da média ' + nTxt(s.n) }));
           // B: mais de 30% abaixo da média -> amarelo
           if (isB) fired.push(assign(base, { rule: 'B', threshold: r1(s.mean * 0.7), message: (options.dropMessage || 'Possível falha de GPS ou equipamento desligado') + ' (' + label + ' ' + Math.round(-s.devPct) + '% abaixo da média ' + nTxt(s.n) + ')' }));
           // C: 5 leituras seguidas fora do padrão (desvio além de ±20%) -> tendência
-          streak[m] = Math.abs(s.devPct) > ABOVE_PCT ? streak[m] + 1 : 0;
+          streak[m] = moving && Math.abs(s.devPct) > ABOVE_PCT ? streak[m] + 1 : 0;
           if (streak[m] === CONSECUTIVE) fired.push(assign(base, { rule: 'C', threshold: ABOVE_PCT, message: 'Tendência: ' + CONSECUTIVE + ' leituras seguidas de ' + label + ' fora do padrão (mais de 20% de desvio)' }));
         });
         // D: entre 22h e 6h BRT, deslocamento acima de 1,5x a média noturna
@@ -101,7 +107,7 @@
       if (last && iv && now - Date.parse(last.ts) > STALE_FACTOR * iv) {
         var minutes = Math.round((now - Date.parse(last.ts)) / MIN);
         var e = { rule: 'E', metric: 'posicoes', at: Date.parse(last.ts), seq: last.seq, value: minutes, threshold: Math.round((STALE_FACTOR * iv) / MIN),
-          message: 'Sem posições há ' + (minutes > 2880 ? Math.round(minutes / 1440) + ' dias (' + minutes + ' minutos)' : minutes + ' minutos') + ', verificar conexão' };
+          message: 'Sem posições há ' + fmtDur(minutes) + ', verificar conexão' };
         active.push(e); fired.push(e);
       }
       /* Para o painel (setas): a última posição expõe distM/speedKmh/stoppedMin como "métricas". Sem lat/lon nos alertas. */
@@ -109,7 +115,7 @@
       return { readings: list.map(function (o) { var c = assign(o, {}); delete c.lat; delete c.lon; return c; }), fired: fired, active: active, last: last || null };
     }
     var engine = {}; for (var k in Base) engine[k] = Base[k];
-    engine.METRICS = METRICS; engine.RULES = RULES; engine.compute = compute; engine.annotate = annotate; engine.haversineM = haversineM; engine.DEVICE_WORD = DEVICE_WORD;
+    engine.METRICS = METRICS; engine.RULES = RULES; engine.compute = compute; engine.annotate = annotate; engine.haversineM = haversineM; engine.DEVICE_WORD = DEVICE_WORD; engine.fmtDur = fmtDur;
     return engine;
   }
   root.MovementRules = { create: create };

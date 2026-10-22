@@ -15,7 +15,7 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var dateTimeBRT = function (ms) { return new Date(ms).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
   var nf = function (n) { return Number(n).toLocaleString('pt-BR'); };
-  var selectedChartMetric = null, historyMetricFilter = 'all', historyRuleFilter = 'all', lastResult = null;
+  var PAGE = 20, page = 0, selectedChartMetric = null, historyMetricFilter = 'all', historyRuleFilter = 'all', lastResult = null;
   var METRIC_LABELS = cfg.labels;
 
   /* Seta: sobe ou desce conforme o desvio; cor conforme a métrica (consumo alto = vermelho, sinal alto = verde). */
@@ -43,7 +43,7 @@
   }
 
   /* Gráfico de linha: valor (azul), média móvel (tracejado) e pontos de alerta (cor da regra). */
-  var RULE_COLORS = { red: '#ff5470', yellow: '#ffd23f', orange: '#ff9a3c', purple: '#c79bff', grey: '#9aa4b8' };
+  var RULE_COLORS = { red: '#e5484d', yellow: '#f08a8d', orange: '#3d8bff', purple: '#3d8bff', grey: '#9aa4b8' }; // padrão: vermelho alerta, vermelho suave atenção, azul info, cinza neutro
   function renderChart(res) {
     var el = $('metricChart'); if (!el) return;
     var m = selectedChartMetric, pts = res.readings.filter(function (r) { return typeof r[m] === 'number'; }).slice(-200);
@@ -71,8 +71,11 @@
     var h = R.loadHistory(cfg.storageKey), list = R.filterHistory(h, historyMetricFilter, historyRuleFilter), unread = R.unreadCount(h);
     if ($('ahUnread')) $('ahUnread').textContent = unread ? unread + ' não lido' + (unread === 1 ? '' : 's') : '';
     var el = $('ahList'); if (!el) return;
-    el.innerHTML = list.length ? list.map(function (e) {
-      return '<tr class="' + (e.read ? 'ah-read' : 'ah-unread') + '"><td class="mono">' + esc(dateTimeBRT(e.at)) + '</td><td>' + esc(METRIC_LABELS[e.metric] || e.metric) + '</td><td><span class="rb rb--' + R.RULES[e.rule].color + ' rb--sm">' + e.rule + '</span> ' + esc(R.RULES[e.rule].label) + '</td><td class="mono">' + esc(e.value) + '</td><td class="mono">' + esc(e.threshold) + '</td><td>' + esc(e.message) + '</td><td><button class="btn btn-sm" data-key="' + esc(e.key) + '">' + (e.read ? 'Marcar não lido' : 'Marcar lido') + '</button></td></tr>';
+    var pages = Math.max(1, Math.ceil(list.length / PAGE)); if (page >= pages) page = pages - 1;
+    var pg = $('ahPager'); if (pg) pg.innerHTML = list.length > PAGE ? '<button class="btn btn-sm" data-p="-1"' + (page ? '' : ' disabled') + '>Anterior</button> <span class="muted">página ' + (page + 1) + ' de ' + pages + ' · ' + list.length + ' alertas</span> <button class="btn btn-sm" data-p="1"' + (page < pages - 1 ? '' : ' disabled') + '>Próxima</button>' : '';
+    if (pg) pg.querySelectorAll('button[data-p]').forEach(function (b) { b.onclick = function () { page += +b.dataset.p; renderHistory(); }; });
+    el.innerHTML = list.length ? list.slice(page * PAGE, page * PAGE + PAGE).map(function (e) {
+      return '<tr class="' + (e.read ? 'ah-read' : 'ah-unread') + '"><td class="mono">' + esc(dateTimeBRT(e.at)) + '</td><td>' + esc(METRIC_LABELS[e.metric] || e.metric) + '</td><td><span class="rb rb--' + R.RULES[e.rule].color + ' rb--sm">' + e.rule + '</span> ' + esc(R.RULES[e.rule].label) + '</td><td class="mono">' + esc(e.value) + '</td><td class="mono">' + esc(e.threshold) + '</td><td>' + esc(e.message) + '</td><td><button class="btn btn-sm ah-mark" data-key="' + esc(e.key) + '">' + (e.read ? 'Não lido' : 'Lido') + '</button></td></tr>';
     }).join('') : '<tr><td colspan="7" class="muted">' + (h.length ? 'Nenhum alerta com esse filtro.' : 'Nenhum alerta disparado nos últimos 30 dias.') + '</td></tr>';
     el.querySelectorAll('button[data-key]').forEach(function (b) { b.onclick = function () { R.saveHistory(R.toggleRead(R.loadHistory(cfg.storageKey), b.dataset.key), cfg.storageKey); renderHistory(); }; });
   }
@@ -90,8 +93,8 @@
     if (bindOnce.done) return; bindOnce.done = true;
     var seg = function (id, fn) { document.querySelectorAll('#' + id + ' button').forEach(function (b) { b.addEventListener('click', function () { fn(b); document.querySelectorAll('#' + id + ' button').forEach(function (x) { x.classList.toggle('on', x === b); }); if (lastResult) renderChart(lastResult); renderHistory(); }); }); };
     seg('mcSeg', function (b) { selectedChartMetric = b.dataset.m; });
-    if ($('ahMetric')) $('ahMetric').onchange = function () { historyMetricFilter = this.value; renderHistory(); };
-    if ($('ahRule')) $('ahRule').onchange = function () { historyRuleFilter = this.value; renderHistory(); };
+    if ($('ahMetric')) $('ahMetric').onchange = function () { historyMetricFilter = this.value; page = 0; renderHistory(); };
+    if ($('ahRule')) $('ahRule').onchange = function () { historyRuleFilter = this.value; page = 0; renderHistory(); };
     if ($('ahAllRead')) $('ahAllRead').onclick = function () { R.saveHistory(R.markAllRead(R.loadHistory(cfg.storageKey)), cfg.storageKey); renderHistory(); };
     if ($('ahExport')) $('ahExport').onclick = exportHistoryNow;
   }
@@ -105,11 +108,11 @@
     box.innerHTML = '<div class="card-h"><h2>Inteligência: médias e alertas</h2><small class="muted">média móvel das últimas 24 ' + cfg.unitWord + 's</small></div>' +
       '<div class="ai-grid"><div><div id="metricDeltas" class="md"></div><div id="ruleBadges" class="rbs" aria-live="polite"></div></div>' +
       '<div><div class="seg" id="mcSeg">' + metrics.map(function (m, i) { return '<button data-m="' + m + '"' + (m === cfg.defaultMetric ? ' class="on"' : '') + '>' + E.METRICS[m].label + '</button>'; }).join('') + '</div>' +
-      '<div id="metricChart" class="chart"></div><div class="legend"><span><i style="background:#3d8bff"></i>valor</span><span><i style="background:#2fd27a"></i>média móvel (tracejado)</span><span>pontos coloridos = alertas A a E</span></div></div></div>' +
+      '<div id="metricChart" class="chart"></div><div class="legend"><span><i style="background:#3d8bff"></i>valor</span><span><i style="background:#2fd27a"></i>média móvel (tracejado)</span><span><i style="background:#e5484d"></i>pontos: alertas por regra</span></div></div></div>' +
       '<h3 style="margin:14px 0 6px">Histórico de Alertas <span id="ahUnread" class="pill"></span></h3>' +
       '<div class="filters"><select id="ahMetric"><option value="all">Todas as métricas</option>' + metricOpts + '</select><select id="ahRule"><option value="all">Todas as regras</option>' + ruleOpts + '</select>' +
       '<button id="ahAllRead" class="btn btn-sm">Marcar todos como lidos</button><button id="ahExport" class="btn btn-sm" title="Baixa o histórico completo em CSV">⇩ Exportar agora</button></div>' +
-      '<div class="table-wrap" style="max-height:320px"><table class="tbl"><thead><tr><th>Data e hora (BRT)</th><th>Métrica</th><th>Regra</th><th>Valor lido</th><th>Limiar</th><th>Mensagem</th><th></th></tr></thead><tbody id="ahList"></tbody></table></div>' +
+      '<div class="table-wrap ah-wrap"><table class="tbl ah-tbl"><thead><tr><th>Data e hora (BRT)</th><th>Métrica</th><th>Regra</th><th>Valor lido</th><th>Limiar</th><th>Mensagem</th><th></th></tr></thead><tbody id="ahList"></tbody></table></div><div id="ahPager" class="ah-pager"></div>' +
       '<small class="muted">' + (cfg.rulesHelp || '') + ' O histórico fica salvo neste navegador e apaga entradas com mais de 30 dias.</small>';
   }
   function configure(options) { for (var k in options) cfg[k] = options[k]; R = cfg.engine; METRIC_LABELS = cfg.labels; }

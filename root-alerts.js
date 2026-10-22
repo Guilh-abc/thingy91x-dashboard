@@ -34,7 +34,7 @@
       var ts = byType[id].sort(function (a, b) { return a - b; }), first = ts[0], last = ts[ts.length - 1];
       if (now - first < DAY && ts.length && messages.some(function (m) { return now - Date.parse(m.receivedAt) > DAY; }))
         out.push({ rule: 'F', metric: 'sensores', at: first, seq: id, value: id, threshold: 'novo', message: 'Sensor novo: mensagens "' + id + '" começaram a chegar' });
-      if (ts.length >= 3) {
+      if (ts.length >= 3 && false) {
         var gaps = []; for (var i = 1; i < ts.length; i++) gaps.push(ts[i] - ts[i - 1]); gaps.sort(function (a, b) { return a - b; });
         var typical = gaps[gaps.length >> 1];
         if (typical > 0 && now - last > SENSOR_GONE_FACTOR * typical && now - last < 30 * DAY)
@@ -42,13 +42,28 @@
             message: 'Sensor sumiu: "' + id + '" não chega há ' + Math.round((now - last) / 60000) + ' minutos (normal a cada ~' + Math.max(1, Math.round(typical / 60000)) + ' min)' });
       }
     });
+    /* v2: sensores que pararam viram UM alerta só, com data e duração em dias/horas; chave estável (não reabre). */
+    var gone = [];
+    Object.keys(byType).forEach(function (id) {
+      var ts = byType[id], last = ts[ts.length - 1]; if (ts.length < 3) return;
+      var gaps = []; for (var i = 1; i < ts.length; i++) gaps.push(ts[i] - ts[i - 1]); gaps.sort(function (a, b) { return a - b; });
+      var typical = gaps[gaps.length >> 1];
+      if (typical > 0 && now - last > SENSOR_GONE_FACTOR * typical && now - last < 30 * DAY) gone.push({ id: id, last: last });
+    });
+    if (gone.length) {
+      var since = Math.max.apply(null, gone.map(function (g) { return g.last; })), ids = gone.map(function (g) { return g.id; }).sort();
+      var dia = new Date(since).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
+      var dur = base.fmtDur(Math.round((now - since) / 60000));
+      out.push({ rule: 'F', metric: 'sensores', at: since, seq: 'sumiu|' + ids.join(',') + '|' + dia, value: ids.join(', '), threshold: 'há ' + dur,
+        message: 'Telemetria (' + ids.join(', ') + ') sem dados desde ' + dia + ', há ' + dur });
+    }
     return out;
   }
 
   var base = window.MovementRules.create(window.AlertRules, { dropMessage: 'Possível interferência ou chip sem cobertura' });
   var engine = {}; for (var k in base) engine[k] = base[k];
   engine.RULES = {}; for (var r in base.RULES) engine.RULES[r] = base.RULES[r];
-  engine.RULES.F = { color: 'purple', label: 'Sensor novo ou que sumiu' };
+  engine.RULES.F = { color: 'grey', label: 'Sensor novo ou que sumiu' };
   engine.compute = function (records, now) {
     now = now == null ? Date.now() : now;
     var res = base.compute(records, now), changes = sensorChanges(messageRecords(), now);
@@ -75,12 +90,14 @@
     api.printReport('Painel Cat-M Telekom: relatório', kpis, '#metricChart svg', { period: 'gerado em ' + new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + ' BRT', version: 'Connect NTN · placa Cat-M Telekom' });
   }
 
+  /* v2: histórico recalculado com as regras novas (limpa entradas ruidosas antigas uma vez). */
+  try { if (localStorage.getItem(HISTORY_KEY + '.schema') !== '2') { localStorage.removeItem(HISTORY_KEY); localStorage.setItem(HISTORY_KEY + '.schema', '2'); } } catch (e) {}
   var apiPromise = loadApiCoreIsolated().then(function (api) { window.RootApiCore = api; return api; }).catch(function () { return null; });
   function render() {
     apiPromise.then(function (api) {
       window.AlertsPanel.configure({ engine: engine, labels: { distM: 'Distância entre posições', speedKmh: 'Velocidade', stoppedMin: 'Tempo parado', posicoes: 'Posições', sensores: 'Sensores' },
         storageKey: HISTORY_KEY, csvPrefix: 'fing-alertas', defaultMetric: 'speedKmh', unitWord: 'posição', emptyText: 'Ainda não há posições da trilha carregadas (abra a trilha ou aguarde o pareamento com o nRF Cloud).',
-        rulesHelp: 'Regras: A distância ou velocidade mais de 20% acima da média; B mais de 30% abaixo (possível interferência ou chip sem cobertura); C 5 leituras seguidas com desvio acima de 20%; D entre 22h e 6h, deslocamento acima de 1,5x a média noturna; E sem posição nova há mais de 2x o intervalo esperado; F sensor novo ou que parou de enviar.' });
+        rulesHelp: 'Regras: A distância ou velocidade mais de 20% acima da média; B mais de 30% abaixo estando em movimento (possível interferência ou chip sem cobertura); C 5 leituras seguidas em movimento com desvio acima de 20%; parado não gera B nem C; D entre 22h e 6h, deslocamento acima de 1,5x a média noturna; E sem posição nova há mais de 2x o intervalo esperado; F sensor novo ou que parou de enviar.' });
       if (api && !window.ApiCore) window.ApiCore = { toCSV: api.toCSV }; // o "Exportar agora" do histórico usa ApiCore.toCSV
       window.AlertsPanel.mount('intelCard');
       var head = document.querySelector('#intelCard .card-h');
