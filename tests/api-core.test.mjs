@@ -12,7 +12,7 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 // Carrega como script classico (igual ao navegador) num contexto isolado
 import vm from 'vm';
 import fs from 'fs';
-const ctx = { window: {}, Date, Math, JSON, console };
+const ctx = { window: {}, Date, Math, JSON, console, String, Number, isFinite, isNaN };
 vm.runInNewContext(fs.readFileSync(join(__dir, '../api-core.js'), 'utf8'), ctx);
 const { dedup, fmtDur, fmtBytes, ago } = ctx.window.ApiCore;
 
@@ -93,6 +93,30 @@ ok('string vazia sem dados',  ago('')      === 'sem dados');
   ok('2 h atras',   ago(h2).includes('h'), ago(h2));
 }
 
+// ---- toCSV / reportHTML (G1, RF-06) ----
+console.log('\n=== toCSV ===');
+{
+  const { toCSV, reportHTML } = ctx.window.ApiCore;
+  const csv = toCSV([
+    { ts: '2026-10-22T12:00:00Z', totalL: 12.5, info: 'a;b "x"', lat: -23.561234, lon: -46.655678, iccid: '8955000000001234567', custo: 9 },
+  ], ['ts', 'totalL', 'info', 'lat', 'lon', 'iccid', 'custo'], { ts: 'Data (BRT)', totalL: 'Total (L)' });
+  const lines = csv.split('\r\n');
+  ok('BOM no início', csv.charCodeAt(0) === 0xfeff);
+  ok('cabeçalho com ; e rótulos', lines[0] === '\ufeffData (BRT);Total (L);info;lat;lon;iccid', lines[0]);
+  ok('data em BRT', lines[1].startsWith('22/10/2026, 09:00:00') || lines[1].startsWith('22/10/2026 09:00:00'), lines[1]);
+  ok('decimal com vírgula', lines[1].includes(';12,5;'));
+  ok('aspas e ; escapados', lines[1].includes('"a;b ""x"""'));
+  ok('coordenada arredondada', lines[1].includes(';-23,56;-46,66;') && !csv.includes('561234'));
+  ok('ICCID mascarado', lines[1].endsWith('•••• 4567') && !csv.includes('8955000000001234567'));
+  ok('coluna de custo descartada', !/custo/.test(csv) && lines[0].split(';').length === 6 && !lines[1].endsWith(';9'));
+  ok('lista vazia gera só cabeçalho', toCSV([], ['ts']).split('\r\n').length === 1);
+  const h = reportHTML('Relatório', [['Total', '10 L'], ['Custo estimado', 'R$ 5'], ['Fatura', 'R$ 2']], { period: 'Últimas 24 h', now: Date.parse('2026-10-22T12:00:00Z'), version: 'painel v1' });
+  ok('relatório com período e data BRT', h.includes('Últimas 24 h') && h.includes('22/10/2026') && h.includes('horário de Brasília'));
+  ok('relatório sem custo', !/Custo|R\$/.test(h) && h.includes('10 L'));
+  ok('relatório escapa HTML', reportHTML('<b>x</b>', []).includes('&lt;b&gt;'));
+  ok('sem travessão', !/\u2014/.test(csv + h));
+}
+
 // ---- resultado ----
-console.log('\n' + (failed === 0 ? 'TODOS OK' : 'FALHAS: ' + failed) + ' — ' + passed + ' passaram, ' + failed + ' falharam');
+console.log('\n' + (failed === 0 ? 'TODOS OK' : 'FALHAS: ' + failed) + ': ' + passed + ' passaram, ' + failed + ' falharam');
 if (failed > 0) process.exit(1);

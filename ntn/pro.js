@@ -208,13 +208,20 @@
   }
 
   // ---------- export ----------
+  // G2: colunas do CSV do Rastreador (sem custo; lat/lon saem arredondadas pelo api-core)
+  const CSV_COLS = ['ts', 'rx', 'type', 'net', 'seq', 'event', 'value', 'info', 'plmn', 'act', 'band', 'rsrp', 'snr', 'ce', 'mv', 'temp', 'regFor', 'lat', 'lon', 'acc', 'posSrc', 'gnssAge', 'gnssSats', 'deliveredNet', 'deliveredHow', 'transport', 'bytes', 'late', 'prevRttMs', 'rttMs'];
+  const CSV_LABELS = { ts: 'criada (BRT)', rx: 'chegada (BRT)', type: 'tipo', net: 'rede', event: 'evento', value: 'valor', info: 'descrição', act: 'tecnologia', band: 'banda', ce: 'nível CE', mv: 'bateria (mV)', temp: 'temperatura (°C)', regFor: 'tempo de registro', lat: 'lat (aprox.)', lon: 'lon (aprox.)', acc: 'precisão (m)', posSrc: 'fonte da posição', gnssAge: 'idade GNSS (s)', gnssSats: 'satélites GNSS', deliveredNet: 'rede de entrega', deliveredHow: 'fonte da rede de entrega', transport: 'transporte', late: 'atraso (s)', prevRttMs: 'RTT anterior (ms)', rttMs: 'RTT (ms)' };
   function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
   function doExport(kind) {
     const rs = view(), stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '');
     const tag = st.src === 'replay' ? 'replay' : 'live';
-    if (kind === 'csv') download(`ntn-pro-${tag}-${stamp}.csv`, P.toCSV(rs), 'text/csv;charset=utf-8');
+    const A = window.ApiCore;
+    if (kind === 'csv') download(`ntn-pro-${tag}-${stamp}.csv`, A.toCSV(P.sortRecs(rs), CSV_COLS, CSV_LABELS), 'text/csv;charset=utf-8'); // G2: via api-core
     if (kind === 'json') download(`ntn-pro-${tag}-${stamp}.json`, JSON.stringify({ schema: 'ntn-pro/1', source: tag, exportedAt: new Date().toISOString(), kpis: P.kpis(rs, nowRef()), switches: P.switches(rs), records: rs }, null, 1), 'application/json');
-    if (kind === 'print') window.print();
+    if (kind === 'print') { // G2: relatório via api-core (KPIs da tela + sinal satélite)
+      const per = st.src === 'replay' ? 'Replay do teste gravado' : ($('fPeriod').selectedOptions[0] || {}).textContent;
+      A.printReport('Rastreador NTN: relatório de conectividade', A.kpisFromDom('#kpis'), '#satChart svg, #satChart canvas', { period: per + ' · ' + rs.length + ' mensagens', version: (document.querySelector('.foot, footer') || {}).textContent || '' });
+    }
   }
 
   // ---------- eventos de UI ----------
@@ -224,11 +231,11 @@
   [['lgNet', 'net'], ['lgTr', 'tr']].forEach(([id, k]) => document.querySelectorAll('#' + id + ' button').forEach((b) => b.onclick = () => { lg[k] = b.dataset.v; document.querySelectorAll('#' + id + ' button').forEach((x) => x.classList.toggle('on', x === b)); render(); }));
   $('lgLate').onchange = (e) => { lg.late = e.target.checked; render(); };
   $('lgQ').oninput = (e) => { lg.q = e.target.value; render(); };
-  $('lgCsv').onclick = () => {
-    const esc2 = (v) => (v == null ? '' : /[",\n;]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v));
-    const head = ['criada', 'chegada', 'seq', 'rede_criacao', 'rede_entrega', 'rede_entrega_fonte', 'transporte', 'tipo', 'descricao', 'bytes', 'latencia_ms', 'atraso_s'];
-    const lines = lgRows.map(({ r, lat }) => [r.ts, r.rx, r.seq, r.net, r.deliveredNet, r.deliveredHow, r.transport || 'https', r.type, lgDesc(r), r.bytes, lat, r.late].map(esc2).join(','));
-    download('ntn-log-completo-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '') + '.csv', [head.join(','), ...lines].join('\n'), 'text/csv;charset=utf-8');
+  $('lgCsv').onclick = () => { // G2: CSV do log completo via api-core (BOM, ';', BRT)
+    const rows = lgRows.map(({ r, lat }) => ({ ts: r.ts, rx: r.rx, seq: r.seq, net: r.net, deliveredNet: r.deliveredNet, deliveredHow: r.deliveredHow, transport: r.transport || 'https', type: r.type, desc: lgDesc(r), bytes: r.bytes, latMs: lat, late: r.late }));
+    const cols = ['ts', 'rx', 'seq', 'net', 'deliveredNet', 'deliveredHow', 'transport', 'type', 'desc', 'bytes', 'latMs', 'late'];
+    const lab = { ts: 'criada (BRT)', rx: 'chegada (BRT)', net: 'rede_criacao', deliveredNet: 'rede_entrega', deliveredHow: 'rede_entrega_fonte', transport: 'transporte', type: 'tipo', desc: 'descricao', latMs: 'latencia_ms', late: 'atraso_s' };
+    download('ntn-log-completo-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '') + '.csv', window.ApiCore.toCSV(rows, cols, lab), 'text/csv;charset=utf-8');
   };
   $('fPeriod').onchange = (e) => { st.period = e.target.value; save(); fitted = false; render(); };
   $('fSw').onchange = (e) => { st.sw = e.target.checked; save(); render(); };
@@ -242,12 +249,8 @@
     const pref = ['ts', 'rx', 'type', 'event', 'seq', 'net', 'txNet', 'transport', 'lat', 'lon', 'acc', 'posSrc', 'gnssAge', 'gnssSats', 'prevRttMs', 'late', 'bytes', 'satOp', 'satTac', 'satCell', 'regSecs', 'rsrp', 'snr', 'plmn'];
     const keys = new Set(); rs.forEach((r) => Object.keys(r || {}).forEach((k) => keys.add(k)));
     const cols = [...pref.filter((k) => keys.has(k)), ...[...keys].filter((k) => !pref.includes(k)).sort()];
-    const loc = (v) => { const t = Date.parse(v); return isNaN(t) ? '' : new Date(t).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }); };
-    const esc = (v) => { if (v == null) return ''; const x = typeof v === 'object' ? JSON.stringify(v) : String(v); return /[";\n\r]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; };
-    const head = ['hora_local_sp', 'chegada_local_sp', ...cols];
-    const lines = rs.map((r) => [loc(r.ts), loc(r.rx), ...cols.map((k) => r[k])].map(esc).join(';'));
     const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '');
-    download(`ntn-log-${stamp}.csv`, '\ufeff' + [head.join(';'), ...lines].join('\r\n'), 'text/csv;charset=utf-8');
+    download(`ntn-log-${stamp}.csv`, window.ApiCore.toCSV(rs, cols.filter((k) => !['iccid', 'imsi', 'cell', 'satCell'].includes(k)), { ts: 'hora_local_sp', rx: 'chegada_local_sp' }), 'text/csv;charset=utf-8'); // G2: privacidade via api-core
     setTimeout(() => download(`ntn-log-${stamp}.json`, JSON.stringify({ schema: 'ntn-log/1', exportedAt: new Date().toISOString(), filtros: { periodo: st.period, rede: st.net, pos: st.pos }, total: rs.length, records: rs }, null, 1), 'application/json'), 400);
   };
   // F1: botão único de Modo Apresentação (tela cheia + layout compacto); ao ativar inicia o replay real de 14/10
