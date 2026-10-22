@@ -9,6 +9,7 @@
     { id: 'consumo', rotulo: 'Consumo', href: 'consumo/', ico: 'grafico', papeis: ['admin', 'leitor'] },
     { id: 'relatorio-demo', rotulo: 'Relatório (demo)', href: 'relatorio-demo/', ico: 'pdf', papeis: ['viewer'] },
     { id: 'relatorio', rotulo: 'Relatório completo', href: 'app/relatorio/', ico: 'apresentacao', papeis: ['admin'] },
+    { id: 'alarmes', rotulo: 'Alarmes', href: 'alarmes/', ico: 'alerta', papeis: ['admin', 'leitor'] },
     { id: 'acessos', rotulo: 'Acessos', href: 'admin/acessos/', ico: 'admin', papeis: ['admin'] }
   ];
   /* Subpáginas: mantêm o item pai ativo e entram como 3º nível da trilha. */

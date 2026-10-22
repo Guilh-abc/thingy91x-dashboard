@@ -1,0 +1,12 @@
+import assert from 'node:assert';
+import * as A from '../functions/_lib/alarmes.js';
+const c = { tipo: 'circulo', lat: -23.5, lon: -46.6, raio: 200, nome: 'Casa' };
+assert.equal(A.validar({ sistema: 'ntn', gatilho: 'cerca_saida', nome: 'a', cerca: c }), null);
+assert.ok(A.validar({ sistema: 'utilities', gatilho: 'velocidade', nome: 'a', limite: 1 }));
+assert.equal(A.avaliar({ gatilho: 'cerca_saida', cerca: c, nome: 'x' }, { lat: -23.51, lon: -46.6 }).disparou, true);
+assert.equal(A.avaliar({ gatilho: 'cerca_saida', cerca: c, nome: 'x' }, { lat: -23.5, lon: -46.6 }).disparou, false);
+assert.equal(A.avaliar({ gatilho: 'sem_posicao', limite: 60 }, { ts: 1 }, 61 * 60000).disparou, true);
+assert.equal(A.avaliar({ gatilho: 'bateria', limite: 3.6 }, {}), null);
+const h = A.emailHtml([{ sistema: 's', regra: 'r', quando: 'q', valor: 'v' }], true);
+assert.ok(h.includes('TESTE') && !h.includes('—'));
+console.log('alarmes: 8 testes OK');
