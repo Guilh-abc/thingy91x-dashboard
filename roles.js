@@ -1,4 +1,4 @@
-/* roles.js: camada de papéis no front (viewer e admin).
+/* roles.js: camada de papéis no front (admin, leitor e viewer).
    IMPORTANTE: isto só ajusta a interface. A segurança de verdade fica no servidor (GET /api/me e rotas /api/users),
    que ainda será implementado. Nada aqui guarda senha ou segredo.
    Contrato em docs/papeis-api.md.
@@ -8,6 +8,15 @@
   var ESTADO = { origem: 'carregando', papel: null, usuario: null };
   var base = (function () { var s = document.currentScript && document.currentScript.src; return s ? s.replace(/roles\.js.*$/, '') : '/'; })();
 
+  /* Leitor: esconde exportações (CSS em shell.css via html[data-papel=leitor]) e corta downloads e impressão
+     pela página. Só interface: o servidor já responde 403 a export e escrita. Captura de tela não dá para impedir. */
+  function travarLeitor() {
+    document.documentElement.setAttribute('data-papel', 'leitor');
+    var clique = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () { if (this.hasAttribute('download')) return; return clique.apply(this, arguments); };
+    document.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a[download]'); if (a) e.preventDefault(); }, true);
+    window.print = function () {};
+  }
   function aplicar() {
     var real = document.documentElement.hasAttribute('data-pagina-real');
     if (ESTADO.origem === 'servidor' && ESTADO.papel === 'viewer' && real) {
@@ -18,6 +27,7 @@
         '<p><a class="btn btn-primary" href="' + base + 'relatorio-demo/">Ver o relatório de demonstração</a></p></div>';
       document.body.appendChild(d);
     }
+    if (ESTADO.origem === 'servidor' && ESTADO.papel === 'leitor') travarLeitor();
     if (ESTADO.origem === 'servidor' && ESTADO.papel === 'admin') {
       document.querySelectorAll('[data-so-admin]').forEach(function (e) { e.hidden = false; });
     }
@@ -33,7 +43,7 @@
         return r.json();
       })
       .then(function (j) {
-        if (j && (j.role === 'admin' || j.role === 'viewer')) { ESTADO.origem = 'servidor'; ESTADO.papel = j.role; ESTADO.usuario = j.email || null; }
+        if (j && ['admin', 'leitor', 'viewer'].indexOf(j.role) >= 0) { ESTADO.origem = 'servidor'; ESTADO.papel = j.role; ESTADO.usuario = j.email || null; }
         else ESTADO.origem = 'legado';
       })
       .catch(function () { ESTADO.origem = 'legado'; })
@@ -44,6 +54,7 @@
     estado: function () { return ESTADO; },
     // No modo legado a decisão continua com a página (chave no navegador), exatamente como hoje.
     podeExportar: function () { return ESTADO.origem !== 'servidor' || ESTADO.papel === 'admin'; },
+    ehLeitor: function () { return ESTADO.origem === 'servidor' && ESTADO.papel === 'leitor'; },
     ehAdmin: function () { return ESTADO.origem === 'servidor' && ESTADO.papel === 'admin'; },
     pronto: carregar()
   };

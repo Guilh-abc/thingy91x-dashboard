@@ -8,12 +8,13 @@
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.status === 204 ? null : r.json(); });
   }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var PAPEIS = [['admin', 'Admin'], ['leitor', 'Leitor'], ['viewer', 'Viewer']];
   function listar() {
     api('GET', 'users').then(function (j) {
       $('lista').innerHTML = (j.users || []).map(function (u) {
-        var badge = u.role === 'admin' ? 'badge-info' : 'badge-neutro';
-        return '<tr><td>' + esc(u.email) + '</td><td><span class="badge ' + badge + '">' + esc(u.role) + '</span></td><td style="text-align:right">' +
-          (u.role !== 'admin' ? '<button class="btn btn-sm" data-admin="' + esc(u.id) + '">Conceder admin</button> ' : '') +
+        var sel = '<select data-papel="' + esc(u.id) + '" aria-label="Papel de ' + esc(u.email) + '" style="padding:6px;border-radius:8px;border:1px solid var(--borda)">' +
+          PAPEIS.map(function (p) { return '<option value="' + p[0] + '"' + (p[0] === u.role ? ' selected' : '') + '>' + p[1] + '</option>'; }).join('') + '</select>';
+        return '<tr><td>' + esc(u.email) + '</td><td>' + sel + '</td><td style="text-align:right">' +
           '<button class="btn btn-danger btn-sm" data-rem="' + esc(u.id) + '">Remover</button></td></tr>';
       }).join('');
     }).catch(function (e) { $('situacao').textContent = 'Não foi possível listar usuários (' + e.message + ').'; });
@@ -21,7 +22,10 @@
   $('lista').addEventListener('click', function (ev) {
     var b = ev.target.closest('button'); if (!b) return;
     if (b.dataset.rem && confirm('Remover este usuário?')) api('DELETE', 'users/' + encodeURIComponent(b.dataset.rem)).then(listar);
-    if (b.dataset.admin) api('PATCH', 'users/' + encodeURIComponent(b.dataset.admin), { role: 'admin' }).then(listar);
+  });
+  $('lista').addEventListener('change', function (ev) {
+    var s = ev.target.closest('select[data-papel]'); if (!s) return;
+    api('PATCH', 'users/' + encodeURIComponent(s.dataset.papel), { role: s.value }).then(listar).catch(function (e) { alert('Não foi possível alterar: ' + e.message); listar(); });
   });
   $('novo').addEventListener('submit', function (ev) {
     ev.preventDefault();

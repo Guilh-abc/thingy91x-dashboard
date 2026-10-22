@@ -3,10 +3,10 @@
    Uso: <script src="../shell.js" data-pagina="ntn"></script> */
 (function (root) {
   var ITENS = [
-    { id: 'app', rotulo: 'Início', href: 'app/', ico: 'casa', papeis: ['admin'] },
-    { id: 'rastreador', rotulo: 'Rastreador', href: 'rastreador/', ico: 'local', papeis: ['admin'] },
-    { id: 'utilities', rotulo: 'Utilities', href: 'utilities/', ico: 'medicao', papeis: ['admin'] },
-    { id: 'consumo', rotulo: 'Consumo', href: 'consumo/', ico: 'grafico', papeis: ['admin'] },
+    { id: 'app', rotulo: 'Início', href: 'app/', ico: 'casa', papeis: ['admin', 'leitor'] },
+    { id: 'rastreador', rotulo: 'Rastreador', href: 'rastreador/', ico: 'local', papeis: ['admin', 'leitor'] },
+    { id: 'utilities', rotulo: 'Utilities', href: 'utilities/', ico: 'medicao', papeis: ['admin', 'leitor'] },
+    { id: 'consumo', rotulo: 'Consumo', href: 'consumo/', ico: 'grafico', papeis: ['admin', 'leitor'] },
     { id: 'relatorio-demo', rotulo: 'Relatório (demo)', href: 'relatorio-demo/', ico: 'pdf', papeis: ['viewer'] },
     { id: 'relatorio', rotulo: 'Relatório completo', href: 'app/relatorio/', ico: 'apresentacao', papeis: ['admin'] },
     { id: 'acessos', rotulo: 'Acessos', href: 'admin/acessos/', ico: 'admin', papeis: ['admin'] }
@@ -45,7 +45,7 @@
       '<nav id="sh-nav" class="sh-nav" aria-label="Sistemas">' +
       itens.map(function (i) { return '<a href="' + base + i.href + '"' + (i.id === ativo(pagina) ? ' aria-current="' + (SUB[pagina] ? 'true' : 'page') + '"' : '') + '>' + ico(i.ico) + i.rotulo + '</a>'; }).join('') +
       '<div class="sh-user"><button type="button" class="sh-ubtn" aria-expanded="false" aria-haspopup="true">' + ico('viewer') + '<span>' + esc(estado.email ? estado.email.split('@')[0] : 'Conta') + '</span></button>' +
-      '<div class="sh-umenu" hidden><b>' + esc(estado.email || 'Sessão do navegador') + '</b><small>Papel: ' + (estado.papel === 'viewer' ? 'Viewer' : estado.papel === 'admin' ? 'Admin' : 'não identificado') + '</small>' +
+      '<div class="sh-umenu" hidden><b>' + esc(estado.email || 'Sessão do navegador') + '</b><small>Papel: ' + ({ viewer: 'Viewer', admin: 'Admin', leitor: 'Leitor' }[estado.papel] || 'não identificado') + '</small>' +
       '<a class="btn btn-sm" href="/cdn-cgi/access/logout">' + ico('sair') + 'Sair</a></div></div></nav></div>' +
       '<ol class="sh-trilha" aria-label="Você está em">' + tr.map(function (t, k) {
         return '<li>' + (t.href ? '<a href="' + base + t.href + '">' + t.rotulo + '</a>' : '<span aria-current="page">' + t.rotulo + '</span>') + (k < tr.length - 1 ? ico('seta') : '') + '</li>';
@@ -79,7 +79,7 @@
     montar();
     fetch(base + 'api/me', { credentials: 'include', cache: 'no-store', headers: { Accept: 'application/json' } })
       .then(function (r) { if (!r.ok) throw 0; return r.json(); })
-      .then(function (j) { estado.papel = j.role || j.papel || null; estado.email = j.email || null; montar(); document.dispatchEvent(new CustomEvent('shell-pronto', { detail: estado })); })
+      .then(function (j) { estado.papel = j.role || j.papel || null; estado.email = j.email || null; if (estado.papel) document.documentElement.setAttribute('data-papel', estado.papel); montar(); document.dispatchEvent(new CustomEvent('shell-pronto', { detail: estado })); })
       .catch(function () {});
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();

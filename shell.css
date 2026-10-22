@@ -48,3 +48,6 @@ header.sh{display:block;flex-wrap:nowrap;justify-content:normal;align-items:norm
 .ntn-nav,nav.sh-velho,a.link.sh-velho{display:none!important}
 @media(prefers-reduced-motion:reduce){.sh-nav.aberto,html.sh-fade body{animation:none}::view-transition-old(root),::view-transition-new(root){animation:none}}
 @media print{header.sh{display:none!important}}
+/* Leitor: sem exportação, relatório completo ou acessos (o servidor também bloqueia) */
+html[data-papel=leitor] :is([data-esconde-leitor],#btnExportLog,#btnExport,#exportMenu,#lgCsv,#exportCsv,#exportGeo,#exportShadow,#exportLog,#rootCsv,#rootPdf,#ahExport,#btnCsvU,#btnPdfU,#btnPdfC,#btnCsvC,#btnApresentacao,a[download],a[href*="app/relatorio"],a[href*="admin/acessos"]){display:none!important}
+@media print{html[data-papel=leitor] body{display:none!important}}

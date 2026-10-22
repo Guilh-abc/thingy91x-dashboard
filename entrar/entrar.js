@@ -3,6 +3,7 @@
 (function () {
   function destino(me) {
     if (me && me.role === 'admin') return '../app/?bemvindo=1';
+    if (me && me.role === 'leitor') return '../app/';
     if (me && me.role === 'viewer') return '../relatorio-demo/';
     return null;
   }

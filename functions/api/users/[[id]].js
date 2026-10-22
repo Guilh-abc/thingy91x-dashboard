@@ -1,10 +1,11 @@
 // /api/users e /api/users/:email (só admin). Grava no KV NTN_ROLES e no Access Group correspondente.
-import { sessao, json, grupo, emailsDo, definirEmails, PLACEHOLDER } from '../../_lib/acesso.js';
+import { sessao, json, grupo, emailsDo, definirEmails, PLACEHOLDER, PAPEIS } from '../../_lib/acesso.js';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function sincronizar(env, email, role) {
-  for (const [id, papel] of [[env.ADMINS_GROUP_ID, 'admin'], [env.VIEWERS_GROUP_ID, 'viewer']]) {
+  for (const [id, papel] of [[env.ADMINS_GROUP_ID, 'admin'], [env.LEITORES_GROUP_ID, 'leitor'], [env.VIEWERS_GROUP_ID, 'viewer']]) {
+    if (!id) continue;
     const atual = emailsDo(await grupo(env, id)).filter((e) => e !== PLACEHOLDER && e !== email);
     if (role === papel) atual.push(email);
     await definirEmails(env, id, atual);
@@ -30,7 +31,7 @@ export async function onRequest({ request, env, params }) {
   if (m === 'POST' && !id) {
     const b = await request.json().catch(() => ({}));
     const email = String(b.email || '').trim().toLowerCase();
-    if (!EMAIL.test(email) || !['admin', 'viewer'].includes(b.role)) return json({ error: 'dado inválido' }, 422);
+    if (!EMAIL.test(email) || !PAPEIS.includes(b.role)) return json({ error: 'dado inválido' }, 422);
     if (await env.NTN_ROLES.get('role:' + email)) return json({ error: 'já existe' }, 409);
     await sincronizar(env, email, b.role);
     await env.NTN_ROLES.put('role:' + email, b.role);
@@ -38,7 +39,7 @@ export async function onRequest({ request, env, params }) {
   }
   if (m === 'PATCH' && id) {
     const b = await request.json().catch(() => ({}));
-    if (!['admin', 'viewer'].includes(b.role)) return json({ error: 'dado inválido' }, 422);
+    if (!PAPEIS.includes(b.role)) return json({ error: 'dado inválido' }, 422);
     await sincronizar(env, id, b.role);
     await env.NTN_ROLES.put('role:' + id, b.role);
     return json({ id, email: id, role: b.role });

@@ -1,7 +1,8 @@
-// acesso.js: valida o JWT do Cloudflare Access e resolve o papel (admin ou viewer).
+// acesso.js: valida o JWT do Cloudflare Access e resolve o papel (admin, leitor ou viewer).
 // Variáveis do Pages: TEAM_DOMAIN (ex. ntn-plataforma.cloudflareaccess.com), ACCESS_AUDS (AUDs separados por vírgula),
-// ADMIN_EMAIL (fallback do primeiro admin), ADMINS_GROUP_ID, VIEWERS_GROUP_ID, ACCOUNT_ID.
+// ADMIN_EMAIL (fallback do primeiro admin), ADMINS_GROUP_ID, LEITORES_GROUP_ID, VIEWERS_GROUP_ID, ACCOUNT_ID.
 // Segredo (nunca no repo): CF_API_TOKEN. KV: NTN_ROLES.
+export const PAPEIS = ['admin', 'leitor', 'viewer'];
 let certsCache = { at: 0, keys: [] };
 
 function b64url(s) {
@@ -40,12 +41,13 @@ export async function validarJwt(request, env) {
 export async function papelDe(email, env) {
   email = String(email || '').toLowerCase();
   const kv = env.NTN_ROLES ? await env.NTN_ROLES.get('role:' + email) : null;
-  if (kv === 'admin' || kv === 'viewer') return kv;
+  if (PAPEIS.includes(kv)) return kv;
   if (env.ADMIN_EMAIL && email === env.ADMIN_EMAIL.toLowerCase()) return 'admin';
   // Fallback: grupo do Access (consulta pela API)
   try {
     const g = await grupo(env, env.ADMINS_GROUP_ID);
     if (emailsDo(g).includes(email)) return 'admin';
+    if (env.LEITORES_GROUP_ID && emailsDo(await grupo(env, env.LEITORES_GROUP_ID)).includes(email)) return 'leitor';
   } catch (e) { /* segue */ }
   return 'viewer';
 }
