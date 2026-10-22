@@ -20,35 +20,65 @@ async function leituraThingy(env) {
   if (b) { const dt = (d.ts - Date.parse(b.insertedAt)) / 3600e3; if (dt > 0 && dt < 1) { d.vel_kmh = distM(d, { lat: +b.lat, lon: +b.lon }) / 1000 / dt; } }
   return d;
 }
-// Fontes no servidor: só o Thingy:91X hoje. NTN, Utilities e Consumo ainda não têm leitura server-side (ficam "sem fonte").
-async function fontes(env) { return { thingy91x: await leituraThingy(env).catch(() => null) }; }
+// Fontes no servidor: Thingy:91X (nRF Cloud) e ntn-lab público (Netlify): NTN (?pro=1), medidor (?meter=1). Posição já arredondada ~100 m.
+const LAB = 'https://thingy91x-x-dashboard.netlify.app/.netlify/functions/ntn-lab';
+const recs = async (q) => { const r = await fetch(`${LAB}?${q}`); return r.ok ? ((await r.json()).records || []) : null; };
+const tsDe = (x) => Date.parse(x.ts || x.rx);
+export function derivar(pro, meter, agora = Date.now()) {
+  const out = {};
+  if (pro) {
+    const p = pro.filter((x) => x.lat != null && x.lon != null).sort((a, b) => tsDe(a) - tsDe(b));
+    const u = p[p.length - 1], v = p[p.length - 2];
+    if (u) { out.ntn = { ts: tsDe(u), lat: +u.lat, lon: +u.lon }; if (v) { const h = (tsDe(u) - tsDe(v)) / 3600e3; if (h > 0 && h < 1) out.ntn.vel_kmh = distM(out.ntn, { lat: +v.lat, lon: +v.lon }) / 1000 / h; } }
+    else if (pro.length) out.ntn = { ts: Math.max(...pro.map(tsDe)) };
+  }
+  if (meter) {
+    const dia = meter.filter((x) => agora - tsDe(x) < 864e5);
+    out.utilities = { ts: meter.length ? Math.max(...meter.map(tsDe)) : null, anomalo: dia.some((x) => x.event === 'anom') };
+  }
+  if (pro && meter) {
+    const dia = [...pro, ...meter].filter((x) => agora - tsDe(x) < 864e5);
+    out.consumo = { valor: +(dia.reduce((s, x) => s + (x.bytes || 0), 0) / 1048576).toFixed(3), anomalo: dia.some((x) => x.event === 'anom') };
+  }
+  return out;
+}
+async function fontes(env) {
+  const [t, pro, meter] = await Promise.all([leituraThingy(env).catch(() => null), recs('pro=1&days=30').catch(() => null), recs('meter=1').catch(() => null)]);
+  return { thingy91x: t, ...derivar(pro, meter) };
+}
 
 async function rodar(env) {
   const regras = await ler(env), f = await fontes(env), agora = Date.now(), itens = [];
   for (const r of regras) {
     if (!r.ativo) continue;
     const res = avaliar(r, f[r.sistema], agora);
-    r.ultimaAvaliacao = agora; r.estado = res ? (res.disparou ? 'disparado' : 'ok') : 'sem fonte';
+    r.ultimoValor = res ? res.valor : null; r.ultimaAvaliacao = agora; r.estado = res ? (res.disparou ? 'disparado' : 'ok') : 'sem fonte';
     if (res && res.disparou) {
-      if (!r.disparadoEm || agora - r.notificadoEm > REPETIR_MS) { itens.push({ sistema: SISTEMAS[r.sistema].nome, regra: r.nome, quando: brt(agora), valor: res.valor }); r.notificadoEm = agora; }
+      if (!r.notificadoEm || agora - r.notificadoEm > REPETIR_MS) { itens.push({ r, sistema: SISTEMAS[r.sistema].nome, regra: r.nome, quando: brt(agora), valor: res.valor }); r.ultimoDisparo = { em: agora, valor: res.valor }; }
       r.disparadoEm = r.disparadoEm || agora;
-    } else if (res) { r.disparadoEm = null; }
+    } else if (res) { r.disparadoEm = null; r.notificadoEm = null; }
   }
   let envio = null;
-  if (itens.length) envio = await enviar(env, `Alarme: ${itens.map((i) => i.regra).join(', ')}`, emailHtml(itens, false));
+  if (itens.length) { envio = await enviar(env, `Alarme: ${itens.map((i) => i.regra).join(', ')}`, emailHtml(itens, false)); if (envio.ok) itens.forEach((i) => { i.r.notificadoEm = agora; }); }
   await gravar(env, regras);
-  return { avaliadas: regras.filter((r) => r.ativo).length, disparos: itens.length, envio };
+  return { avaliadas: regras.filter((r) => r.ativo).length, disparos: itens.map((i) => ({ id: i.r.id, regra: i.regra, valor: i.valor })), envio: envio && { ok: envio.ok, falta: envio.falta, id: envio.id, status: envio.status } };
 }
 
+export { rodar };
 export async function onRequest({ request, env, params }) {
   const id = (params.id || [])[0];
-  if (id === 'avaliar' && request.method === 'POST' && env.ALARMES_CRON_TOKEN && request.headers.get('X-Cron-Token') === env.ALARMES_CRON_TOKEN) return json(await rodar(env));
+  // /avaliar fica fora do Access (bypass): só aceita o cron com X-Cron-Token.
+  if (id === 'avaliar') {
+    const t = request.headers.get('X-Cron-Token') || '';
+    if (request.method !== 'POST' || !env.ALARMES_CRON_TOKEN || t.length !== env.ALARMES_CRON_TOKEN.length || t !== env.ALARMES_CRON_TOKEN) return json({ error: 'não autorizado' }, 401);
+    return json(await rodar(env));
+  }
   const s = await sessao(request, env);
   if (!s) return json({ error: 'sem sessão' }, 401);
   if (!['admin', 'leitor'].includes(s.role)) return json({ error: 'sem permissão' }, 403);
   if (request.method === 'GET') return json({ regras: await ler(env), sistemas: SISTEMAS, gatilhos: GATILHOS, podeEditar: s.role === 'admin', email: !!env.RESEND_API_KEY, cron: !!env.ALARMES_CRON_TOKEN });
   if (s.role !== 'admin') return json({ error: 'somente admin' }, 403);
-  if (id === 'avaliar' && request.method === 'POST') return json(await rodar(env));
+  if (id === 'rodar' && request.method === 'POST') return json(await rodar(env));
   if (id === 'teste' && request.method === 'POST') {
     const q = brt(Date.now());
     const ex = [

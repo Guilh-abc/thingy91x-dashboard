@@ -10,3 +10,8 @@ assert.equal(A.avaliar({ gatilho: 'bateria', limite: 3.6 }, {}), null);
 const h = A.emailHtml([{ sistema: 's', regra: 'r', quando: 'q', valor: 'v' }], true);
 assert.ok(h.includes('TESTE') && !h.includes('—'));
 console.log('alarmes: 8 testes OK');
+const { derivar } = await import('../functions/api/alarmes/[[id]].js');
+const ag = Date.parse('2026-10-22T12:00:00Z');
+const d = derivar([{ ts: '2026-10-22T11:00:00Z', lat: -23.5, lon: -46.6, bytes: 1048576 }], [{ ts: '2026-10-22T11:30:00Z', event: 'anom', bytes: 0 }], ag);
+assert.equal(d.ntn.lat, -23.5); assert.equal(d.utilities.anomalo, true); assert.equal(d.consumo.valor, 1);
+console.log('derivar: OK');

@@ -1,0 +1,6 @@
+name = "ntn-alarmes-cron"
+main = "index.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+[triggers]
+crons = ["*/5 * * * *"]

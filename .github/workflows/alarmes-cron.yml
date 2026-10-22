@@ -1,0 +1,15 @@
+# Avaliação periódica dos alarmes (a cada 5 min; o GitHub pode atrasar alguns minutos).
+# Segredo ALARMES_CRON_TOKEN fica só em Settings > Secrets (nunca no repo).
+name: alarmes-cron
+on:
+  schedule: [{ cron: '*/5 * * * *' }]
+  workflow_dispatch: {}
+jobs:
+  avaliar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: |
+          code=$(curl -s -o /tmp/r.json -w '%{http_code}' -X POST -H "X-Cron-Token: ${{ secrets.ALARMES_CRON_TOKEN }}" https://ntn-plataforma.pages.dev/api/alarmes/avaliar)
+          echo "status $code"; python3 -c "import json;r=json.load(open('/tmp/r.json'));print('avaliadas',r.get('avaliadas'),'disparos',len(r.get('disparos') or []))"
+          test "$code" = 200

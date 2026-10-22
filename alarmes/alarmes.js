@@ -94,7 +94,7 @@
     if (t.dataset.rm && confirm('Excluir o alarme "' + r.nome + '"?')) api('DELETE', '/' + r.id).then(carregar);
     if (t.id === 'novo') abrirForm(null);
     if (t.id === 'teste') api('POST', '/teste').then(function (j) { aviso(j.ok ? 'E-mail de teste enviado (id ' + j.id + ').' : j.falta ? 'Falta configurar ' + j.falta + ' no servidor.' : 'Falha no envio: ' + (j.erro || j._s), !j.ok); });
-    if (t.id === 'avaliar') api('POST', '/avaliar').then(function (j) { aviso('Avaliados ' + (j.avaliadas || 0) + ' alarmes, ' + (j.disparos || 0) + ' disparo(s).'); carregar(); });
+    if (t.id === 'avaliar') api('POST', '/rodar').then(function (j) { aviso('Avaliados ' + (j.avaliadas || 0) + ' alarmes, ' + ((j.disparos || []).length) + ' disparo(s).'); carregar(); });
   });
   carregar();
 })();
