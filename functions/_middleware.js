@@ -6,6 +6,8 @@ import { sessao, json } from './_lib/acesso.js';
 const ORIGEM = 'https://thingy91x-x-dashboard.netlify.app';
 const FUNCOES = ['ntn-lab', 'nrfcloud', 'alerts'];
 const SO_ADMIN = /^\/(admin|app\/relatorio)(\/|$)/;
+const NRF_API = 'https://api.nrfcloud.com/v1';
+const NRF_DEV = '50423451-3737-4337-80fc-110bddf418ff';
 const EXPORTA = /(export|csv|download|relatorio|report|pdf|print)/i;
 
 export function destino(url) {
@@ -13,6 +15,35 @@ export function destino(url) {
   if (!m) m = url.pathname.match(/^\/api\/([^/]+)(\/.*)?$/);
   if (!m || !FUNCOES.includes(m[1])) return null;
   return `${ORIGEM}/.netlify/functions/${m[1]}${m[2] || ''}${url.search}`;
+}
+
+/* nRF Cloud com a chave do servidor (secret NRF_CLOUD_API_KEY). Só GET e só leituras do device permitido.
+   Retorna { u, lista } ou null (rota fora da allowlist). A chave nunca vai ao navegador. */
+export function rotaNrf(url) {
+  let m = url.pathname.match(/^\/(?:\.netlify\/functions|api)\/nrfcloud(\/.*)?$/);
+  if (!m) return null;
+  const p = (m[1] || '/').replace(/\/+$/, '') || '/', q = url.searchParams;
+  if (p === '/devices') return { u: `${NRF_API}/devices/${NRF_DEV}`, lista: true };
+  if (p === '/devices/' + NRF_DEV) return { u: `${NRF_API}/devices/${NRF_DEV}` };
+  if ((p === '/messages' || p === '/location/history') && q.get('deviceId') === NRF_DEV) {
+    const s = new URLSearchParams();
+    for (const k of ['deviceId', 'pageLimit', 'pageNextToken', 'start', 'end', 'pageSort', 'appId', 'inclusiveStart']) if (q.has(k)) s.set(k, q.get(k));
+    return { u: `${NRF_API}${p}?${s}` };
+  }
+  return null;
+}
+
+async function nrf(request, env, url) {
+  if (!['GET', 'HEAD'].includes(request.method)) return json({ error: 'nRF Cloud: só leitura' }, 405);
+  const r = rotaNrf(url);
+  if (!r) return json({ error: 'rota do nRF Cloud não permitida' }, 403);
+  const k = String(env.NRF_CLOUD_API_KEY || '').trim();
+  if (!k) return json({ error: 'chave do nRF Cloud não configurada no servidor' }, 503);
+  const up = await fetch(r.u, { headers: { Authorization: 'Bearer ' + k, Accept: 'application/json' } });
+  if (!up.ok) return json({ error: 'nRF Cloud respondeu ' + up.status }, up.status === 401 || up.status === 403 ? 502 : up.status);
+  let body = await up.text();
+  if (r.lista) body = JSON.stringify({ items: [JSON.parse(body)], total: 1 });
+  return new Response(body, { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 
 /* Puro: decide se o papel pode fazer esta requisição. Retorna null (ok) ou o motivo do 403. */
@@ -36,6 +67,7 @@ export async function onRequest(ctx) {
   const motivo = negar(s.role, request.method, url, !!alvo);
   if (motivo) return json({ error: motivo }, 403);
   if (!alvo) return ctx.next();
+  if (/\/nrfcloud(\/|$)/.test(url.pathname)) return nrf(request, env, url);
   const h = new Headers(request.headers);
   for (const k of ['cookie', 'cf-access-jwt-assertion', 'cf-access-authenticated-user-email', 'host']) h.delete(k);
   const r = await fetch(alvo, { method: request.method, headers: h, body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body, redirect: 'manual' });

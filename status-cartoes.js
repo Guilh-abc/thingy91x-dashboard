@@ -29,10 +29,12 @@
   function thingy(id) {
     var ls = function (k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
     var key = ls('nrf_api_key'), dev = ls('nrf_device_id'), mail = ls('nrf_user_email');
-    if (!key || !dev) return marcar(id, 'neutro', 'Sem chave');
+    var serv = /pages\.dev$/i.test(location.hostname); if (serv) dev = '50423451-3737-4337-80fc-110bddf418ff';
+    if (!serv && (!key || !dev)) return marcar(id, 'neutro', 'Sem chave');
     var hd = { Authorization: mail ? 'Basic ' + btoa(unescape(encodeURIComponent(mail + ':' + key))) : 'Bearer ' + key, 'X-User-Api-Key': key,
       'X-Memfault-Org': ls('nrf_org_slug') || 'telekom', 'X-Memfault-Project': ls('nrf_project_slug') || 'nrf-project' };
     if (mail) hd['X-User-Email'] = mail; if (ls('nrf_team_api_key')) hd['X-Nrf-Team-Key'] = ls('nrf_team_api_key');
+    if (serv) hd = {};
     comTempo(fetch(NRF + '/devices/' + encodeURIComponent(dev), { headers: hd, cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }), 12000).then(function (d) {
       var t = ultimaData(d), s = t ? Math.round((Date.now() - t) / 1000) : null, e = porIdade(s);
       if (!e) return semDados(id); var r = ROT[e]; marcar(id, r[0], r[1] + idade(s));

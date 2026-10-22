@@ -1,0 +1,34 @@
+// nrf-servidor.test.mjs: proxy do nRF Cloud com chave do servidor, JWT do Access simulado (chave RSA gerada aqui).
+import assert from 'node:assert/strict'; import { readFileSync } from 'node:fs';
+const { onRequest, rotaNrf } = await import('../functions/_middleware.js');
+const DEV = '50423451-3737-4337-80fc-110bddf418ff', u = (p) => new URL('https://ntn-plataforma.pages.dev' + p);
+assert.ok(rotaNrf(u('/.netlify/functions/nrfcloud/messages?deviceId=' + DEV + '&pageLimit=5')).u.endsWith('/messages?deviceId=' + DEV + '&pageLimit=5'));
+assert.equal(rotaNrf(u('/.netlify/functions/nrfcloud/messages?deviceId=outro')), null);
+assert.equal(rotaNrf(u('/api/nrfcloud/devices/outro')), null);
+assert.equal(rotaNrf(u('/api/nrfcloud/devices/' + DEV + '/state')), null);
+assert.ok(rotaNrf(u('/api/nrfcloud/devices?pageLimit=1')).lista);
+const b64 = (o) => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64url');
+const kp = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
+const jwk = { ...(await crypto.subtle.exportKey('jwk', kp.publicKey)), kid: 'k1' };
+async function jwt(email) { const h = b64({ alg: 'RS256', kid: 'k1' }), p = b64({ email, aud: ['a'], iss: 'https://t.cloudflareaccess.com', exp: Math.floor(Date.now() / 1000) + 600 });
+  return h + '.' + p + '.' + Buffer.from(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', kp.privateKey, new TextEncoder().encode(h + '.' + p))).toString('base64url'); }
+const KV = { 'role:l@x.com': 'leitor', 'role:a@x.com': 'admin', 'role:v@x.com': 'viewer' };
+const env = { TEAM_DOMAIN: 't.cloudflareaccess.com', ACCESS_AUDS: 'a', NRF_CLOUD_API_KEY: 'chave-teste', NTN_ROLES: { get: async (k) => KV[k] || null } };
+const vistos = [];
+globalThis.fetch = async (url, o = {}) => { url = String(url);
+  if (url.includes('/cdn-cgi/access/certs')) return new Response(JSON.stringify({ keys: [jwk] }));
+  vistos.push({ url, auth: (o.headers || {}).Authorization });
+  if (url.startsWith('https://api.nrfcloud.com/v1/devices/')) return new Response(JSON.stringify({ id: DEV }));
+  return new Response(JSON.stringify({ items: [] })); };
+const req = async (email, p, m = 'GET', hd = {}) => onRequest({ request: new Request('https://ntn-plataforma.pages.dev' + p, { method: m, headers: { 'Cf-Access-Jwt-Assertion': await jwt(email), ...hd } }), env, next: () => new Response('x') });
+let r = await req('l@x.com', '/.netlify/functions/nrfcloud/messages?deviceId=' + DEV + '&pageLimit=1', 'GET', { Authorization: 'Bearer do-navegador' });
+assert.equal(r.status, 200); assert.equal(vistos.at(-1).auth, 'Bearer chave-teste', 'servidor injeta a própria chave');
+assert.ok(!(await r.text()).includes('chave-teste'));
+r = await req('a@x.com', '/api/nrfcloud/devices?pageLimit=1'); assert.equal(r.status, 200); assert.equal((await r.json()).items[0].id, DEV);
+assert.equal((await req('l@x.com', '/api/nrfcloud/devices/outro')).status, 403);
+assert.equal((await req('a@x.com', '/api/nrfcloud/devices/' + DEV + '/messages', 'POST')).status, 405);
+assert.equal((await req('v@x.com', '/api/nrfcloud/messages?deviceId=' + DEV)).status, 403, 'viewer não');
+assert.equal((await req('l@x.com', '/api/nrfcloud/messages?deviceId=' + DEV + '&export=csv')).status, 403, 'leitor não exporta');
+r = await onRequest({ request: new Request('https://ntn-plataforma.pages.dev/api/nrfcloud/messages?deviceId=' + DEV), env, next: () => new Response('x') }); assert.equal(r.status, 401);
+for (const f of ['thingy-dados.js', 'app/hub.js', 'status-cartoes.js', 'app/relatorio/relatorio-real.js', 'app.js']) assert.ok(/pages\\?\.dev\$\/i\.test\(location\.hostname\)/.test(readFileSync(new URL('../' + f, import.meta.url), 'utf8')), 'servidor em ' + f);
+console.log('nrf-servidor ok');

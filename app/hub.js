@@ -93,10 +93,12 @@
   function thingy() {
     var ls = function (k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
     var key = ls('nrf_api_key'), mail = ls('nrf_user_email'), dev = ls('nrf_device_id') || '50423451-3737-4337-80fc-110bddf418ff';
-    if (!key) return Promise.resolve({ semChave: true });
+    var serv = /pages\.dev$/i.test(location.hostname); if (serv) dev = '50423451-3737-4337-80fc-110bddf418ff';
+    if (!key && !serv) return Promise.resolve({ semChave: true });
     var hd = { Authorization: mail ? 'Basic ' + btoa(unescape(encodeURIComponent(mail + ':' + key))) : 'Bearer ' + key, 'X-User-Api-Key': key,
       'X-Memfault-Org': ls('nrf_org_slug') || 'telekom', 'X-Memfault-Project': ls('nrf_project_slug') || 'nrf-project' };
     if (mail) hd['X-User-Email'] = mail; if (ls('nrf_team_api_key')) hd['X-Nrf-Team-Key'] = ls('nrf_team_api_key');
+    if (serv) hd = {};
     var j = function (u) { return tempo(fetch(NRF + u, { headers: hd, cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }), 15000).catch(function () { return null; }); };
     var td = root.ThingyDados ? root.ThingyDados.tudo(7).then(function (r) { return r.d; }).catch(function () { return null; }) : Promise.resolve(null);
     return Promise.all([j('/devices/' + encodeURIComponent(dev)), j('/location/history?deviceId=' + encodeURIComponent(dev) + '&pageLimit=1&pageSort=desc')]).then(function (r) {

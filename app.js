@@ -42,6 +42,9 @@ let config = {
     projectSlug: localStorage.getItem('nrf_project_slug') || 'nrf-project',
     deviceId: localStorage.getItem('nrf_device_id') || DEVICE_DEFAULT
 };
+/* Pages: a chave do nRF Cloud fica no servidor (proxy injeta). O navegador não precisa e não guarda chave. */
+const CHAVE_SERVIDOR = /pages\.dev$/i.test(location.hostname);
+if (CHAVE_SERVIDOR) Object.assign(config, { apiKey: 'servidor', teamApiKey: '', email: '', deviceId: DEVICE_DEFAULT });
 let map, marker, accuracyCircle = null, trailLine = null, trailMarkersLayer = null, trailEnabled = true;
 let fleetMarkers = [];
 let pollInterval = null;
@@ -226,6 +229,7 @@ function updateAuthBanner() {
     document.body.classList.toggle('has-auth-banner', !!show);
 }
 function persistConfigToStorage() {
+    if (CHAVE_SERVIDOR) return true;
     try {
         localStorage.setItem('nrf_api_key', config.apiKey);
         localStorage.setItem('nrf_team_api_key', config.teamApiKey || '');
@@ -3174,7 +3178,7 @@ function init() {
 elements.saveConfig?.addEventListener('click', () => { saveConfig(); });
 elements.cancelConfig?.addEventListener('click', hideModal);
 elements.closeModal?.addEventListener('click', hideModal);
-elements.configBtn?.addEventListener('click', showModal);
+if (CHAVE_SERVIDOR) { if (elements.configBtn) elements.configBtn.hidden = true; } else elements.configBtn?.addEventListener('click', showModal);
 elements.authBannerBtn?.addEventListener('click', showModal);
 elements.copyPairingLink?.addEventListener('click', () => { copyPairingLink(); });
 elements.connectionStatus?.addEventListener('click', () => {

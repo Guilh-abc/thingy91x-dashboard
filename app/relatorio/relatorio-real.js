@@ -120,6 +120,7 @@
   /* nRF Cloud pelo proxy do painel, com a chave salva neste navegador (mesmos cabeçalhos do painel; a chave nunca aparece na tela). */
   function nrfCab() {
     var ls = function (k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+    if (/pages\.dev$/i.test(location.hostname)) return { hd: {}, dev: '50423451-3737-4337-80fc-110bddf418ff' }; // chave no servidor
     var key = ls('nrf_api_key'), mail = ls('nrf_user_email'); if (!key) return null;
     var hd = { Authorization: mail ? 'Basic ' + btoa(unescape(encodeURIComponent(mail + ':' + key))) : 'Bearer ' + key, 'X-User-Api-Key': key,
       'X-Memfault-Org': ls('nrf_org_slug') || 'telekom', 'X-Memfault-Project': ls('nrf_project_slug') || 'nrf-project' };

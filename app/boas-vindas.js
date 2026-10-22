@@ -13,15 +13,16 @@
   var f = document.createElement('div'); f.className = 'bv-fundo';
   f.innerHTML = '<div class="bv" role="dialog" aria-modal="true" aria-labelledby="bvT">' +
     '<h2 id="bvT">Boas-vindas à IoT Cat-M + NTN</h2><p>Três passos para ver seus dados reais:</p><ol>' +
-    '<li><b>Cadastre a chave do nRF Cloud</b> em Configurações (ícone de engrenagem). Ela fica só neste navegador.</li>' +
+    (/pages\.dev$/i.test(location.hostname) ? '' : '<li><b>Cadastre a chave do nRF Cloud</b> em Configurações (ícone de engrenagem). Ela fica só neste navegador.</li>') +
     '<li><b>Confira o rastreador</b> em Rastreador: posição, trilha e alertas.</li>' +
     '<li><b>Convide pessoas</b> em Admin, Acessos, como admin ou viewer.</li></ol>' +
     '<div class="acoes"><button type="button" class="btn" id="bvDepois">Depois</button>' +
-    '<button type="button" class="btn btn-primary" id="bvChave">Cadastrar chave agora</button></div></div>';
+    (/pages\.dev$/i.test(location.hostname) ? '' : '<button type="button" class="btn btn-primary" id="bvChave">Cadastrar chave agora</button>') + '</div></div>';
   function fechar() { try { localStorage.setItem(MARCA, '1'); } catch (e) {} f.remove(); history.replaceState(null, '', location.pathname); }
   document.addEventListener('DOMContentLoaded', function () {
     document.body.appendChild(f);
     document.getElementById('bvDepois').onclick = fechar;
+    if (!document.getElementById('bvChave')) { document.getElementById('bvDepois').textContent = 'Começar'; document.getElementById('bvDepois').focus(); return; }
     document.getElementById('bvChave').onclick = function () { fechar(); var b = document.getElementById('configBtn'); if (b) b.click(); else location.href = '../rastreador/thingy91x/?config=1'; };
     document.getElementById('bvChave').focus();
   });

@@ -497,7 +497,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="../presence-core.js?v=32"></script>
-    <script src="../app.js?v=35"></script>
+    <script src="../app.js?v=36"></script>
     <script src="../utilities/alert-rules.js?v=3"></script>
     <script src="../movement-rules.js?v=4"></script>
     <script src="../utilities/alerts-panel.js?v=3"></script>
@@ -505,6 +505,6 @@
 <script src="../icons.js?v=4"></script>
 <script src="../roles.js?v=2"></script>
 <script src="../shell.js?v=5" data-pagina="thingy91x"></script>
-<script>if(/[?&]config=1/.test(location.search))addEventListener("load",function(){var b=document.getElementById("configBtn");if(b)b.click();});</script>
+<script>if(!/pages\.dev$/i.test(location.hostname)&&/[?&]config=1/.test(location.search))addEventListener("load",function(){var b=document.getElementById("configBtn");if(b)b.click();});</script>
 </body>
 </html>
