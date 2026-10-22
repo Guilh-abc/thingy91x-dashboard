@@ -3284,8 +3284,15 @@ elements.createFota?.addEventListener('click', async () => {
 
 elements.exportCsv?.addEventListener('click', () => {
     if (!lastMessages.length) return log('warn', 'Sem mensagens para CSV');
-    const rows = [['receivedAt', 'appId', 'data']].concat(lastMessages.map(m => [m.receivedAt, m.message?.appId || '', JSON.stringify(m.message?.data ?? {})]));
-    download(`thingy91x-msgs-${Date.now()}.csv`, rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n'), 'text/csv');
+    // padrão api-core (BOM, ';', datas BRT); ICCID/IMSI (15+ dígitos) mascarados. api-core é carregado isolado por root-alerts.js.
+    const api = window.RootApiCore || window.ApiCore;
+    if (api && api.toCSV) {
+        const rows = lastMessages.map(m => ({ ts: m.receivedAt, appId: m.message?.appId || '', data: JSON.stringify(m.message?.data ?? {}).replace(/\d{15,22}/g, d => '••••' + d.slice(-4)) }));
+        download(`thingy91x-msgs-${Date.now()}.csv`, api.toCSV(rows, ['ts', 'appId', 'data'], { ts: 'recebida (BRT)', appId: 'tipo', data: 'dado' }), 'text/csv;charset=utf-8');
+    } else {
+        const rows = [['receivedAt', 'appId', 'data']].concat(lastMessages.map(m => [m.receivedAt, m.message?.appId || '', JSON.stringify(m.message?.data ?? {})]));
+        download(`thingy91x-msgs-${Date.now()}.csv`, rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n'), 'text/csv');
+    }
     log('info', 'CSV exportado');
 });
 elements.exportGeo?.addEventListener('click', () => {
@@ -3350,7 +3357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Pairing link Mac→phone: #cfg=base64url(JSON) — before init
     importConfigFromHash();
     if ('serviceWorker' in navigator) {
-        const swHref = new URL('service-worker.js?v=36', document.baseURI || location.href).href;
+        const swHref = new URL('service-worker.js?v=37', document.baseURI || location.href).href;
         // Limpa caches antigos (Cmd+Shift+R no Safari muitas vezes não basta)
         const bustKey = 'thingy_sw_bust_v36';
         caches.keys().then(keys => Promise.all(keys.filter(k => !k.startsWith('ntn-v36')).map(k => caches.delete(k)))).catch(() => {});

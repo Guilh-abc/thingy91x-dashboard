@@ -71,17 +71,22 @@
 
   /* Regras A a D aplicadas a cada leitura de consumo (deltaL). Retorna lista de disparos. */
   function evaluateReadings(annotated) {
-    var fired = [], consecutiveAbove = 0, nightValues = [];
+    /* A e B ficam ativos enquanto a condição durar, mas entram no histórico só no início de cada sequência
+       (streakStart), para o consumo zerado de sempre não gerar uma notificação a cada leitura. */
+    var fired = [], consecutiveAbove = 0, nightValues = [], previousRule = { A: false, B: false };
     annotated.forEach(function (r) {
       var value = r.deltaL, stat = r.rolling && r.rolling.deltaL, t = timeOf(r);
       var base = { metric: 'deltaL', at: t, seq: r.seq, value: value };
       if (!isNumber(value)) return;
+      if (!(stat && stat.mean > 0 && stat.devPct != null)) previousRule = { A: false, B: false };
       if (stat && stat.mean > 0 && stat.devPct != null) {
         // A: consumo acima de 20% da média móvel -> badge vermelho
-        if (stat.devPct > RULE_A_ABOVE_AVERAGE_PCT) fired.push(assign(base, { rule: 'A', threshold: roundOne(stat.mean * 1.2), mean: stat.mean, n: stat.n,
+        var isA = stat.devPct > RULE_A_ABOVE_AVERAGE_PCT, isB = stat.devPct < -RULE_B_BELOW_AVERAGE_PCT;
+        base.streakStartA = !previousRule.A; base.streakStartB = !previousRule.B; previousRule = { A: isA, B: isB };
+        if (isA) fired.push(assign(base, { rule: 'A', threshold: roundOne(stat.mean * 1.2), mean: stat.mean, n: stat.n,
           message: 'Consumo ' + Math.round(stat.devPct) + '% acima da média ' + averageText(stat) }));
         // B: queda acima de 30% abaixo da média -> badge amarelo
-        if (stat.devPct < -RULE_B_BELOW_AVERAGE_PCT) fired.push(assign(base, { rule: 'B', threshold: roundOne(stat.mean * 0.7), mean: stat.mean, n: stat.n,
+        if (isB) fired.push(assign(base, { rule: 'B', threshold: roundOne(stat.mean * 0.7), mean: stat.mean, n: stat.n,
           message: 'Possível falha de sensor ou equipamento desligado (consumo ' + Math.round(-stat.devPct) + '% abaixo da média ' + averageText(stat) + ')' }));
       }
       // C: 5 leituras consecutivas acima da média -> alerta de tendência (dispara na 5ª, não repete até zerar)
@@ -99,6 +104,8 @@
     });
     return fired;
   }
+  /* Histórico: A e B só no início de cada sequência; C, D e E sempre (já são eventos únicos). */
+  function onlyStreakStarts(list) { return list.filter(function (a) { return a.rule === 'A' ? a.streakStartA !== false : a.rule === 'B' ? a.streakStartB !== false : true; }); }
   function assign(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
 
   /* Intervalo esperado entre leituras: mediana dos intervalos reais (mínimo 3 intervalos). */
@@ -127,9 +134,10 @@
   function compute(records, now) {
     now = now == null ? Date.now() : now;
     var annotated = annotate(records).filter(function (r) { return timeOf(r) <= now; });
-    var fired = evaluateReadings(annotated), stale = evaluateStale(annotated, now);
+    var all = evaluateReadings(annotated), stale = evaluateStale(annotated, now);
     var last = annotated[annotated.length - 1];
-    var active = fired.filter(function (a) { return last && a.at === timeOf(last); });
+    var active = all.filter(function (a) { return last && a.at === timeOf(last); });
+    var fired = onlyStreakStarts(all);
     if (stale) { active.push(stale); fired.push(stale); }
     return { readings: annotated, fired: fired, active: active, last: last || null };
   }
@@ -156,13 +164,14 @@
   function markAllRead(history) { return (history || []).map(function (h) { return assign(h, { read: true }); }); }
   function toggleRead(history, key) { return (history || []).map(function (h) { return h.key === key ? assign(h, { read: !h.read }) : h; }); }
   function filterHistory(history, metric, rule) { return (history || []).filter(function (h) { return (!metric || metric === 'all' || h.metric === metric) && (!rule || rule === 'all' || h.rule === rule); }); }
-  function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]'); } catch (e) { return []; } }
-  function saveHistory(h) { try { localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(h)); } catch (e) {} }
+  /* storageKey opcional: o Rastreador e a raiz reutilizam estas funções com a própria chave. */
+  function loadHistory(storageKey) { try { return JSON.parse(localStorage.getItem(storageKey || HISTORY_STORAGE_KEY) || '[]'); } catch (e) { return []; } }
+  function saveHistory(h, storageKey) { try { localStorage.setItem(storageKey || HISTORY_STORAGE_KEY, JSON.stringify(h)); } catch (e) {} }
 
   var api = { METRICS: METRICS, RULES: RULES, MOVING_AVERAGE_WINDOW: MOVING_AVERAGE_WINDOW, rollingStat: rollingStat, annotate: annotate, evaluateReadings: evaluateReadings,
-    evaluateStale: evaluateStale, expectedIntervalMs: expectedIntervalMs, compute: compute, isNightBRT: isNightBRT,
+    evaluateStale: evaluateStale, onlyStreakStarts: onlyStreakStarts, expectedIntervalMs: expectedIntervalMs, compute: compute, isNightBRT: isNightBRT,
     historyKey: historyKey, mergeHistory: mergeHistory, unreadCount: unreadCount, markAllRead: markAllRead, toggleRead: toggleRead, filterHistory: filterHistory,
-    loadHistory: loadHistory, saveHistory: saveHistory, HISTORY_STORAGE_KEY: HISTORY_STORAGE_KEY };
+    loadHistory: loadHistory, saveHistory: saveHistory, assign: assign, timeOf: timeOf, roundOne: roundOne, HISTORY_STORAGE_KEY: HISTORY_STORAGE_KEY };
   root.AlertRules = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

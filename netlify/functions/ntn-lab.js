@@ -138,6 +138,29 @@ export function withRolling(records) {
   });
 }
 
+
+/* Rastreador: distância (m), velocidade (km/h) e tempo parado (min) entre posições medidas, calculados
+   com a coordenada exata (antes de arredondar para ~100 m), mais a média móvel de 24 posições e o desvio %.
+   Campo novo e opcional "move"; não expõe coordenada além do que publicView já mostra. Exportado para testes. */
+const MOVE_METRICS = ['distM', 'speedKmh', 'stoppedMin'];
+function haversineM(a, b) {
+  const R = 6371000, rad = Math.PI / 180, dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+export function withMovement(records) {
+  let prev = null, stoppedSince = null; const hist = Object.fromEntries(MOVE_METRICS.map((m) => [m, []]));
+  return records.map((r) => {
+    if (!r || r.type !== 'telemetry' || num(r.lat) == null || num(r.lon) == null || r.posSrc === 'salva') return r;
+    const t = Date.parse(r.ts); if (!prev) { prev = r; return r; }
+    const dt = (t - Date.parse(prev.ts)) / 1000, distM = Math.round(haversineM(prev, r));
+    if (distM < 50) { if (stoppedSince == null) stoppedSince = Date.parse(prev.ts); } else stoppedSince = null;
+    const move = { distM, speedKmh: dt > 0 ? Math.round((distM / dt) * 36) / 10 : null, stoppedMin: stoppedSince == null ? 0 : Math.round((t - stoppedSince) / 60000), rolling: {} };
+    for (const m of MOVE_METRICS) { move.rolling[m] = rollingStat(hist[m], move[m]); if (num(move[m]) != null) hist[m].push(move[m]); }
+    prev = r; return { ...r, move };
+  });
+}
+
 export default async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   const store = getStore({ name: 'ntn-lab', consistency: 'strong' });
@@ -163,9 +186,12 @@ export default async (req) => {
     const out = [];
     for (let i = days - 1; i >= 0; i--) {
       const list = await store.get(dayKey(new Date(Date.now() - i * 86400000).toISOString()), { type: 'json' }).catch(() => null);
-      if (Array.isArray(list)) out.push(...list.map(publicView));
+      if (Array.isArray(list)) out.push(...list);
     }
-    return json(200, { ok: true, schema: 'ntn-pro/1', serverTime: new Date().toISOString(), records: out });
+    // move: deslocamento entre posições com média móvel (calculado com coordenada exata, depois arredonda)
+    out.sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts));
+    const records = withMovement(out).map(publicView);
+    return json(200, { ok: true, schema: 'ntn-pro/1', serverTime: new Date().toISOString(), records });
   }
   if (req.method === 'POST' && url.searchParams.get('ingest')) {
     // v36: telemetria/eventos da placa (app v2.0). Resposta minima (poucos bytes no satelite).

@@ -6,19 +6,23 @@
    Script clássico: window.AlertsPanel. Só dados reais vindos da API. */
 (function () {
   'use strict';
-  var R = window.AlertRules;
+  var Base = window.AlertRules;
+  /* Configuração do sistema que usa o painel. Padrão = Utilities; o Rastreador e a raiz passam a sua
+     (engine com compute/METRICS/RULES, rótulos, chave do histórico e prefixo do CSV). */
+  var cfg = { engine: Base, labels: { deltaL: 'Consumo', rsrp: 'Sinal RSRP', snr: 'SNR', leituras: 'Leituras' }, storageKey: null, csvPrefix: 'utilities-alertas', defaultMetric: 'deltaL', unitWord: 'leitura' };
+  var R = Base;
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var dateTimeBRT = function (ms) { return new Date(ms).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
   var nf = function (n) { return Number(n).toLocaleString('pt-BR'); };
-  var selectedChartMetric = 'deltaL', historyMetricFilter = 'all', historyRuleFilter = 'all', lastResult = null;
-  var METRIC_LABELS = { deltaL: 'Consumo', rsrp: 'Sinal RSRP', snr: 'SNR', leituras: 'Leituras' };
+  var selectedChartMetric = null, historyMetricFilter = 'all', historyRuleFilter = 'all', lastResult = null;
+  var METRIC_LABELS = cfg.labels;
 
   /* Seta: sobe ou desce conforme o desvio; cor conforme a métrica (consumo alto = vermelho, sinal alto = verde). */
   function arrowHtml(metric, stat) {
     var info = R.METRICS[metric];
     if (!stat) return '<span class="md-flat">sem média ainda</span>';
-    var nTxt = stat.n >= R.MOVING_AVERAGE_WINDOW ? 'média de 24 leituras' : 'média de ' + stat.n + ' leitura' + (stat.n === 1 ? '' : 's');
+    var nTxt = stat.n >= Base.MOVING_AVERAGE_WINDOW ? 'média de 24 ' + cfg.unitWord + 's' : 'média de ' + stat.n + ' ' + cfg.unitWord + (stat.n === 1 ? '' : 's');
     if (stat.devPct == null) return '<span class="md-flat">média ' + nf(stat.mean) + ' ' + info.unit + ' · desvio indefinido (média zero) · ' + nTxt + '</span>';
     var up = stat.devPct > 0, flat = stat.devPct === 0, good = flat ? null : (up === info.higherIsBetter);
     var cls = flat ? 'md-flat' : good ? 'md-good' : 'md-bad';
@@ -26,10 +30,10 @@
   }
   function renderDeltas(res) {
     var el = $('metricDeltas'); if (!el) return;
-    if (!res.last) { el.innerHTML = '<div class="muted">Aguardando leituras do medidor.</div>'; return; }
+    if (!res.last) { el.innerHTML = '<div class="muted">' + (cfg.emptyText || 'Aguardando leituras do medidor.') + '</div>'; return; }
     el.innerHTML = Object.keys(R.METRICS).map(function (m) {
       var v = res.last[m];
-      return '<div class="md-row"><span class="muted">' + R.METRICS[m].label + '</span><b>' + (v == null ? 'sem valor' : nf(v) + ' ' + R.METRICS[m].unit) + '</b> ' + (v == null ? '' : arrowHtml(m, res.last.rolling[m])) + '</div>';
+      return '<div class="md-row"><span class="muted">' + (R.METRICS[m].label) + '</span><b>' + (v == null ? 'sem valor' : nf(v) + ' ' + R.METRICS[m].unit) + '</b> ' + (v == null ? '' : arrowHtml(m, res.last.rolling[m])) + '</div>';
     }).join('');
   }
   function renderBadges(res) {
@@ -64,20 +68,20 @@
 
   /* Histórico de Alertas (localStorage, ver alert-rules.js). */
   function renderHistory() {
-    var h = R.loadHistory(), list = R.filterHistory(h, historyMetricFilter, historyRuleFilter), unread = R.unreadCount(h);
+    var h = R.loadHistory(cfg.storageKey), list = R.filterHistory(h, historyMetricFilter, historyRuleFilter), unread = R.unreadCount(h);
     if ($('ahUnread')) $('ahUnread').textContent = unread ? unread + ' não lido' + (unread === 1 ? '' : 's') : '';
     var el = $('ahList'); if (!el) return;
     el.innerHTML = list.length ? list.map(function (e) {
       return '<tr class="' + (e.read ? 'ah-read' : 'ah-unread') + '"><td class="mono">' + esc(dateTimeBRT(e.at)) + '</td><td>' + esc(METRIC_LABELS[e.metric] || e.metric) + '</td><td><span class="rb rb--' + R.RULES[e.rule].color + ' rb--sm">' + e.rule + '</span> ' + esc(R.RULES[e.rule].label) + '</td><td class="mono">' + esc(e.value) + '</td><td class="mono">' + esc(e.threshold) + '</td><td>' + esc(e.message) + '</td><td><button class="btn btn-sm" data-key="' + esc(e.key) + '">' + (e.read ? 'Marcar não lido' : 'Marcar lido') + '</button></td></tr>';
     }).join('') : '<tr><td colspan="7" class="muted">' + (h.length ? 'Nenhum alerta com esse filtro.' : 'Nenhum alerta disparado nos últimos 30 dias.') + '</td></tr>';
-    el.querySelectorAll('button[data-key]').forEach(function (b) { b.onclick = function () { R.saveHistory(R.toggleRead(R.loadHistory(), b.dataset.key)); renderHistory(); }; });
+    el.querySelectorAll('button[data-key]').forEach(function (b) { b.onclick = function () { R.saveHistory(R.toggleRead(R.loadHistory(cfg.storageKey), b.dataset.key), cfg.storageKey); renderHistory(); }; });
   }
   var CSV_COLUMNS = ['quando', 'metrica', 'regra', 'valor', 'limiar', 'mensagem', 'lido'];
   var CSV_LABELS = { quando: 'data e hora (BRT)', metrica: 'métrica', regra: 'regra', valor: 'valor lido', limiar: 'limiar', mensagem: 'mensagem', lido: 'lido' };
   /* Exportar agora: CSV com o histórico completo (sem filtro), gerado na hora e baixado normalmente. */
   function exportHistoryNow() {
-    var rows = R.loadHistory().map(function (e) { return { quando: dateTimeBRT(e.at), metrica: METRIC_LABELS[e.metric] || e.metric, regra: e.rule + ' ' + R.RULES[e.rule].label, valor: e.value, limiar: e.threshold, mensagem: e.message, lido: e.read ? 'sim' : 'não' }; });
-    var now = new Date(Date.now() - 3 * 3600000), name = 'utilities-alertas-' + now.getUTCFullYear() + '-' + String(now.getUTCMonth() + 1).padStart(2, '0') + '.csv';
+    var rows = R.loadHistory(cfg.storageKey).map(function (e) { return { quando: dateTimeBRT(e.at), metrica: METRIC_LABELS[e.metric] || e.metric, regra: e.rule + ' ' + R.RULES[e.rule].label, valor: e.value, limiar: e.threshold, mensagem: e.message, lido: e.read ? 'sim' : 'não' }; });
+    var now = new Date(Date.now() - 3 * 3600000), name = cfg.csvPrefix + '-' + now.getUTCFullYear() + '-' + String(now.getUTCMonth() + 1).padStart(2, '0') + '.csv';
     var a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([window.ApiCore.toCSV(rows, CSV_COLUMNS, CSV_LABELS)], { type: 'text/csv;charset=utf-8' }));
     a.download = name; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
@@ -88,16 +92,35 @@
     seg('mcSeg', function (b) { selectedChartMetric = b.dataset.m; });
     if ($('ahMetric')) $('ahMetric').onchange = function () { historyMetricFilter = this.value; renderHistory(); };
     if ($('ahRule')) $('ahRule').onchange = function () { historyRuleFilter = this.value; renderHistory(); };
-    if ($('ahAllRead')) $('ahAllRead').onclick = function () { R.saveHistory(R.markAllRead(R.loadHistory())); renderHistory(); };
+    if ($('ahAllRead')) $('ahAllRead').onclick = function () { R.saveHistory(R.markAllRead(R.loadHistory(cfg.storageKey)), cfg.storageKey); renderHistory(); };
     if ($('ahExport')) $('ahExport').onclick = exportHistoryNow;
   }
+  /* Monta os cards (comparação com a média, gráfico por métrica e Histórico de Alertas) num contêiner vazio.
+     Usado pelo Rastreador e pela raiz; o Utilities já tem o mesmo HTML fixo no index.html. */
+  function mount(containerId) {
+    var box = $(containerId); if (!box || box.dataset.mounted) return; box.dataset.mounted = '1';
+    var E = cfg.engine, metrics = Object.keys(E.METRICS);
+    var ruleOpts = Object.keys(E.RULES).map(function (k) { return '<option value="' + k + '">' + k + ': ' + E.RULES[k].label.toLowerCase() + '</option>'; }).join('');
+    var metricOpts = Object.keys(cfg.labels).map(function (k) { return '<option value="' + k + '">' + cfg.labels[k] + '</option>'; }).join('');
+    box.innerHTML = '<div class="card-h"><h2>Inteligência: médias e alertas</h2><small class="muted">média móvel das últimas 24 ' + cfg.unitWord + 's</small></div>' +
+      '<div class="ai-grid"><div><div id="metricDeltas" class="md"></div><div id="ruleBadges" class="rbs" aria-live="polite"></div></div>' +
+      '<div><div class="seg" id="mcSeg">' + metrics.map(function (m, i) { return '<button data-m="' + m + '"' + (m === cfg.defaultMetric ? ' class="on"' : '') + '>' + E.METRICS[m].label + '</button>'; }).join('') + '</div>' +
+      '<div id="metricChart" class="chart"></div><div class="legend"><span><i style="background:#3d8bff"></i>valor</span><span><i style="background:#2fd27a"></i>média móvel (tracejado)</span><span>pontos coloridos = alertas A a E</span></div></div></div>' +
+      '<h3 style="margin:14px 0 6px">Histórico de Alertas <span id="ahUnread" class="pill"></span></h3>' +
+      '<div class="filters"><select id="ahMetric"><option value="all">Todas as métricas</option>' + metricOpts + '</select><select id="ahRule"><option value="all">Todas as regras</option>' + ruleOpts + '</select>' +
+      '<button id="ahAllRead" class="btn btn-sm">Marcar todos como lidos</button><button id="ahExport" class="btn btn-sm" title="Baixa o histórico completo em CSV">⇩ Exportar agora</button></div>' +
+      '<div class="table-wrap" style="max-height:320px"><table class="tbl"><thead><tr><th>Data e hora (BRT)</th><th>Métrica</th><th>Regra</th><th>Valor lido</th><th>Limiar</th><th>Mensagem</th><th></th></tr></thead><tbody id="ahList"></tbody></table></div>' +
+      '<small class="muted">' + (cfg.rulesHelp || '') + ' O histórico fica salvo neste navegador e apaga entradas com mais de 30 dias.</small>';
+  }
+  function configure(options) { for (var k in options) cfg[k] = options[k]; R = cfg.engine; METRIC_LABELS = cfg.labels; }
   function render(records) {
     if (!R) return null;
+    if (!selectedChartMetric) selectedChartMetric = cfg.defaultMetric;
     bindOnce();
     var res = R.compute(records, Date.now()); lastResult = res;
-    R.saveHistory(R.mergeHistory(R.loadHistory(), res.fired, Date.now())); // sem duplicar: chave regra+métrica+registro
+    R.saveHistory(R.mergeHistory(R.loadHistory(cfg.storageKey), res.fired, Date.now()), cfg.storageKey); // sem duplicar: chave regra+métrica+registro
     renderDeltas(res); renderBadges(res); renderChart(res); renderHistory();
     return res;
   }
-  window.AlertsPanel = { render: render, exportHistoryNow: exportHistoryNow };
+  window.AlertsPanel = { configure: configure, mount: mount, render: render, exportHistoryNow: exportHistoryNow };
 })();

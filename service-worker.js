@@ -17,7 +17,7 @@ const ASSETS_V2 = [
   './ntn/pointing.js', './ntn/busca-ui.js', './ntn/hero.js', './ntn/trajeto.js', './ntn/insights.js',
   './ntn/alerts-ui.js', './ntn/replay.json', './ntn/pro.css', './ntn/hero.css', './ntn/ntn.css', './ntn/deck-theme.css',
   './utilities/', './utilities/index.html', './utilities/utilities.js', './utilities/sat-live.js',
-  './utilities/hero-u.js', './utilities/alerts-u.js', './utilities/alert-rules.js', './utilities/alerts-panel.js', './utilities/utilities.css',
+  './utilities/hero-u.js', './utilities/alerts-u.js', './utilities/alert-rules.js', './utilities/alerts-panel.js', './movement-rules.js', './alerts-panel.css', './ntn/alerts-trk.js', './root-alerts.js', './utilities/utilities.css',
   './consumo/', './consumo/index.html', './consumo/consumo.js',
 ];
 

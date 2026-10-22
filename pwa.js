@@ -4,7 +4,7 @@
   function swUrl(loc) {
     // No GitHub Pages o site fica em /thingy91x-dashboard/; no localhost, na raiz servida.
     const base = /\/thingy91x-dashboard\//.test(loc.pathname) ? '/thingy91x-dashboard/' : '/';
-    return { url: base + 'service-worker.js?v=36', scope: base };
+    return { url: base + 'service-worker.js?v=37', scope: base };
   }
   function register() {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;

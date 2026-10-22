@@ -31,6 +31,8 @@
     .ntn-nav a[aria-current]{color:#e8ecf6;background:#182036;border-color:#26304a}
     .ntn-nav a small{font-weight:500;color:#8e9ab5}
     </style>
+    <link rel="stylesheet" href="alerts-panel.css?v=1">
+    <style>.intel-root{margin:14px 22px;padding:16px;border:1px solid #26304a;border-radius:14px;background:#111a2e}.intel-root .card-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.intel-root .seg button.on{background:#182036}</style>
 </head>
 <body>
     <nav class="ntn-nav" aria-label="Plataforma Connect NTN">
@@ -41,6 +43,7 @@
         <a href="consumo/">Consumo</a>
         <a href="ntn/?modo=apresentacao&amp;rot=10">Demonstração</a>
     </nav>
+    <section id="intelCard" class="card intel-root"></section>
     <div class="app">
         <header class="header">
             <div class="header-left">
@@ -492,6 +495,10 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="presence-core.js?v=32"></script>
-    <script src="app.js?v=32"></script>
+    <script src="app.js?v=33"></script>
+    <script src="utilities/alert-rules.js?v=3"></script>
+    <script src="movement-rules.js?v=2"></script>
+    <script src="utilities/alerts-panel.js?v=2"></script>
+    <script src="root-alerts.js?v=1"></script>
 </body>
 </html>

@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="pro.css?v=51">
 <link rel="stylesheet" href="hero.css?v=50">
 <link rel="stylesheet" href="deck-theme.css?v=3">
+<link rel="stylesheet" href="../alerts-panel.css?v=1">
 </head>
 <body>
 <header class="top">
@@ -81,6 +82,7 @@
     <div id="satChart"></div>
     <div class="table-wrap" style="max-height:240px"><table class="tbl"><thead><tr><th>Início</th><th>Tipo</th><th>Rede</th><th>Duração</th><th>Amostras</th><th>RSRP mín/méd/máx</th><th>SNR mín/méd/máx</th><th>% registrado</th><th>Tempo até registrar</th><th>Rejeição</th></tr></thead><tbody id="satBody"></tbody></table></div>
   </section>
+  <section class="card" id="intelCard" style="grid-column:1/-1"></section>
   <section class="card tl-card">
     <div class="card-h"><h2>Linha do tempo de comutações</h2><span id="swCount" class="pill"></span></div>
     <div id="swBar" class="swbar"></div>
@@ -107,7 +109,7 @@
 <footer class="foot muted">nRF9151 DK · modem mfw_nrf9151-ntn_1.0.1 · painel <span id="footPanelVer">v?</span> · app <span id="footAppVer">v?</span> · mensagens ≤ 256 B, ≥ 30 s em NTN · <span id="foot"></span></footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="../api-core.js?v=3"></script>
-<script src="../pwa.js?v=3"></script>
+<script src="../pwa.js?v=4"></script>
 <script src="../health-badge.js?v=1"></script>
 <script src="pro-core.js?v=47"></script>
 <script src="sim.js?v=47"></script>
@@ -120,7 +122,11 @@
 <script src="../switch-timeline.js?v=1"></script>
 <script src="../apresentacao.js?v=2"></script>
 <script src="alerts-ui.js?v=1"></script>
-<script src="pro.js?v=60"></script>
+<script src="../utilities/alert-rules.js?v=3"></script>
+<script src="../movement-rules.js?v=2"></script>
+<script src="../utilities/alerts-panel.js?v=2"></script>
+<script src="alerts-trk.js?v=1"></script>
+<script src="pro.js?v=61"></script>
 <a class="deck-fw" href="firmware.html">Firmware</a>
 </body>
 </html>

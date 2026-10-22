@@ -42,4 +42,5 @@ h = R.toggleRead(h, h[0].key); ok('alternar lido/não lido', R.unreadCount(h) ==
 ok('filtro por regra', R.filterHistory(h, 'all', 'A').every((e) => e.rule === 'A') && R.filterHistory(h, 'all', 'Z').length === 0);
 h = R.mergeHistory([{ key: 'A|deltaL|1', at: now - 31 * 86400000, rule: 'A', metric: 'deltaL', read: false }], [], now); ok('entrada com mais de 30 dias sai', h.length === 0);
 ok('sem travessão nas mensagens', !fs.readFileSync(join(dir, '../utilities/alert-rules.js'), 'utf8').includes('\u2014'));
+r = last([10, 10, 10, 10, 6, 6, 6]); ok('B: ativo na última leitura, mas no histórico só 1 vez por sequência', r.active.some((a) => a.rule === 'B') && r.fired.filter((a) => a.rule === 'B').length === 1, JSON.stringify(r.fired.map((a) => a.rule)));
 console.log(f ? 'FALHAS: ' + f : 'TODOS OK'); if (f) process.exit(1);
