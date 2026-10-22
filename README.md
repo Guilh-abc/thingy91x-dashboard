@@ -114,3 +114,9 @@ Local: run `Thingy91X-Dashboard.command` or `npm run serve` on port **3001**, op
 Auth: Memfault User API Key/OAT for fleet; optional **team Simple Token** (`X-Nrf-Team-Key`) for cloud messages, shadow **PATCH**, and c2d.  
 ATT-friendly desired wraps flat `gpsInterval`/`led`/`buzzer` into `desired.config`.  
 Without Simple Token, writes return explicit 401/403 JSON — GNSS/ListMessages are **not** claimed to work.
+
+## Acesso: admin e demonstração
+- **Demonstração** (`/relatorio-demo/`): 100% estática, dados fictícios (cidade inventada Vila Aurora), sem chamada de rede, sem leitura de chaves e com exportações desabilitadas. Garantido por `tests/demo-isolation.test.mjs`.
+- **Painéis reais**: a raiz (Fing) só mostra dados e exporta com a chave nRF Cloud salva no próprio navegador (modo admin atual). Rastreador, Utilities e Consumo leem a API `ntn-lab`, que hoje é pública; para restringir é preciso validar sessão no servidor.
+- **Papéis**: `roles.js` lê `GET /api/me` (ainda não implementado) e, enquanto ele não existir, mantém o comportamento atual. Contrato em `docs/papeis-api.md`. Administração de usuários em `/admin/acessos/`.
+- **Padrão visual**: `design-tokens.css` (cores, botões, badges) e `icons.js` (sprite Lucide local) em todas as páginas.
