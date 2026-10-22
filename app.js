@@ -19,7 +19,7 @@ const NETLIFY_ALERTS = 'https://thingy91x-x-dashboard.netlify.app/.netlify/funct
 function resolveNrfCloudBase() {
     const h = location.hostname;
     if (h === 'localhost' || h === '127.0.0.1') return '/api';
-    if (/netlify\.app$/i.test(h)) return '/.netlify/functions/nrfcloud';
+    if (/(netlify\.app|pages\.dev)$/i.test(h)) return '/.netlify/functions/nrfcloud';
     if (/github\.io$/i.test(h)) return NETLIFY_FN;
     if (/trycloudflare\.com$/i.test(h)) return '/api';
     if (location.protocol === 'https:') return NETLIFY_FN;
@@ -29,7 +29,7 @@ const NRF_CLOUD_BASE = resolveNrfCloudBase();
 function resolveAlertsUrl() {
     const h = location.hostname;
     if (h === 'localhost' || h === '127.0.0.1') return null; // client-only on local
-    if (/netlify\.app$/i.test(h)) return '/.netlify/functions/alerts';
+    if (/(netlify\.app|pages\.dev)$/i.test(h)) return '/.netlify/functions/alerts';
     return NETLIFY_ALERTS;
 }
 

@@ -4,7 +4,7 @@
 
 // Resolucao da URL base: vazia apenas no Netlify (netlify.app).
 // Localhost, GitHub Pages e qualquer outro host usam a URL completa.
-const BASE_URL = (typeof location !== 'undefined' && /netlify\.app$/i.test(location.hostname))
+const BASE_URL = (typeof location !== 'undefined' && /(netlify\.app|pages\.dev)$/i.test(location.hostname))
   ? ''
   : 'https://thingy91x-x-dashboard.netlify.app';
 

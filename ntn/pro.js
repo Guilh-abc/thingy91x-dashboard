@@ -2,7 +2,7 @@
 (() => {
   const PANEL_VERSION = '2.4'; // versão do painel NTN Pro; atualizar a cada release
   const P = window.NtnPro;
-  const onNetlify = /netlify\.app$/i.test(location.hostname) || /^(localhost|127\.)/.test(location.hostname);
+  const onNetlify = /(netlify\.app|pages\.dev)$/i.test(location.hostname) || /^(localhost|127\.)/.test(location.hostname);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const hhmm = (iso) => (iso ? new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—');

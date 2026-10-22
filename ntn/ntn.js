@@ -1,7 +1,7 @@
 /* nRF9151 NTN Lab v35 — lê o resumo publicado pelo uploader do Mac (Netlify Blobs) com polling de 15 s. */
 (function () {
   'use strict';
-  const onNetlify = /netlify\.app$/i.test(location.hostname) || /^(localhost|127\.)/.test(location.hostname);
+  const onNetlify = /(netlify\.app|pages\.dev)$/i.test(location.hostname) || /^(localhost|127\.)/.test(location.hostname);
   const API = (onNetlify ? '' : 'https://thingy91x-x-dashboard.netlify.app') + '/.netlify/functions/ntn-lab';
   const POLL_MS = 15000, STALE_MS = 120000, TZ = 'America/Sao_Paulo';
   const $ = (id) => document.getElementById(id);

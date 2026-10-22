@@ -2,7 +2,7 @@
    Lógica idêntica ao original; nenhum comportamento alterado.
    A3: Poll 45 s: dados historicos, sem urgencia de tempo real. */
 (function(){
-var on=/netlify\.app$/.test(location.hostname);
+var on=/(netlify\.app|pages\.dev)$/.test(location.hostname);
 var B=(on?'':'https://thingy91x-x-dashboard.netlify.app')+'/.netlify/functions/ntn-lab';
 var CHIPS={tracker:'Rastreador (chip do NTN)',meter:'Medidor (chip do Utilities)'};
 var recs=[];

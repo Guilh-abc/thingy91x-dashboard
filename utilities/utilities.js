@@ -1,6 +1,6 @@
 /* Connect Utilities v2 (operador) — só dados reais do medidor (ntn-lab ?meter=1). Sem simulação. */
 (function () {
-  const onNetlify = /netlify\.app$/.test(location.hostname);
+  const onNetlify = /(netlify\.app|pages\.dev)$/.test(location.hostname);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const dmy = (t) => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });

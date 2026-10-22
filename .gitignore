@@ -19,3 +19,4 @@ serial_telemetry.pid
 
 # Local Netlify folder
 .netlify
+dist/

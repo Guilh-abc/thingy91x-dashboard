@@ -118,5 +118,6 @@ Without Simple Token, writes return explicit 401/403 JSON — GNSS/ListMessages 
 ## Acesso: admin e demonstração
 - **Demonstração** (`/relatorio-demo/`): 100% estática, dados fictícios (cidade inventada Vila Aurora), sem chamada de rede, sem leitura de chaves e com exportações desabilitadas. Garantido por `tests/demo-isolation.test.mjs`.
 - **Painéis reais**: a raiz (Fing) só mostra dados e exporta com a chave nRF Cloud salva no próprio navegador (modo admin atual). Rastreador, Utilities e Consumo leem a API `ntn-lab`, que hoje é pública; para restringir é preciso validar sessão no servidor.
-- **Papéis**: `roles.js` lê `GET /api/me` (ainda não implementado) e, enquanto ele não existir, mantém o comportamento atual. Contrato em `docs/papeis-api.md`. Administração de usuários em `/admin/acessos/`.
+- **Plataforma com login**: https://ntn-plataforma.pages.dev (Cloudflare Access, PIN por e-mail). Admin vê tudo; viewer só a demonstração. Detalhes em `docs/papeis-api.md`. Usuários em `/admin/acessos/`.
+- **GitHub Pages**: serve só a demonstração e um aviso (ramo `gh-pages-demo`).
 - **Padrão visual**: `design-tokens.css` (cores, botões, badges) e `icons.js` (sprite Lucide local) em todas as páginas.
