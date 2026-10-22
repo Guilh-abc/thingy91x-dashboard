@@ -17,6 +17,7 @@
   const AL = { leak: ['💧', 'Vazamento', 'Fluxo contínuo ou alarme de vazamento.'], tamper: ['🔓', 'Violação', 'Tentativa de violação do medidor.'], anom: ['📈', 'Consumo anômalo', 'Consumo por hora acima do limite.'], lowbat: ['🔋', 'Bateria baixa', 'Tensão abaixo do limite.'] };
   const empty = (t) => `<div class="empty-st">${t}</div>`;
   let recs = [], agg = 'i', map, mk, fT = 'all', fN = 'all';
+  document.addEventListener('sw:focusMap', (e) => { const d = e.detail || {}; if (map && isFinite(d.lat) && isFinite(d.lon)) { map.setView([d.lat, d.lon], 16); document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
   $('tariff').value = localStorage.getItem('cu.tariff') || '';
   $('tariff').addEventListener('input', () => { localStorage.setItem('cu.tariff', $('tariff').value); render(); });
   const segBind = (id, fn) => document.querySelectorAll('#' + id + ' button').forEach((b) => b.addEventListener('click', () => { fn(b); document.querySelectorAll('#' + id + ' button').forEach((x) => x.classList.toggle('on', x === b)); render(); }));
@@ -127,14 +128,16 @@
     $('cChart').innerHTML = consumo(rd);
     $('sChart').innerHTML = sinal(rs, tel);
     $('nChart').innerHTML = redes(rs);
-    $('tl').innerHTML = timeline(ses);
+    // D3: componente compartilhado com o Rastreador (RF-03)
+    if (window.SwitchTimeline) window.SwitchTimeline.render($('tl'), window.SwitchTimeline.build(rs), { max: 8, onlyTo: 'ntn', empty: 'Nenhuma tentativa de satélite ainda. Segure o Botão 4 por 3 s para iniciar o teste.' });
     /* identidade */
     const boot = [...rs].reverse().find((r) => r.event === 'boot');
     $('idCard').innerHTML = rs.length ? [['Modelo', 'nRF9151 DK (PCA10201)'], ['Firmware do modem', boot ? esc(boot.info) : '—'], ['Firmware da aplicação', 'medidor m1 <small class="muted">(versão não enviada)</small>'],
       ['ICCID', sp?.ic ? '•••• •••• ' + esc(sp.ic) : '—'], ['IMSI', sp?.im ? esc(sp.im.replace(/^(\d{5}).*…/, '$1 ••• ')) : '—'], ['APN', '<small class="muted">não reportado pela placa</small>'],
       ['Intervalo de envio', ivMin ? '~' + Math.round(ivMin) + ' min (medido)' : '—'], ['Alimentação', lt?.mv != null ? (lt.mv / 1000).toFixed(2) + ' V' + (lt.temp != null ? ' · ' + lt.temp + ' °C' : '') : '—'],
       ['Último boot', boot ? dmy(T(boot)) : '—']].map(([k, v]) => `<div><span class="muted">${k}</span><b>${v}</b></div>`).join('') : empty('Aguardando a primeira comunicação da placa.');
-    $('alCount').textContent = al.length || '';
+    const lk = window.AlertsU ? window.AlertsU.render('alertLeak', rs) : null; // E2: RF-04.2
+    $('alCount').textContent = (al.length + (lk && lk.on ? 1 : 0)) || '';
     $('alerts').innerHTML = al.length ? al.slice(-20).reverse().map((a) => { const d = AL[a.event] || ['⚠️', a.event, '']; return `<div class="al"><i>${d[0]}</i><div><b>${esc(d[1])}</b> <span class="muted">${dmy(a.ts)}</span><br><small class="muted">${esc(d[2])}</small></div></div>`; }).join('')
       : empty('Nenhum alerta. Monitorados: vazamento, consumo anômalo, violação e bateria baixa.');
     /* mapa */
@@ -206,20 +209,6 @@
     return bar('catm', 'Cat-M', '#2f7cf6') + bar('ntn', 'Satélite Skylo', '#9b4dff') +
       `<div class="nstat"><div><small class="muted">Latência Cat-M (mediana)</small><b>${lc != null ? (lc / 1000).toFixed(1) + ' s' : '—'}</b><small class="muted">atraso fila ${late(g.catm) ?? '—'} s</small></div><div><small class="muted">Latência satélite</small><b>${ln != null ? (ln / 1000).toFixed(1) + ' s' : '—'}</b><small class="muted">${g.ntn.length ? 'atraso fila ' + (late(g.ntn) ?? '—') + ' s' : 'nenhum envio via satélite ainda'}</small></div></div>
       <small class="muted">Latência = tempo de ida e volta do envio anterior, medido pela placa.</small>`;
-  }
-  function timeline(ses) {
-    if (!ses.length) return empty('Nenhuma tentativa de satélite ainda. Segure o Botão 4 por 3 s para iniciar o teste.');
-    return ses.slice(-8).reverse().map((s) => {
-      const end = s.open ? Math.max(s.last, Date.now()) : s.end, span = Math.max(end - s.start, 60000), p = (t) => ((t - s.start) / span) * 100;
-      const segs = []; const g = s.gnss ? T(s.gnss) : null, se = s.search ? T(s.search) : g, rg = s.reg ? T(s.reg) : null, ls = s.lost ? T(s.lost) : null;
-      segs.push([s.start, g || se || s.last, '#3d8bff', 'GNSS']);
-      if (se) segs.push([se, rg || ls || (s.open ? s.last : end), '#ffb020', 'buscando Skylo']);
-      if (rg) segs.push([rg, ls || (s.open ? s.last : end), '#2fd27a', 'registrado 90198']);
-      if (s.open) segs.push([s.last, end, 'repeating-linear-gradient(90deg,#ffffff22 0 6px,transparent 6px 12px)', 'sem notícias da placa (fila até registrar)']);
-      const bars = segs.filter(([a, b]) => b > a).map(([a, b, c, t]) => `<i title="${t}: ${hm(a)}–${hm(b)}" style="position:absolute;left:${p(a)}%;width:${Math.max(0.8, p(b) - p(a))}%;top:0;bottom:0;background:${c};border-radius:4px"></i>`).join('');
-      const res = s.reg ? `<b style="color:#2fd27a">registrou</b> em ${s.reg.value ?? '—'} s${s.reg.rsrp != null ? ' · ' + s.reg.rsrp + ' dBm' : ''}${s.tx ? ' · ' + s.tx + ' leitura(s) via satélite' : ''}` : s.fail ? `<b style="color:#ff5470">falhou</b> (${esc(s.fail.info || '')})` : s.open ? '<b style="color:#ffb020">em andamento</b> · sem registro ainda' : '<b style="color:#ff5470">sem registro</b>';
-      return `<div class="tlrow"><div><b>${dmy(s.start)}</b><br><small class="muted">${agoS(end - s.start)}${s.open ? '' : ' · ' + esc(s.why || '')}</small></div><div><div style="position:relative;height:16px;background:var(--card2);border-radius:5px">${bars}</div><small class="muted">${s.gnss ? 'GNSS ' + (s.gnss.event === 'gnss_fail' || s.gnss.value < 0 ? 'sem fix' : 'ok em ' + s.gnss.value + ' s') + ' · ' : ''}${res}${s.lost ? ' · <span style="color:#ff5470">perdeu o sinal</span>' : ''}</small></div></div>`;
-    }).join('') + '<div class="legend"><span><i style="background:#3d8bff"></i>GNSS</span><span><i style="background:#ffb020"></i>buscando</span><span><i style="background:#2fd27a"></i>registrado</span><span><i style="background:#ffffff33"></i>sem notícias</span></div>';
   }
   async function load() { try { recs = sanitizeNet(await window.ApiCore.fetchMeter(62)); /* B3: via api-core.js */ } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
   // A3: Poll 30 s: suficiente para o medidor.

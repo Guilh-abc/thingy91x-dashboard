@@ -1,0 +1,22 @@
+// node tests/alerts-u.test.mjs
+import vm from 'vm'; import fs from 'fs'; import { fileURLToPath } from 'url'; import { dirname, join } from 'path';
+const dir = dirname(fileURLToPath(import.meta.url)); const ctx = { window: {}, Date, Math, console, String, isNaN };
+vm.runInNewContext(fs.readFileSync(join(dir, '../utilities/alerts-u.js'), 'utf8'), ctx);
+const { compute, html } = ctx.window.AlertsU; let f = 0;
+const ok = (l, c, x = '') => { console.log((c ? '  OK  ' : 'FALHA ') + l + (c ? '' : ' ' + x)); if (!c) f++; };
+const now = Date.parse('2026-10-22T13:00:00Z');
+const rd = (minAgo, totalL, deltaL) => ({ type: 'telemetry', ts: new Date(now - minAgo * 60000).toISOString(), totalL, deltaL, dv: 'm1' });
+let a = compute([rd(60, 1000, 10), rd(40, 1020, 20), rd(20, 1045, 25), rd(1, 1060, 15)], now);
+ok('B: deltaL > 0 contínuo por 60 min dispara', a.on && a.rule === 'B' && a.litros === 70, JSON.stringify(a));
+ok('texto', html(a).includes('Possível vazamento: +70 L em 59 min') && !html(a).includes('\u2014'), html(a));
+a = compute([rd(60, 1000, 10), rd(40, 1000, 0), rd(20, 1045, 25), rd(1, 1060, 15)], now);
+ok('B: uma leitura com deltaL 0 não dispara', !a.on);
+a = compute([rd(5, 1000, 3), rd(1, 1003, 3)], now); ok('B: 2 leituras não bastam', !a.on);
+a = compute([rd(70, 1000, 0), rd(1, 1700, 0)], now);
+ok('C: 700 L em 69 min dispara (> 500 L/h)', a.on && a.rule === 'C' && a.litros === 700, JSON.stringify(a));
+a = compute([rd(70, 1000, 0), rd(1, 1300, 0)], now); ok('C: 300 L em 69 min não dispara', !a.on);
+a = compute([rd(30, 1000, 0), { type: 'alarm', event: 'leak', ts: new Date(now - 30 * 60000).toISOString() }, rd(2, 1100, 0)], now);
+ok('A: alarme leak recente dispara', a.on && a.rule === 'A' && a.litros === 100, JSON.stringify(a));
+a = compute([{ type: 'alarm', event: 'leak', ts: new Date(now - 120 * 60000).toISOString() }], now); ok('A: alarme antigo não dispara', !a.on);
+a = compute([], now); ok('sem dados não dispara', !a.on && html(a) === '');
+console.log(f ? 'FALHAS: ' + f : 'TODOS OK'); if (f) process.exit(1);
