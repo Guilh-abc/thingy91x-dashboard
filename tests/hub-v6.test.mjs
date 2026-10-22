@@ -29,3 +29,14 @@ const md2 = t.ThingyDados.medidor([], agora, loc); assert.equal(md2.hoje, 193 + 
 const gm = [{ message: { appId: 'GNSS', data: {}, ts: Date.parse('2026-10-22T12:00:00Z') } }];
 assert.equal(t.ThingyDados.medidor(gm, agora, loc).tipos.find((x) => x.tipo === 'LOC_GNSS').n, 1, 'GNSS duplicado não conta');
 console.log('ok  - consumo Thingy com localização');
+// Reconhecimento de alerta
+const al2 = [{ type: 'alarm', ts: '2026-10-22T17:30:00Z', event: 'leak' }, { type: 'alarm', ts: '2026-10-22T17:40:00Z', event: 'anom' }];
+const v0 = H.resumo([], al2, {}, agora); assert.equal(v0.al, 2); assert.equal(v0.sev, 'crítica');
+const vis = { ts: Date.parse('2026-10-22T17:40:00Z'), por: 'leitor@x.com', em: Date.parse('2026-10-22T17:45:00Z') };
+const v1 = H.resumo([], al2, {}, agora, vis); assert.equal(v1.al, 0); assert.equal(v1.sev, null, 'banner some');
+assert.ok(v1.feed.some((e) => /Consumo anômalo/.test(e.txt) && /visto por leitor@x\.com às 14:45/.test(e.de)));
+const v2 = H.resumo([], al2.concat([{ type: 'alarm', ts: '2026-10-22T17:48:00Z', event: 'tamper' }]), {}, agora, vis); assert.equal(v2.al, 1); assert.equal(v2.sev, 'crítica', 'volta com alerta novo');
+assert.equal(H.nomeEv('anom'), 'Consumo anômalo'); assert.equal(H.nomeEv('xyz'), 'Evento (xyz)');
+const ep = ler('functions/api/alertas/visto.js'); assert.match(ep, /\['admin', 'leitor'\]\.includes/); assert.match(ep, /atual\.ts >= ts/);
+assert.match(ler('app/index.html'), /id="dispensar"/);
+console.log('ok  - reconhecimento de alerta');

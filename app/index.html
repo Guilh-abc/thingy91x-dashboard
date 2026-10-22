@@ -12,13 +12,13 @@
 </head>
 <body class="hub-pg">
 <main>
-  <div id="banner" class="hub-banner" role="alert" hidden><svg class="ico" aria-hidden="true"><use href="#i-alerta"></use></svg><span><b>Alerta crítico</b> <span id="bannerTxt"></span></span><a class="btn btn-danger btn-sm" href="../utilities/">Ver alerta</a></div>
+  <div id="banner" class="hub-banner" role="alert" hidden><svg class="ico" aria-hidden="true"><use href="#i-alerta"></use></svg><span><b>Alerta crítico</b> <span id="bannerTxt"></span></span><a id="verAlerta" class="btn btn-danger btn-sm" href="../utilities/">Ver alerta</a><button id="dispensar" type="button" class="btn btn-ghost btn-sm" aria-label="Dispensar alerta" title="Marcar como visto e dispensar"><svg class="ico" aria-hidden="true"><use href="#i-limpar"></use></svg></button></div>
   <div class="hub-tit"><h1>Início do sistema</h1><p>Saúde, atenção e próxima ação; atualiza a cada minuto.</p></div>
 
   <section class="hub-kpis" aria-label="Resumo">
     <div class="kpi-h" title="Aparelhos com envio nos últimos 15 min"><svg class="ico" aria-hidden="true"><use href="#i-saude"></use></svg><div><small>Dispositivos online</small><div id="kDisp" class="kv sk"></div><p id="kDispS" class="ks"></p></div></div>
     <div class="kpi-h" title="Bytes enviados hoje (BRT) pelo Rastreador NTN, pelo medidor e pelo Thingy:91X (este estimado pelo tamanho das mensagens, não é a fatura)"><svg class="ico" aria-hidden="true"><use href="#i-rede"></use></svg><div><small>Dados hoje</small><div id="kDados" class="kv sk"></div><p id="kDadosS" class="ks"></p></div></div>
-    <div class="kpi-h" title="Alarmes recebidos nas últimas 24 h, por sistema; crítica quando o último tem menos de 1 h"><svg class="ico" aria-hidden="true"><use href="#i-escudo"></use></svg><div><small>Alertas ativos</small><div id="kAl" class="kv sk"></div><p id="kAlS" class="ks"></p></div></div>
+    <div class="kpi-h" title="Alarmes não reconhecidos nas últimas 24 h, por sistema; crítica quando o último tem menos de 1 h"><svg class="ico" aria-hidden="true"><use href="#i-escudo"></use></svg><div><small>Alertas ativos</small><div id="kAl" class="kv sk"></div><p id="kAlS" class="ks"></p></div></div>
     <div class="kpi-h" title="Último envio de cada sistema e o sinal (RSRP) de cada um: bom a partir de -90 dBm, regular até -105 dBm, fraco abaixo"><svg class="ico" aria-hidden="true"><use href="#i-relogio"></use></svg><div><small>Última atualização</small><div id="kUlt" class="kv sk"></div><p id="kUltS" class="ks"></p></div></div>
   </section>
 
@@ -66,7 +66,7 @@
 <script src="../roles.js?v=2"></script>
 <script src="../health-badge.js?v=1"></script>
 <script src="../status-cartoes.js?v=1"></script>
-<script src="../thingy-dados.js?v=2"></script><script src="hub.js?v=3"></script>
+<script src="../thingy-dados.js?v=2"></script><script src="hub.js?v=4"></script>
 <script src="boas-vindas.js?v=2"></script>
 <script src="../shell.js?v=5" data-pagina="app"></script>
 </body>

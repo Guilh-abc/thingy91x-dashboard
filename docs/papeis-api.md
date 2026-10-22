@@ -45,3 +45,7 @@ Quem vê um dado na tela pode fotografar ou capturar a tela; isso não dá para 
 - A função Netlify `ntn-lab` (https://thingy91x-x-dashboard.netlify.app/.netlify/functions/ntn-lab) continua aberta, porque as placas e o relay enviam para ela. Quem souber a URL ainda lê os dados. Fechar a leitura exige separar ingestão (POST das placas) de leitura (GET) com um segredo compartilhado com o proxy do Pages.
 - O site Netlify `thingy91x-x-dashboard` continua com as páginas antigas.
 - O GitHub Pages agora serve só a demonstração e um aviso (ramo `gh-pages-demo`).
+
+## /api/alertas/visto
+
+GET lê e POST `{ ts }` grava o reconhecimento do alerta crítico do hub (KV `alerta:visto`: ts, e-mail, horário). Admin e leitor podem marcar; é a única escrita liberada ao leitor. Viewer recebe 403. Sem servidor, o hub usa o localStorage.

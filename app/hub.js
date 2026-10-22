@@ -9,7 +9,10 @@
   function rel(t, agora) { if (t == null) return 'sem dado'; var s = Math.max(0, Math.round((agora - t) / 1000)); return s < 90 ? 'há ' + s + ' s' : s < 5400 ? 'há ' + Math.round(s / 60) + ' min' : s < 172800 ? 'há ' + Math.round(s / 3600) + ' h' : 'há ' + Math.round(s / 86400) + ' d'; }
   function porIdade(s) { return s == null ? null : s < 900 ? 'online' : s < 3600 ? 'atrasado' : 'desligado'; }
   function qualidade(rsrp) { return rsrp == null ? null : rsrp >= -90 ? 'bom' : rsrp >= -105 ? 'regular' : 'fraco'; }
-  var EV = { leak: 'vazamento', boot: 'Ligou', sw: 'Troca de rede', reg: 'Registro na rede', sim: 'Leitura do SIM', fsel: 'Seleção de rede', stest: 'Autoteste', sat_start: 'Início no satélite' };
+  var EV = { leak: 'Vazamento', tamper: 'Violação do medidor', anom: 'Consumo anômalo', lowbat: 'Bateria baixa', boot: 'Ligou', rst: 'Reinício', sw: 'Troca de rede', reg: 'Registro na rede',
+    rej: 'Registro recusado pela rede', lost: 'Perda de sinal', wait: 'Aguardando rede', fail: 'Falha de envio', probe: 'Teste de rede', fsel: 'Seleção de rede', back_catm: 'Volta ao Cat-M', apn: 'Configuração de APN',
+    sim: 'Leitura do SIM', stest: 'Autoteste', fix: 'Posição obtida', gnss_ok: 'GNSS pronto', sat_start: 'Início no satélite', sat_search: 'Busca de satélite', sat_reg: 'Registro no satélite' };
+  function nomeEv(c) { return EV[c] || (c ? 'Evento (' + c + ')' : 'Evento'); }
   /* Estado de um aparelho a partir dos registros da API (último envio e intervalo típico). */
   function estadoApi(recs, agora) {
     var rs = (recs || []).filter(function (r) { return !isNaN(tms(r)); }).sort(function (a, b) { return tms(a) - tms(b); });
@@ -18,7 +21,9 @@
     return { estado: e === 'parado' ? 'desligado' : e, ultimo: u };
   }
   /* Cálculo puro do hub. th = { ultimo, spd, semChave }. */
-  function resumo(ntn, meter, th, agora) {
+  function hhmm(t) { return new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: TZ }); }
+  /* vis = { ts, por, em }: alertas com horário até vis.ts estão reconhecidos. */
+  function resumo(ntn, meter, th, agora, vis) {
     agora = agora || Date.now(); ntn = ntn || []; meter = meter || []; th = th || {};
     var tEst = th.semChave ? 'sem chave' : th.ultimo ? porIdade((agora - th.ultimo) / 1000) : 'sem dado';
     var disp = [
@@ -32,7 +37,7 @@
     var porHora = new Array(horaBRT(agora) + 1).fill(0), catm = 0, sat = 0;
     hj.forEach(function (r) { var b = +r.bytes || 0; porHora[horaBRT(tms(r))] += b; if (rede(r) === 'ntn') sat += b; else catm += b; });
     if (th.bytesHoje) { catm += th.bytesHoje; }
-    var al = todos.filter(function (r) { return r.type === 'alarm' && agora - tms(r) <= 24 * H1; });
+    var al = todos.filter(function (r) { return r.type === 'alarm' && agora - tms(r) <= 24 * H1 && (!vis || tms(r) > vis.ts); });
     var ultAl = al.length ? tms(al[al.length - 1]) : null;
     var sev = !al.length ? null : agora - ultAl <= H1 ? 'crítica' : 'alta';
     var tel = todos.filter(function (r) { return r.rsrp != null; }), rsrp = tel.length ? tel[tel.length - 1].rsrp : null;
@@ -55,8 +60,8 @@
     var sis = disp.map(function (x) { var rs = x.id === 'ntn' ? ntn : x.id === 'utilities' ? meter : []; var r = sinal(rs); return { nome: x.nome, ultimo: x.ultimo, rsrp: r, qual: qualidade(r) }; });
     // Feed de eventos
     var feed = todos.filter(function (r) { return r.type === 'alarm' || r.type === 'event'; }).map(function (r) {
-      var ev = EV[r.event] || r.event || 'evento';
-      return r.type === 'alarm' ? { t: tms(r), tipo: 'alerta', txt: 'Alerta de ' + ev, de: r._o }
+      var ev = nomeEv(r.event);
+      return r.type === 'alarm' ? { t: tms(r), tipo: 'alerta', txt: 'Alerta: ' + ev, de: r._o + (vis && tms(r) <= vis.ts ? ' · visto' + (vis.por ? ' por ' + vis.por : '') + (vis.em ? ' às ' + hhmm(vis.em) : '') : '') }
         : { t: tms(r), tipo: r.event === 'sw' || r.event === 'fsel' ? 'rede' : r.event === 'boot' ? 'online' : 'evento', txt: ev, de: r._o };
     });
     todos.filter(function (r) { return r.type === 'telemetry'; }).slice(-3).forEach(function (r) { feed.push({ t: tms(r), tipo: 'envio', txt: 'Envio ' + (rede(r) === 'ntn' ? 'NTN' : 'Cat-M') + (r.bytes ? ' de ' + r.bytes + ' B' : ''), de: r._o }); });
@@ -66,15 +71,15 @@
     var pos = th.pos || (np ? [+np.lat, +np.lon] : null); if (pos) pos = pos.map(function (v) { return Math.round(v * 1000) / 1000; });
     var alPor = {}; al.forEach(function (r) { alPor[r._o] = (alPor[r._o] || 0) + 1; });
     return { sol: SOL, mat: mat, totHoje: tot(mat.hoje), tot7: tot(mat.d7), sis: sis, alPor: alPor, pos: pos, posDe: th.pos ? 'Thingy:91X' : np ? 'Rastreador NTN' : null, disp: disp, online: disp.filter(function (d) { return d.estado === 'online'; }).length, total: disp.length,
-      bytesHoje: catm + sat, catm: catm, ntn: sat, porHora: porHora, al: al.length, sev: sev, ultAl: ultAl, ultAlTxt: al.length ? 'Alerta de ' + (EV[al[al.length - 1].event] || al[al.length - 1].event) + ' no ' + al[al.length - 1]._o : null,
+      bytesHoje: catm + sat, catm: catm, ntn: sat, porHora: porHora, al: al.length, sev: sev, ultAl: ultAl, ultAlTxt: al.length ? nomeEv(al[al.length - 1].event) + ' no ' + al[al.length - 1]._o : null,
       ultimo: ult, rsrp: rsrp, qual: qualidade(rsrp), leitura: mt.length ? mt[mt.length - 1].totalL : null, l24: l24, l48: l48,
-      alConsumo: meter.filter(function (r) { return r.type === 'alarm' && agora - tms(r) <= 24 * H1; }).length,
+      alConsumo: al.filter(function (r) { return r._o === 'Medidor Utilities'; }).length,
       chips: Object.keys(chips).map(function (k) { return { k: k, b: chips[k] }; }).sort(function (a, b) { return b.b - a.b; }), feed: feed.slice(0, 10) };
   }
   /* Tile OSM e posição do ponto dentro dele (mini mapa leve, sem biblioteca). */
   function tile(pos, z) { var n = Math.pow(2, z), x = (pos[1] + 180) / 360 * n, la = pos[0] * Math.PI / 180, y = (1 - Math.log(Math.tan(la) + 1 / Math.cos(la)) / Math.PI) / 2 * n;
     return { z: z, x: Math.floor(x), y: Math.floor(y), px: (x % 1) * 100, py: (y % 1) * 100 }; }
-  root.HubCalc = { tile: tile, resumo: resumo, rel: rel, qualidade: qualidade, porIdade: porIdade };
+  root.HubCalc = { nomeEv: nomeEv, tile: tile, resumo: resumo, rel: rel, qualidade: qualidade, porIdade: porIdade };
   if (typeof document === 'undefined') return;
 
   var PROXY = /(netlify\.app|pages\.dev)$/i.test(location.hostname), BASE = PROXY ? '' : 'https://thingy91x-x-dashboard.netlify.app';
@@ -156,11 +161,27 @@
       $('cAc').innerHTML = [['admin', 'Admins'], ['leitor', 'Leitores'], ['viewer', 'Viewers']].map(function (p) { return '<li><span>' + p[1] + '</span><b>' + c[p[0]] + '</b></li>'; }).join('');
     }).catch(function () { $('cAc').innerHTML = '<li><span>Contagem por papel</span><b>sem dado</b></li>'; });
   }
+  var VIS = null;
+  function visLocal() { try { return JSON.parse(localStorage.getItem('ntn.alerta.visto') || 'null'); } catch (e) { return null; } }
+  function maisNovo(a, b) { return !a ? b : !b ? a : b.ts > a.ts ? b : a; }
+  function lerVisto() { return tempo(fetch('/api/alertas/visto', { cache: 'no-store', credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }), 8000).catch(function () { return null; })
+    .then(function (k) { VIS = maisNovo(visLocal(), k && k.ts ? k : null); return VIS; }); }
+  function reconhecer() {
+    var ts = ULT_AL; if (!ts) return Promise.resolve();
+    var loc = { ts: ts, por: null, em: Date.now() }; VIS = maisNovo(VIS, loc); try { localStorage.setItem('ntn.alerta.visto', JSON.stringify(VIS)); } catch (e) {}
+    $('banner').hidden = true;
+    return tempo(fetch('/api/alertas/visto', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ts: ts }) }).then(function (r) { return r.ok ? r.json() : null; }), 5000)
+      .then(function (k) { if (k && k.ts) { VIS = maisNovo(VIS, k); try { localStorage.setItem('ntn.alerta.visto', JSON.stringify(VIS)); } catch (e) {} } }).catch(function () {});
+  }
+  var ULT_AL = null, DADOS = null;
+  function desenhar() { if (!DADOS) return; var agora = Date.now(), d = resumo(DADOS[0], DADOS[1], DADOS[2], agora, VIS); ULT_AL = d.ultAl; render(d, agora); }
   function ciclo() {
-    Promise.all([api('pro'), api('meter'), thingy()]).then(function (r) { var agora = Date.now(); render(resumo(r[0], r[1], r[2], agora), agora); });
+    Promise.all([api('pro'), api('meter'), thingy(), lerVisto()]).then(function (r) { DADOS = r; desenhar(); });
     setTimeout(ciclo, 60000);
   }
   function iniciar() {
+    $('verAlerta').onclick = function (e) { e.preventDefault(); var h = this.href; reconhecer().then(function () { location.href = h; }); };
+    $('dispensar').onclick = function () { reconhecer().then(desenhar); };
     document.querySelectorAll('[data-per]').forEach(function (b) { b.onclick = function () { PER = b.getAttribute('data-per'); document.querySelectorAll('[data-per]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); }); consumo(); }; }); ciclo(); if (root.Roles && root.Roles.ehAdmin()) acessos(); document.addEventListener('papel-pronto', acessos); if (!$('cAc').innerHTML) acessos(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })(typeof window !== 'undefined' ? window : globalThis);
