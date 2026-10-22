@@ -1,0 +1,22 @@
+import assert from 'node:assert'; import { readFileSync } from 'node:fs';
+const raiz = new URL('../', import.meta.url).pathname;
+const ctx = {}; new Function('globalThis', readFileSync(raiz + 'app/relatorio/relatorio-real.js', 'utf8').replace(/typeof window !== 'undefined' \? window : globalThis/, 'globalThis'))(ctx);
+const R = ctx.RelReal;
+// Dados de exemplo: ida e volta de cerca de 5,5 km entre dois locais, passos de 10 min.
+const t0 = Date.parse('2026-10-01T10:00:00Z'), L = [];
+const add = (i, lat, lon) => L.push({ recordedAt: new Date(t0 + i * 600000).toISOString(), lat: String(lat), lon: String(lon), uncertainty: '10', serviceType: 'GNSS', meta: { spd: 10 } });
+for (let i = 0; i < 4; i++) add(i, -23.5, -46.6);
+for (let k = 1; k <= 5; k++) add(3 + k, -23.5 + k * 0.005, -46.6);
+for (let i = 9; i < 14; i++) add(i, -23.475, -46.6);
+L.push({ recordedAt: new Date(t0 + 99 * 600000).toISOString(), lat: '-22', lon: '-45', uncertainty: '900', serviceType: 'WIFI' });
+const M = [{ message: { appId: 'BATTERY', data: 80, ts: t0 } }, { message: { appId: 'TEMP', data: 22.34, ts: t0 } }, { message: { appId: 'HUMID', data: 50, ts: t0 } }];
+const recs = R.thingyRecs(L, M);
+assert.equal(recs.length, L.length + 2);
+const d = R.calcular(recs, 'thingy');
+assert.equal(d.vg.trips.length, 1);
+assert.ok(Math.abs(d.vg.km - 2.78) < 0.05, 'km ' + d.vg.km);
+assert.equal(d.vmax, 36); assert.deepEqual(d.bat, [80]);
+assert.ok(d.pts.every(x => x.p.every(v => Math.round(v * 1000) === v * 1000)), 'posição arredondada');
+const c = R.csv(recs, R.COLS_T); assert.match(c, /bateria/); assert.doesNotMatch(c, /-23\.5000|900/);
+for (const f of ['root-alerts.js', 'ntn/pro.js']) assert.match(readFileSync(raiz + f, 'utf8'), f === 'ntn/pro.js' ? /fonte=ntn/ : /fonte=thingy91x/);
+console.log('relatorio-thingy ok');

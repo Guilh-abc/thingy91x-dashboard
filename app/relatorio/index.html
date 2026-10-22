@@ -21,7 +21,7 @@
 <header class="topo">
   <div><h1 id="tit">Relatório completo</h1><small id="sub">Carregando dados reais da API</small></div>
   <nav class="rr-ctrl">
-    <label>Fonte <select id="fonte"><option value="meter">Utilities (medidor)</option><option value="tracker">Rastreador</option><option value="consumo">Consumo (todos)</option></select></label>
+    <label>Fonte <select id="fonte"><option value="ntn">Rastreador NTN</option><option value="thingy">Thingy:91X (Cat-M)</option><option value="meter">Utilities (medidor)</option><option value="consumo">Consumo (todos)</option></select></label>
     <label>Período <select id="per"><option value="1">Últimas 24 h</option><option value="7">7 dias</option><option value="30">30 dias</option><option value="62">62 dias</option><option value="x">Personalizado</option></select></label>
     <span id="perX" hidden><input type="date" id="de" aria-label="De"> <input type="date" id="ate" aria-label="Até"></span>
     <button class="btn btn-sm" id="csv" type="button"><svg class="ico" aria-hidden="true"><use href="#i-csv"></use></svg>Exportar CSV</button>
@@ -51,7 +51,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="../../icons.js?v=3"></script>
 <script src="../../roles.js?v=2"></script>
-<script src="relatorio-real.js?v=1"></script>
+<script src="relatorio-real.js?v=2"></script>
 <script src="../../shell.js?v=5" data-pagina="relatorio"></script>
 </body>
 </html>
