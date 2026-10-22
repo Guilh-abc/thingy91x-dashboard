@@ -12,7 +12,7 @@
 <link rel="preload" as="image" href="assets/totem-poster.jpg">
 <link rel="prefetch" href="entrar/">
 <link rel="stylesheet" href="design-tokens.css?v=2">
-<link rel="stylesheet" href="landing.css?v=5">
+<link rel="stylesheet" href="landing.css?v=6">
 </head>
 <body>
 <a class="pular" href="#conteudo">Pular para o conteúdo</a>
@@ -144,7 +144,7 @@
 <script>
 (function(){var d=document.getElementById('dlg-comercial'),v=document.getElementById('vid-comercial'),bg=document.querySelector('.hero-video');
 function fechar(){v.pause();if(d.open)d.close();if(bg)bg.play().catch(function(){})}
-document.getElementById('ver-comercial').addEventListener('click',function(){if(bg)bg.pause();d.showModal();v.muted=false;v.play().catch(function(){})});
+document.getElementById('ver-comercial').addEventListener('click',function(){if(bg)bg.pause();d.showModal();v.muted=false;v.removeAttribute('muted');v.volume=1;v.currentTime=0;var pr=v.play();if(pr)pr.catch(function(){v.controls=true})});
 document.getElementById('fechar-comercial').addEventListener('click',fechar);
 d.addEventListener('close',function(){v.pause();if(bg)bg.play().catch(function(){})});
 d.addEventListener('click',function(e){if(e.target===d)fechar()});

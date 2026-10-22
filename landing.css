@@ -127,3 +127,10 @@ body{margin:0;font:16px/1.55 Inter,-apple-system,'Segoe UI',Roboto,sans-serif;ba
 .comercial-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-bottom:3px solid #E20074}
 .comercial video{display:block;width:100%;height:auto;background:#000}
 button.btn-claro{background:transparent;cursor:pointer}
+/* v13: celular mostra o vídeo 16:9 inteiro numa faixa acima do título */
+@media(max-width:760px){
+  .hero{min-height:0;background:#000}
+  .hero-video{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#000}
+  .hero::after{display:none}
+  .hero-txt{padding:24px 16px 40px}
+}
