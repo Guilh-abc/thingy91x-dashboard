@@ -1,0 +1,22 @@
+import assert from 'node:assert'; import { readFileSync } from 'node:fs';
+const raiz = new URL('../', import.meta.url).pathname, ler = (f) => readFileSync(raiz + f, 'utf8');
+const g = {}; new Function('globalThis', ler('health-badge.js'))(g); new Function('globalThis', ler('app/hub.js'))(g);
+const H = g.HubCalc, agora = Date.parse('2026-10-22T17:50:00Z');
+// Dados de exemplo
+const m = [{ type: 'telemetry', ts: '2026-10-22T17:40:00Z', bytes: 200, txNet: 'catm', rsrp: -95, totalL: 100, deltaL: 5 }, { type: 'alarm', ts: '2026-10-22T17:30:00Z', event: 'leak', bytes: 80 }];
+const d = H.resumo([], m, { semChave: true }, agora);
+assert.equal(d.total, 3); assert.equal(d.disp[0].estado, 'sem chave'); assert.equal(d.disp[1].estado, 'sem dado');
+assert.equal(d.bytesHoje, 280); assert.equal(d.ntn, 0); assert.equal(d.sev, 'crítica'); assert.equal(d.qual, 'regular'); assert.equal(d.leitura, 100);
+assert.equal(d.feed[0].tipo, 'envio'); assert.ok(d.feed.some((e) => e.tipo === 'alerta')); assert.equal(d.pos, null);
+const d2 = H.resumo([{ type: 'telemetry', ts: '2026-10-22T17:45:00Z', lat: -23.54712, lon: -46.77891 }], [], { ultimo: agora - 60000, spd: 40 }, agora);
+assert.deepEqual(d2.pos, [-23.547, -46.779]); assert.equal(d2.disp[0].mov, 'em movimento'); assert.equal(H.resumo([], [], {}, agora).sev, null);
+const html = ler('app/index.html'), css = ler('hub.css');
+assert.match(css, /prefers-reduced-motion/); assert.match(html, /loading="lazy"/); assert.equal((html.match(/data-esconde-leitor/g) || []).length, 2);
+assert.doesNotMatch(html + ler('app/hub.js') + ler('docs/hub.md'), /[\u2013\u2014]|BMW|Telecom|#f[0-9a-f]{1,2}c[0-9a-f]{2}0/i);
+console.log('ok  - hub v6');
+const t = {}; new Function('globalThis', ler('thingy-dados.js'))(t);
+const ms = [{ receivedAt: '2026-10-22T12:00:00Z', message: { appId: 'TEMP', data: 21.5, ts: Date.parse('2026-10-22T12:00:00Z') } }, { receivedAt: '2026-10-10T12:00:00Z', message: { appId: 'GNSS', data: { lat: 1 }, ts: Date.parse('2026-10-10T12:00:00Z') } }];
+const md = t.ThingyDados.medidor(ms, agora); assert.ok(md.hoje > 0 && md.d30 > md.hoje && md.d7 === md.hoje); assert.equal(md.tipos.length, 2); assert.equal(t.ThingyDados.mascara('8949000012345678901'), '****8901');
+const d3 = H.resumo([], [], { ultimo: agora, bytesHoje: 500 }, agora); assert.equal(d3.catm, 500); assert.ok(d3.chips[0].k.startsWith('Thingy'));
+assert.match(ler('consumo/index.html'), /não é a fatura da operadora/); assert.doesNotMatch(ler('consumo/consumo-thingy.js') + ler('thingy-dados.js'), /R\$|custo:|preço/i);
+console.log('ok  - consumo Thingy');

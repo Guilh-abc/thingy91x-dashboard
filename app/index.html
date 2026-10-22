@@ -8,24 +8,64 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../design-tokens.css?v=2">
 <link rel="stylesheet" href="../shell.css?v=4">
-<link rel="stylesheet" href="../hub.css?v=1">
+<link rel="stylesheet" href="../hub.css?v=2">
 </head>
 <body class="hub-pg">
 <main>
-  <div class="hub-tit"><h1>Início do sistema</h1><p>Escolha um módulo; o status de cada um atualiza a cada minuto.</p></div>
-  <section class="hub" aria-label="Sistemas">
-    <a class="hub-c" href="../rastreador/"><svg class="ico" aria-hidden="true"><use href="#i-local"></use></svg><b>Rastreador</b><small>Modelos Thingy:91X e NTN da solução veicular</small>
-      <span class="hub-linhas"><span data-hub="thingy91x">Thingy:91X <span class="hub-st st-neutro">Verificando</span></span><span data-hub="ntn">NTN <span class="hub-st st-neutro">Verificando</span></span></span></a>
-    <a class="hub-c" data-hub="utilities" href="../utilities/"><svg class="ico" aria-hidden="true"><use href="#i-medicao"></use></svg><b>Utilities</b><small>Leituras do medidor e alertas de consumo</small><span class="hub-st st-neutro">Verificando</span></a>
-    <a class="hub-c" href="../consumo/"><svg class="ico" aria-hidden="true"><use href="#i-grafico"></use></svg><b>Consumo</b><small>Dados por chip, Cat-M e satélite</small><span class="hub-st st-info">Abrir painel</span></a>
-    <a class="hub-c" data-esconde-leitor href="./relatorio/?fonte=ntn&amp;dias=7"><svg class="ico" aria-hidden="true"><use href="#i-apresentacao"></use></svg><b>Relatório completo</b><small>Relatório real com mapa, anexo e CSV</small><span class="hub-st st-info">Gerar relatório</span></a>
-    <a class="hub-c" data-esconde-leitor href="../admin/acessos/"><svg class="ico" aria-hidden="true"><use href="#i-admin"></use></svg><b>Acessos</b><small>Quem entra e com qual papel</small><span class="hub-st st-info">Gerenciar</span></a>
+  <div id="banner" class="hub-banner" role="alert" hidden><svg class="ico" aria-hidden="true"><use href="#i-alerta"></use></svg><span><b>Alerta crítico</b> <span id="bannerTxt"></span></span><a class="btn btn-danger btn-sm" href="../utilities/">Ver alerta</a></div>
+  <div class="hub-tit"><h1>Início do sistema</h1><p>Saúde, atenção e próxima ação; atualiza a cada minuto.</p></div>
+
+  <section class="hub-kpis" aria-label="Resumo">
+    <div class="kpi-h" title="Aparelhos com envio nos últimos 15 min"><svg class="ico" aria-hidden="true"><use href="#i-saude"></use></svg><div><small>Dispositivos online</small><div id="kDisp" class="kv sk"></div><p id="kDispS" class="ks"></p></div></div>
+    <div class="kpi-h" title="Bytes enviados hoje (BRT) pelo Rastreador NTN, pelo medidor e pelo Thingy:91X (este estimado pelo tamanho das mensagens, não é a fatura)"><svg class="ico" aria-hidden="true"><use href="#i-rede"></use></svg><div><small>Dados hoje</small><div id="kDados" class="kv sk"></div><p id="kDadosS" class="ks"></p></div></div>
+    <div class="kpi-h" title="Alarmes recebidos nas últimas 24 h; crítica quando o último tem menos de 1 h"><svg class="ico" aria-hidden="true"><use href="#i-escudo"></use></svg><div><small>Alertas ativos</small><div id="kAl" class="kv sk"></div><p id="kAlS" class="ks"></p></div></div>
+    <div class="kpi-h" title="Último envio de qualquer aparelho e sinal (RSRP) do último envio: boa até -90 dBm, regular até -105 dBm"><svg class="ico" aria-hidden="true"><use href="#i-relogio"></use></svg><div><small>Última atualização</small><div id="kUlt" class="kv sk"></div><p id="kUltS" class="ks"></p></div></div>
+  </section>
+
+  <section class="hub" aria-label="Módulos">
+    <article class="hub-c">
+      <div id="miniMapa" class="capa sk"></div>
+      <h2><svg class="ico" aria-hidden="true"><use href="#i-local"></use></svg>Rastreador</h2>
+      <ul id="cRast" class="lin sk"></ul>
+      <div class="ctas"><a class="btn btn-primary btn-sm" href="../rastreador/"><svg class="ico" aria-hidden="true"><use href="#i-rota"></use></svg>Abrir mapa</a><a id="ctaChave" class="btn btn-outline btn-sm" href="../rastreador/thingy91x/?config=1" hidden><svg class="ico" aria-hidden="true"><use href="#i-chave"></use></svg>Cadastrar chave</a></div>
+    </article>
+    <article class="hub-c">
+      <div class="capa"><img loading="lazy" alt="" src="../assets/medidor.webp"></div>
+      <h2><svg class="ico" aria-hidden="true"><use href="#i-medicao"></use></svg>Utilities</h2>
+      <ul id="cUt" class="lin sk"></ul>
+      <div class="ctas"><a class="btn btn-primary btn-sm" href="../utilities/"><svg class="ico" aria-hidden="true"><use href="#i-lidos"></use></svg>Ver leituras</a></div>
+    </article>
+    <article class="hub-c">
+      <div class="capa"><img loading="lazy" alt="" src="../assets/dashboard.webp"></div>
+      <h2><svg class="ico" aria-hidden="true"><use href="#i-camadas"></use></svg>Consumo hoje</h2>
+      <ul id="cCons" class="lin sk"></ul>
+      <div class="ctas"><a class="btn btn-primary btn-sm" href="../consumo/"><svg class="ico" aria-hidden="true"><use href="#i-grafico"></use></svg>Abrir painel</a></div>
+    </article>
+    <article class="hub-c" data-esconde-leitor>
+      <div class="capa"><img loading="lazy" alt="" src="../assets/relatorio-exemplo-capa.webp"></div>
+      <h2><svg class="ico" aria-hidden="true"><use href="#i-apresentacao"></use></svg>Relatório completo</h2>
+      <ul id="cRel" class="lin sk"></ul>
+      <div class="ctas"><a class="btn btn-primary btn-sm" href="./relatorio/?fonte=ntn&amp;dias=7"><svg class="ico" aria-hidden="true"><use href="#i-pdf"></use></svg>Gerar relatório</a></div>
+    </article>
+    <article class="hub-c" data-esconde-leitor>
+      <div class="capa"><img loading="lazy" alt="" src="../assets/acessos.webp"></div>
+      <h2><svg class="ico" aria-hidden="true"><use href="#i-admin"></use></svg>Acessos</h2>
+      <ul id="cAc" class="lin sk"></ul>
+      <div class="ctas"><a class="btn btn-primary btn-sm" href="../admin/acessos/"><svg class="ico" aria-hidden="true"><use href="#i-convidar"></use></svg>Gerenciar</a></div>
+    </article>
+  </section>
+
+  <section class="hub-feed" aria-label="Atividade recente">
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-atualizar"></use></svg>Eventos recentes</h2>
+    <ul id="feed" class="sk"></ul>
+    <p class="legenda"><span class="ev-alerta">alerta</span><span class="ev-rede">troca de rede</span><span class="ev-envio">envio</span><span class="ev-online">ligou</span><span class="ev-desligado">desligado</span></p>
   </section>
 </main>
 <script src="../icons.js?v=3"></script>
 <script src="../roles.js?v=2"></script>
 <script src="../health-badge.js?v=1"></script>
 <script src="../status-cartoes.js?v=1"></script>
+<script src="../thingy-dados.js?v=1"></script><script src="hub.js?v=1"></script>
 <script src="boas-vindas.js?v=2"></script>
 <script src="../shell.js?v=5" data-pagina="app"></script>
 </body>

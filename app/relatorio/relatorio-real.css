@@ -29,3 +29,4 @@
   .anexo .pg:first-child{break-before:auto}
   .rr-mapa{height:240px}
 }
+.parada .num{width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--cor-info-fundo);color:var(--cor-info-texto);font-weight:700;font-size:.8rem}

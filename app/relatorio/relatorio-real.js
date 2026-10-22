@@ -179,6 +179,7 @@
     $('tit').textContent = 'Relatório completo: ' + NOMES[f]; $('capaTit').textContent = 'Relatório completo: ' + NOMES[f];
     $('sub').textContent = per + ' (BRT) · ' + d.n + ' registros reais'; $('capaPer').textContent = 'Período: ' + per + ' (BRT) · gerado em ' + dataHora(Date.now());
     document.title = 'Relatório ' + NOMES[f] + ' | IoT Cat-M + NTN Tecnologia';
+    try { localStorage.setItem('ntn.relatorio.ultimo', JSON.stringify({ nome: NOMES[f], ts: Date.now() })); } catch (e) {}
     $('fResumo').textContent = d.n ? 'Números do período escolhido, direto da API.' : 'Nenhum registro no período escolhido.';
     var T = f === 'thingy', vg = d.vg;
     var K = [['grafico', num(d.n), T ? 'leituras' : 'mensagens', '']];
@@ -213,7 +214,7 @@
       mapa.fitBounds(L.latLngBounds(ll).pad(0.2), { maxZoom: 15 });
       $('fMapa').textContent = 'Trilha em verde, alertas em vermelho, última posição em azul; posição arredondada em cerca de 100 m.';
     } else $('mapa').innerHTML = '<div class="vazio">Sem posição no período.</div>';
-    $('paradas').innerHTML = d.paradas.length ? d.paradas.map(function (p, i) { return '<div class="parada">' + I(i ? 'local' : 'casa') + '<div><b>Área ' + (i + 1) + '</b><small>' + dmy(p.de) + ' ' + hm(p.de) + ' a ' + hm(p.ate) + '</small></div><div class="dur"><b>' + dur(p.s) + '</b><small>permanência</small></div></div>'; }).join('') : '<div class="vazio">Nenhuma parada de 5 min ou mais.</div>';
+    $('paradas').innerHTML = d.paradas.length ? d.paradas.map(function (p, i) { return '<div class="parada">' + (i ? '<span class="num">' + (i + 1) + '</span>' : I('casa')) + '<div><b>Área ' + (i + 1) + '</b><small>' + dmy(p.de) + ' ' + hm(p.de) + ' a ' + hm(p.ate) + '</small></div><div class="dur"><b>' + dur(p.s) + '</b><small>permanência</small></div></div>'; }).join('') : '<div class="vazio">Nenhuma parada de 5 min ou mais.</div>';
     // Linha do tempo
     var h0 = Math.floor(dados.de / 3600000), h1 = Math.floor(dados.ate / 3600000), fx = '';
     for (var h = h0; h <= h1; h++) { var x = d.horas[h]; fx += '<div title="' + dataHora(h * 3600000) + '" style="flex:1;background:' + (!x ? CINZA : x.al ? VERM : VERDE) + ';opacity:' + (x ? 1 : .35) + '"></div>'; }
