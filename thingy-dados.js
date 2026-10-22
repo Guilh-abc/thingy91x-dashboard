@@ -79,5 +79,5 @@
     return fetch(BASE + '/.netlify/functions/nrfcloud/devices/' + encodeURIComponent(c.dev), { headers: c.hd, cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) { var m = JSON.stringify(d || {}).match(/"iccid"\s*:\s*"(\d{10,22})/i); return m ? mascara(m[1]) : null; }).catch(function () { return null; });
   }
-  root.ThingyDados = { TAM_LOC: TAM_LOC, tudo: tudo, localizacoes: localizacoes, medidor: medidor, envios: envios, mensagens: mensagens, iccid: iccid, mascara: mascara, tam: tam };
+  root.ThingyDados = { cab: cab, BASE: BASE, TAM_LOC: TAM_LOC, tudo: tudo, localizacoes: localizacoes, medidor: medidor, envios: envios, mensagens: mensagens, iccid: iccid, mascara: mascara, tam: tam };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,0 +1,21 @@
+import assert from 'node:assert';
+import fs from 'node:fs';
+await import('../rastreador/thingy91x/thingy-v2.js');
+const { resumo } = globalThis.ThingyV2;
+const ag = Date.parse('2026-10-22T20:00:00Z');
+const loc = (min, spd, st = 'GNSS') => ({ lat: '-23.6050321', lon: '-46.6789699', serviceType: st, recordedAt: new Date(ag - min * 6e4).toISOString(), uncertainty: '20', meta: { spd } });
+const dev = { id: '50423451-3737-4337-80fc-110bddf418ff', state: { reported: { device: { deviceInfo: { batteryVoltage: 3981, appVersion: '1.5.4' }, networkInfo: { mccmnc: 72405 } }, config: { sample_interval: 600 } },
+  metadata: { reported: { device: { deviceInfo: { batteryVoltage: { timestamp: 1790969133 } } } } } } };
+let r = resumo([loc(30, 0), loc(11, 0.53)], dev, [], ag);
+assert.equal(r.estado, 'online'); assert.equal(r.pos.kmh, 1.9); assert.equal(r.pos.mov, false); assert.equal(r.pos.fonte, 'GNSS');
+assert.equal(r.alertas[0].c, 'ok'); assert.equal(r.bat.velho, true); assert.equal(r.sinal, null); assert.equal(r.det.id, '****18ff');
+assert.match(r.det.oper, /Claro/);
+r = resumo([loc(90, 10, 'WIFI')], dev, [], ag);
+assert.equal(r.estado, 'parado'); assert.equal(r.alertas[0].c, 'alerta'); assert.equal(r.pos.mov, true); assert.equal(r.pos.fonte, 'Wi-Fi');
+assert.equal(resumo([], null, [], ag).estado, 'sem dado');
+const h = fs.readFileSync(new URL('../rastreador/thingy91x/index.html', import.meta.url), 'utf8');
+assert.ok(!/configBtn|engrenagem|Asset Tracker|DEVICE\/SCELL|m\/s/.test(h));
+assert.ok(/Centralizar/.test(h) && /Trilha/.test(h) && /Detalhes do aparelho/.test(h) && /Cat-M Telekom/.test(h));
+const css = fs.readFileSync(new URL('../rastreador/thingy91x/thingy-v2.css', import.meta.url), 'utf8');
+assert.ok(!/#(9b4dff|a45cff|7a6cff|c79bff|ffd|f1c40f|fdcb6e)/i.test(css));
+console.log('thingy-v2 ok');
