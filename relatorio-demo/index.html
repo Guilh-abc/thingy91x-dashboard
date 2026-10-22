@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Relatório (demo) | Módulo de relatório do Fing</title>
+<link rel="manifest" href="../manifest.json">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="relatorio.css?v=2">
+<link rel="stylesheet" href="../design-tokens.css?v=1">
+</head>
+<body>
+<header class="topo">
+  <div><h1>Relatório do dia <span class="badge badge-alerta" id="avisoDemo">Dados de exemplo</span></h1>
+  <small>Veículo fictício "Furgão 07" em Vila Aurora, cidade inventada. Nenhum dado real.</small></div>
+  <nav>
+    <a href="https://ntn-plataforma.pages.dev/">Plataforma (login)</a><a href="./" aria-current="page"><b>Relatório (demo)</b></a>
+    <button class="btn btn-sm" type="button" disabled aria-disabled="true" title="Disponível na versão completa"><svg class="ico" aria-hidden="true"><use href="#i-cadeado"></use></svg>Exportar CSV · Disponível na versão completa</button>
+    <button class="btn btn-sm" type="button" disabled aria-disabled="true" title="Disponível na versão completa"><svg class="ico" aria-hidden="true"><use href="#i-cadeado"></use></svg>Relatório PDF · Disponível na versão completa</button>
+  </nav>
+</header>
+<main>
+  <section><h2>Resumo do dia</h2><p class="frase">Um dia típico de trabalho com um desvio.</p><div class="kpis" id="kpis"></div></section>
+  <section><h2>O que o módulo faz</h2><p class="frase">Cada capacidade com um exemplo fictício.</p><div class="caps" id="caps"></div></section>
+  <section class="duas">
+    <div class="card"><h2>Rotas habituais</h2><p class="frase">Verde é a rota normal, vermelho é o desvio.</p><div id="mapa"></div><div class="player"><button class="btn btn-primary btn-sm" id="play" type="button"><svg class="ico" aria-hidden="true"><use href="#i-play"></use></svg><span>Reproduzir</span></button><input type="range" id="rel" min="0" max="690" value="0" aria-label="Linha do tempo do dia"><b id="relHora">07h50</b></div><small class="frase" id="relInfo">Toque numa parada ou arraste a linha do tempo.</small></div>
+    <div class="card"><h2>Paradas e locais</h2><p class="frase">Posição cruzada com o local cadastrado.</p><div class="paradas" id="paradas"></div></div>
+  </section>
+  <section class="card"><h2>Linha do tempo</h2><p class="frase">O que fez e como fez, hora a hora.</p><div id="faixa" class="faixa"></div><ol class="tl" id="tl"></ol></section>
+  <section class="duas">
+    <div class="card"><h2>Padrões por hora</h2><p class="frase">Pico de deslocamento no começo da manhã.</p><div id="porHora"></div></div>
+    <div class="card"><h2>Padrões por dia</h2><p class="frase">Segunda a sexta concentram as viagens.</p><div id="porDia"></div></div>
+  </section>
+  <section class="duas">
+    <div class="card"><h2>Alertas</h2><p class="frase">Dois alertas no dia, ambos fictícios.</p><div id="alertas"></div></div>
+    <div class="card"><h2>Sinal e bateria</h2><p class="frase">Sinal estável e bateria saudável.</p><div id="saude"></div></div>
+  </section>
+</main>
+<footer class="frase">Demonstração com dados inventados. Locais, horários e coordenadas não correspondem a nenhuma pessoa real.</footer>
+<script src="../icons.js?v=1"></script>
+<script src="relatorio.js?v=3"></script>
+</body>
+</html>

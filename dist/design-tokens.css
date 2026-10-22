@@ -1,0 +1,63 @@
+/* design-tokens.css: padrão visual único dos painéis (Início, Rastreador, Utilities, Consumo, Demonstração).
+   Cores semânticas: verde = ok, rota normal, online; vermelho = alerta, erro, offline;
+   azul = informação e ação primária; cinza = neutro. Carregar por último para valer sobre o CSS de cada página.
+   Tema claro é o padrão (Início); html[data-tema="escuro"] nos painéis escuros. Só visual. */
+:root{
+  --cor-ok:#00b894;--cor-ok-fundo:#e3f8f1;--cor-ok-texto:#007a62;
+  --cor-alerta:#d63031;--cor-alerta-fundo:#fdeaea;--cor-alerta-texto:#a61e1f;
+  --cor-info:#0984e3;--cor-info-fundo:#e6f2fc;--cor-info-texto:#06609f;--cor-info-hover:#0773c4;
+  --cor-neutro:#636e72;--cor-neutro-fundo:#f1f2f6;--cor-neutro-texto:#2d3436;
+  --cor-atencao:#e49b0f;
+  --fundo:#f5f6fa;--fundo-card:#ffffff;--borda:#dfe6e9;--texto:#2d3436;--texto-suave:#636e72;
+  --btn-raio:9px;--btn-altura:38px;--btn-altura-sm:30px;--btn-pad:0 14px;--btn-pad-sm:0 10px;
+  --foco:0 0 0 3px rgba(9,132,227,.45);
+  --ico:16px;--ico-traco:2;
+}
+html[data-tema="escuro"]{
+  --cor-ok:#2fd27a;--cor-ok-fundo:rgba(47,210,122,.14);--cor-ok-texto:#7be8ad;
+  --cor-alerta:#ff5470;--cor-alerta-fundo:rgba(255,84,112,.14);--cor-alerta-texto:#ff97a8;
+  --cor-info:#2f7cf6;--cor-info-fundo:rgba(47,124,246,.16);--cor-info-texto:#8fb6ff;--cor-info-hover:#4a8ff8;
+  --cor-neutro:#8e9ab5;--cor-neutro-fundo:#182036;--cor-neutro-texto:#e8ecf6;
+  --cor-atencao:#ffb020;
+  --fundo:#0b0f1a;--fundo-card:#121829;--borda:#26304a;--texto:#e8ecf6;--texto-suave:#8e9ab5;
+  --foco:0 0 0 3px rgba(47,124,246,.55);
+}
+
+/* Botões: um conjunto só */
+.btn,.seg button,.menu-list button,nav .btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:var(--btn-altura);padding:var(--btn-pad);border-radius:var(--btn-raio);
+  font:600 .85rem/1 inherit;font-family:inherit;cursor:pointer;
+  transition:background-color .15s,border-color .15s,color .15s,box-shadow .15s;
+}
+.btn,.btn-secondary,.btn-outline,.btn-ghost{background:transparent!important;border:1px solid var(--borda)!important;color:var(--texto)!important}
+.btn:hover,.btn-secondary:hover,.btn-outline:hover,.btn-ghost:hover{background:var(--cor-neutro-fundo)!important;border-color:var(--cor-info)!important}
+.btn-primary,.btn.btn-primary{background:var(--cor-info)!important;border:1px solid var(--cor-info)!important;color:#fff!important}
+.btn-primary:hover,.btn.btn-primary:hover{background:var(--cor-info-hover)!important;border-color:var(--cor-info-hover)!important}
+.btn-danger,.btn.btn-danger,#clearLog{background:transparent!important;border:1px solid var(--cor-alerta)!important;color:var(--cor-alerta)!important}
+.btn-danger:hover,.btn.btn-danger:hover,#clearLog:hover{background:var(--cor-alerta)!important;color:#fff!important}
+.btn-sm,.btn.sm{min-height:var(--btn-altura-sm);padding:var(--btn-pad-sm);font-size:.78rem}
+.btn:focus-visible,.seg button:focus-visible,.menu-list button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:none;box-shadow:var(--foco)}
+.btn:disabled,.btn[aria-disabled="true"],.seg button:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}
+.btn[aria-pressed="true"],.btn.on,#btnApresentacao.on{background:var(--cor-info)!important;border-color:var(--cor-info)!important;color:#fff!important}
+.seg button{min-height:var(--btn-altura-sm);border-radius:0;background:transparent;color:var(--texto-suave)}
+.seg button.on{background:var(--cor-info)!important;color:#fff!important}
+.menu-list button{justify-content:flex-start;width:100%;border-radius:0}
+/* Navegação: links com o mesmo estilo de ação */
+.top .link,nav a{color:var(--cor-info-texto)!important;font-weight:600;text-decoration:none;border-radius:6px;padding:2px 4px}
+.top .link:hover,nav a:hover{text-decoration:underline}
+
+/* Ícones Lucide: mesmo tamanho e traço */
+.ico{width:var(--ico);height:var(--ico);flex:none;fill:none;stroke:currentColor;stroke-width:var(--ico-traco);stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+.btn-sm .ico,.btn.sm .ico{width:14px;height:14px}
+
+/* Badges e status com as cores semânticas */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:600}
+.badge-ok,.status.connected,.feed.live{background:var(--cor-ok-fundo)!important;color:var(--cor-ok-texto)!important}
+.badge-alerta,.status.error{background:var(--cor-alerta-fundo)!important;color:var(--cor-alerta-texto)!important}
+.badge-info{background:var(--cor-info-fundo);color:var(--cor-info-texto)}
+.badge-neutro,.feed{background:var(--cor-neutro-fundo);color:var(--texto-suave)}
+.hb--online .hb-dot{background:var(--cor-ok)!important;box-shadow:0 0 6px var(--cor-ok)!important}
+.hb--parado .hb-dot{background:var(--cor-alerta)!important}
+.hb--atrasado .hb-dot{background:var(--cor-atencao)!important}
+.md-good{color:var(--cor-ok)!important}.md-bad{color:var(--cor-alerta)!important}.md-flat{color:var(--cor-neutro)!important}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR" data-pagina-real data-tema="escuro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>Consumo de dados por chip | NTN</title>
+<link rel="manifest" href="../manifest.json">
+<link rel="stylesheet" href="../ntn/pro.css?v=51">
+<link rel="stylesheet" href="../ntn/deck-theme.css?v=3">
+<style>
+body{font-family:system-ui,sans-serif;background:#0b1220;color:#e5e7eb;margin:0}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+nav a{color:#93c5fd;margin-right:14px;text-decoration:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0}
+.card{background:#111a2e;border:1px solid #1f2a44;border-radius:10px;padding:12px}
+.card b{display:block;font-size:22px;margin-top:4px}
+table{width:100%;border-collapse:collapse;margin:10px 0}td,th{padding:6px 8px;border-bottom:1px solid #1f2a44;text-align:right}td:first-child,th:first-child{text-align:left}
+.aviso{background:#1e293b;border-left:4px solid #f59e0b;padding:10px;border-radius:6px;font-size:14px}
+canvas{width:100%;height:280px;background:#111a2e;border-radius:10px}
+select{background:#111a2e;color:#e5e7eb;border:1px solid #334155;padding:6px;border-radius:6px}
+.muted{color:#94a3b8;font-size:13px}
+/* F3: Modo Apresentação (RF-05) */
+body.apresentacao nav a,body.apresentacao table,body.apresentacao .aviso,body.apresentacao #chipLimit,body.apresentacao #lim{display:none}
+body.apresentacao .wrap{max-width:none;padding:16px 34px}body.apresentacao h1{font-size:2rem}body.apresentacao .card b{font-size:30px}
+#btnApresentacao.on{background:#E20074;color:#fff}
+</style><link rel="stylesheet" href="../design-tokens.css?v=1">
+</head><body><div class="wrap">
+<nav><a href="../">Início</a><a href="../ntn/">Rastreador</a><a href="../utilities/">Utilities</a><a href="./"><b>Consumo</b></a><a href="../relatorio-demo/">Relatório (demo)</a><button id="btnPdfC" class="btn" title="Relatório do período para imprimir ou salvar em PDF" style="float:right;margin-left:6px">⎙ Relatório PDF</button><button id="btnCsvC" class="btn" title="Baixa os totais do período em CSV (Excel)" style="float:right;margin-left:6px">⇩ Exportar CSV</button><button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com os totais e gráficos. Esc para sair" style="float:right">◉ Modo Apresentação</button></nav>
+<h1>Consumo de dados por chip</h1>
+<p>Dispositivo: <select id="dev"><option value="all">Todos</option><option value="tracker">Rastreador (NTN)</option><option value="meter">Medidor (Utilities)</option></select>
+<span class="muted" id="st">carregando...</span></p>
+<div class="cards" id="cards"></div>
+<h2>Por chip e transporte (mês atual)</h2>
+<table><thead><tr><th>Chip</th><th>Mensagens</th><th>Cat-M</th><th>Satélite (NTN/Skylo)</th><th>Total</th><th>Última mensagem</th></tr></thead><tbody id="tb"></tbody></table>
+<h2>Consumo por período</h2>
+<p><span id="pb"></span> <input type="date" id="dt" style="background:#111a2e;color:#e5e7eb;border:1px solid #334155;padding:6px;border-radius:6px"> <label class="muted" id="wkl" style="display:none"><input type="checkbox" id="wkh"> por hora</label></p>
+<div class="cards" id="pcards"></div>
+<div style="position:relative"><canvas id="bars" width="1100" height="300"></canvas><div id="tip" style="position:absolute;display:none;background:#0f172a;border:1px solid #475569;padding:6px 8px;border-radius:6px;font-size:13px;pointer-events:none;white-space:nowrap"></div></div>
+<p class="muted"><span style="color:#38bdf8">■</span> Cat-M &nbsp; <span style="color:#f59e0b">■</span> Satélite (NTN/Skylo). Horários em America/Sao_Paulo (BRT). Toque ou passe o mouse numa barra para ver o detalhe.</p>
+<div id="projbox"><h2>Acumulado do mês e projeção</h2>
+<div id="limAlert" aria-live="polite"></div>
+<canvas id="cv" width="1100" height="280"></canvas>
+<p class="muted">Linha cheia: acumulado real. Linha tracejada: projeção pela taxa média diária do mês até agora.</p>
+<p class="muted"><label>Limite do chip no mês (MB): <input id="chipLimit" type="number" min="0" step="0.1" placeholder="MB" style="width:90px;background:#111a2e;color:#e5e7eb;border:1px solid #334155;padding:4px;border-radius:6px"></label> salvo só neste navegador; a placa não informa o limite.</p></div>
+<p class="muted" id="lim"></p>
+<div class="aviso"><b>Origem do número.</b> Dados ao vivo da mesma API usada pelas páginas Rastreador e Utilities (função ntn-lab), atualizados a cada 45 s, sem cache. Os bytes são o tamanho do payload de cada mensagem recebida pelo servidor (campo bytes). Isso é uma <b>estimativa</b>: não inclui cabeçalhos de rede, TLS, retransmissões, registro na rede nem mensagens perdidas. O valor cobrado é o medido pela operadora. Limite da API: o rastreador devolve no máximo os últimos 14 dias e o medidor os últimos 62 dias, sempre contados a partir de hoje (a API não aceita data de início). Períodos fora dessa janela aparecem incompletos ou como "sem dados". A API não informa o ICCID; cada chip é identificado pelo dispositivo em que está instalado. Sem mensagens no mês, o chip aparece como "sem dados".</div>
+</div>
+<script src="../api-core.js?v=3"></script>
+<script src="../pwa.js?v=4"></script>
+<script src="../apresentacao.js?v=2"></script>
+<script src="consumo.js?v=5"></script><script src="../icons.js?v=1"></script>
+<script src="../roles.js?v=1"></script>
+</body></html>

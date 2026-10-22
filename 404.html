@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plataforma NTN | Acesso</title>
+<link rel="icon" href="/thingy91x-dashboard/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/thingy91x-dashboard/design-tokens.css?v=1">
+<style>body{margin:0;font:16px/1.5 Inter,-apple-system,'Segoe UI',sans-serif;background:var(--fundo);color:var(--texto);display:grid;place-items:center;min-height:100vh;padding:24px}.card{max-width:520px;background:var(--fundo-card);border:1px solid var(--borda);border-radius:14px;padding:24px;text-align:center}.acoes{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}</style>
+</head>
+<body>
+<div class="card">
+  <h1>Os painéis mudaram de endereço</h1>
+  <p>Os dados reais agora ficam na plataforma com login. Este endereço mostra só a demonstração com dados de exemplo.</p>
+  <div class="acoes">
+    <a class="btn btn-primary" href="https://ntn-plataforma.pages.dev/">Entrar na plataforma</a>
+    <a class="btn" href="/thingy91x-dashboard/relatorio-demo/">Ver o Relatório (demo)</a>
+  </div>
+</div>
+<script>
+// Remove o service worker e os caches antigos deste endereço, que guardavam páginas com dados reais.
+if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
+if (window.caches) caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); });
+</script>
+</body>
+</html>
