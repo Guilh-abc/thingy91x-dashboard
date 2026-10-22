@@ -1,7 +1,6 @@
 /* Connect Utilities v2 (operador) — só dados reais do medidor (ntn-lab ?meter=1). Sem simulação. */
 (function () {
   const onNetlify = /netlify\.app$/.test(location.hostname);
-  const API = (onNetlify ? '' : 'https://thingy91x-x-dashboard.netlify.app') + '/.netlify/functions/ntn-lab?meter=1&days=62';
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const dmy = (t) => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -69,6 +68,7 @@
   function sumDelta(rd, t0) { let s = 0, n = 0; for (let i = 1; i < rd.length; i++) if (T(rd[i]) >= t0) { const d = rd[i].totalL - rd[i - 1].totalL; if (d >= 0) { s += d; n++; } } return { s, n }; }
 
   function render() {
+    if (window.HealthBadge) { HealthBadge.init('healthBadge', { hardLimitSec: 86400 }); HealthBadge.update(recs); } // RF-02
     const rs = [...recs].sort((a, b) => T(a) - T(b));
     const rd = rs.filter((r) => r.type === 'telemetry' && r.totalL != null);
     const tel = rs.filter((r) => r.type === 'telemetry');
@@ -221,6 +221,9 @@
       return `<div class="tlrow"><div><b>${dmy(s.start)}</b><br><small class="muted">${agoS(end - s.start)}${s.open ? '' : ' · ' + esc(s.why || '')}</small></div><div><div style="position:relative;height:16px;background:var(--card2);border-radius:5px">${bars}</div><small class="muted">${s.gnss ? 'GNSS ' + (s.gnss.event === 'gnss_fail' || s.gnss.value < 0 ? 'sem fix' : 'ok em ' + s.gnss.value + ' s') + ' · ' : ''}${res}${s.lost ? ' · <span style="color:#ff5470">perdeu o sinal</span>' : ''}</small></div></div>`;
     }).join('') + '<div class="legend"><span><i style="background:#3d8bff"></i>GNSS</span><span><i style="background:#ffb020"></i>buscando</span><span><i style="background:#2fd27a"></i>registrado</span><span><i style="background:#ffffff33"></i>sem notícias</span></div>';
   }
-  async function load() { try { const r = await fetch(API + '&t=' + Date.now(), { cache: 'no-store' }); const j = await r.json(); if (j && Array.isArray(j.records)) recs = sanitizeNet(j.records); } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
+  async function load() { try { recs = sanitizeNet(await window.ApiCore.fetchMeter(62)); /* B3: via api-core.js */ } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
+  // A3: Poll 30 s: suficiente para o medidor.
+  // Rastreador usa 15 s (troca de rede precisa aparecer rapido na demo).
+  // Consumo usa 45 s (dados historicos, sem urgencia de tempo real).
   load(); setInterval(load, 30000); setInterval(render, 15000); // v8: reavalia offline sem dado novo
 })();
