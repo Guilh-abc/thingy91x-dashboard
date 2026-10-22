@@ -105,3 +105,25 @@ body{margin:0;font:16px/1.55 Inter,-apple-system,'Segoe UI',Roboto,sans-serif;ba
 @media(max-width:720px){.rel-ex-grid{grid-template-columns:1fr}.rel-capa{max-width:320px}}
 @media(prefers-reduced-motion:reduce){.rel-capa{transition:none}}
 .sh-i{font-style:normal;font-family:'DejaVu Sans Mono',Menlo,Consolas,ui-monospace,monospace;font-weight:700;letter-spacing:-.06em}
+
+/* v12: padrão visual Telekom (exceção aprovada só na landing): magenta + branco, cinza e preto */
+:root,html[data-tema="escuro"]{--cor-info:#E20074;--cor-info-hover:#c00063;--cor-info-fundo:#fde6f1;--cor-info-texto:#a3005a;--foco:0 0 0 3px rgba(226,0,116,.45);--fundo:#f4f4f4;--texto:#1a1a1a;--texto-suave:#5f5f5f;--borda:#e2e2e2;--fundo-card:#fff}
+.barra{background:rgba(0,0,0,.9)}
+.barra nav a:not(.btn){color:#e6e6e6!important}.barra nav a:not(.btn):hover{color:#E20074!important}
+.hero,.sol{background:#000}
+.hero-video{object-position:50% 50%}
+.hero::after{background:linear-gradient(90deg,rgba(0,0,0,.95) 0%,rgba(0,0,0,.85) 45%,rgba(0,0,0,.35) 100%)}
+@media(max-width:760px){.hero::after{background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.92) 70%)}}
+.hero p{color:#e4e4e4}.hero .dica{color:#bdbdbd}
+.hero .badge-info{background:rgba(226,0,116,.22);color:#ffd1e8}
+.hero h1{border-left:6px solid #E20074;padding-left:16px}
+.sol::after{background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.9))}
+.sol .ico{color:#ff4fa7}.sol p{color:#e0e0e0}
+.passos span{color:#fbd0e6}
+.rodape{background:#000;color:#bdbdbd;border-top:4px solid #E20074}.rodape a{color:#fff}
+.rel-ex .sub,.rel-nota{color:#5f5f5f}
+.comercial{width:min(960px,94vw);padding:0;border:0;border-radius:16px;overflow:hidden;background:#000;color:#fff}
+.comercial::backdrop{background:rgba(0,0,0,.8)}
+.comercial-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-bottom:3px solid #E20074}
+.comercial video{display:block;width:100%;height:auto;background:#000}
+button.btn-claro{background:transparent;cursor:pointer}

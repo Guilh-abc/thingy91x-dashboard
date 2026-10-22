@@ -4,14 +4,14 @@
    - Fontes Google e Leaflet (unpkg): Stale While Revalidate.
    - API ntn-lab: Network First; só GET com status 200 vai para o cache, com __cachedAt (ISO) injetado no JSON.
    - Tiles, Valhalla, OSRM, nRF Cloud e qualquer POST: direto da rede, nunca em cache. */
-const VERSION = 'ntn-v61';
+const VERSION = 'ntn-v62';
 const STATIC = VERSION + '-static';
 const CDN = VERSION + '-cdn';
 const API_CACHE = VERSION + '-api';
 const API_MAX_AGE_MS = 48 * 3600 * 1000;
 
 const ASSETS_V2 = [
-  './', './index.html', './app/', './app/index.html', './landing.css', './assets/relatorio-exemplo-capa.webp', './entrar/', './entrar/index.html', './entrar/entrar.js', './app/boas-vindas.js', './app/hub.js', './thingy-dados.js', './consumo/consumo-thingy.js', './hub.css', './assets/acessos.webp', './rastreador/', './rastreador/index.html', './rastreador/thingy91x/', './rastreador/thingy91x/index.html', './rastreador/thingy91x/thingy-v2.js', './rastreador/thingy91x/thingy-v2.css', './rastreador/thingy91x/classico.html', './hub.css', './status-cartoes.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png',
+  './', './index.html', './app/', './app/index.html', './landing.css', './assets/relatorio-exemplo-capa.webp', './assets/totem-poster.jpg', './entrar/', './entrar/index.html', './entrar/entrar.js', './app/boas-vindas.js', './app/hub.js', './thingy-dados.js', './consumo/consumo-thingy.js', './hub.css', './assets/acessos.webp', './rastreador/', './rastreador/index.html', './rastreador/thingy91x/', './rastreador/thingy91x/index.html', './rastreador/thingy91x/thingy-v2.js', './rastreador/thingy91x/thingy-v2.css', './rastreador/thingy91x/classico.html', './hub.css', './status-cartoes.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png',
   './api-core.js', './pwa.js', './health-badge.js', './switch-timeline.js', './apresentacao.js',
   './ntn/', './ntn/index.html', './ntn/pro-core.js', './ntn/pro.js', './ntn/sim.js', './ntn/satsig.js',
   './ntn/pointing.js', './ntn/busca-ui.js', './ntn/hero.js', './ntn/trajeto.js', './ntn/insights.js',
