@@ -7,13 +7,18 @@
     ntn: ['ntn', '🛰', 'CONECTADO VIA SATÉLITE SKYLO (NTN)', 'Registrado na rede Skylo 90198'],
     search: ['search', '🔎', 'BUSCANDO SATÉLITE SKYLO', 'Placa saiu do Cat-M para o teste NTN e ainda não registrou. Em busca ela pode não enviar nada até registrar'],
     off: ['off', '⛔', 'SEM CONEXÃO / NTN DESCONECTADO', 'Sem envios recentes da placa'],
+    desligado: ['desligado', '', 'DESLIGADO', 'Sem nenhuma mensagem da placa há mais de 5 min'],
     nodata: ['off', '⛔', 'SEM DADOS DA PLACA', 'Nenhum registro recebido']
   };
   function dur(ms) { if (ms == null || ms < 0) return 'n/d'; var s = Math.round(ms / 1000); return s < 60 ? s + ' s' : s < 3600 ? Math.floor(s / 60) + ' min' : Math.floor(s / 3600) + ' h ' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + ' min'; }
   function hm(ms) { return ms ? new Date(ms).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'n/d'; }
+  var ultimo = null;
+  setInterval(function () { if (ultimo) window.drawHeroU(ultimo); }, 30000); // timer local da regra Desligado
   window.drawHeroU = function (o) {
-    var el = document.getElementById('hero'); if (!el) return;
-    var k = qs.get('estado') && ST[qs.get('estado')] ? qs.get('estado') : o.key, d = ST[k], now = Date.now();
+    var el = document.getElementById('hero'); if (!el) return; ultimo = o;
+    var now = Date.now(), dl = window.StatusDesligado && o.key !== 'nodata' ? window.StatusDesligado.avaliar(o.lastRx, now) : { desligado: false };
+    var k = qs.get('estado') && ST[qs.get('estado')] ? qs.get('estado') : dl.desligado ? 'desligado' : o.key, d = ST[k];
+    if (k === 'desligado' && dl.desligado) d = ['desligado', window.StatusDesligado.ICO, 'DESLIGADO', 'Sem nenhuma mensagem da placa há mais de 5 min · ' + window.StatusDesligado.texto(dl.min) + (o.lastNet ? ' · última rede conhecida: ' + o.lastNet : '')];
     if (k === 'off' && o.lastRx && !qs.get('estado')) d = ['off', '⛔', 'OFFLINE: SEM DADOS DA PLACA HÁ ' + dur(now - o.lastRx).toUpperCase(), 'Último dado ' + hm(o.lastRx) + (o.lastNet ? ' · última rede conhecida: ' + o.lastNet : '')];
     el.className = 'hero ' + d[0];
     if (window.BuscaUI) window.BuscaUI.render(document.getElementById('heroBusca'), d[0] === 'search' ? (o.busca || { t0: o.since || now }) : null);

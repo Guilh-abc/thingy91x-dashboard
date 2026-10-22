@@ -4,7 +4,7 @@
    - Fontes Google e Leaflet (unpkg): Stale While Revalidate.
    - API ntn-lab: Network First; só GET com status 200 vai para o cache, com __cachedAt (ISO) injetado no JSON.
    - Tiles, Valhalla, OSRM, nRF Cloud e qualquer POST: direto da rede, nunca em cache. */
-const VERSION = 'ntn-v38';
+const VERSION = 'ntn-v39';
 const STATIC = VERSION + '-static';
 const CDN = VERSION + '-cdn';
 const API_CACHE = VERSION + '-api';
@@ -18,7 +18,7 @@ const ASSETS_V2 = [
   './ntn/alerts-ui.js', './ntn/replay.json', './ntn/pro.css', './ntn/hero.css', './ntn/ntn.css', './ntn/deck-theme.css',
   './utilities/', './utilities/index.html', './utilities/utilities.js', './utilities/sat-live.js',
   './utilities/hero-u.js', './utilities/alerts-u.js', './utilities/alert-rules.js', './utilities/alerts-panel.js', './movement-rules.js', './alerts-panel.css', './ntn/alerts-trk.js', './root-alerts.js', './utilities/utilities.css',
-  './consumo/', './consumo/index.html', './consumo/consumo.js', './design-tokens.css', './icons.js', './relatorio-demo/', './relatorio-demo/index.html', './relatorio-demo/relatorio.js', './relatorio-demo/relatorio.css', './roles.js', './admin/acessos/', './admin/acessos/acessos.js',
+  './consumo/', './consumo/index.html', './consumo/consumo.js', './design-tokens.css', './icons.js', './status-desligado.js', './relatorio-demo/', './relatorio-demo/index.html', './relatorio-demo/relatorio.js', './relatorio-demo/relatorio.css', './roles.js', './admin/acessos/', './admin/acessos/acessos.js',
 ];
 
 const NETWORK_ONLY = /valhalla|project-osrm|arcgisonline|tile\.openstreetmap|nrfcloud/i;

@@ -98,14 +98,14 @@
     if (sNet) { netCls = 'ntn'; netBig = sCur.reg ? 'Satélite Skylo' : 'Buscando Skylo'; netSub = (sCur.reg ? 'registrado na rede 90198' : `teste desde ${hm(sCur.start)} · sem registro em 90198`) + (lastAny && Date.now() - RX(lastAny) > 1800000 ? ` · último estado conhecido, sem notícias há ${ago(lastAny.rx || lastAny.ts)}` : ''); }
     else if (lt) { const sat = isSat(lt); netCls = sat ? 'ntn' : 'catm'; netBig = sat ? 'Satélite Skylo' : 'Cat-M'; netSub = sat ? 'PLMN 90198' : `${OPS[lt.plmn] || 'operadora'} (${esc(lt.plmn || '—')}) · LTE-M banda ${esc(lt.band || '—')}${catmNow ? ' · modo teste NTN ligado, sem registro no satélite' : ''}`; }
     /* v8: offline quando o último dado passa de 2,5x o intervalo medido (mínimo 5 min no Cat-M; 15 min em satélite, como no ntn/) */
-    const offLimMs = (sNet ? 30 : Math.max(5, (ivMin || 2) * 2.5)) * 60000, offNow = !!lastAny && Date.now() - RX(lastAny) > offLimMs;
+    const offLimMs = 5 * 60000 /* regra Desligado: 5 min sem mensagem */, offNow = !!lastAny && Date.now() - RX(lastAny) > offLimMs;
     const lastNetTxt = netBig;
-    if (offNow) { netCls = 'bad'; netSub = 'sem comunicação · última rede conhecida: ' + netBig + ' · ' + netSub; netBig = 'Sem comunicação'; }
+    if (offNow) { netCls = 'off'; netSub = 'última mensagem há ' + agoS(Date.now() - RX(lastAny)) + ' · última rede conhecida: ' + netBig; netBig = 'Desligado'; }
     K.push(kpi(netCls, 'Rede atual', netBig, netSub));
     const q = sigQ(lt?.rsrp);
     K.push(kpi(q ? q[2] : 'off', 'Qualidade do sinal', lt?.rsrp != null ? `${lt.rsrp}<u>dBm</u>` : '—', lt?.rsrp != null ? `<b style="color:${q[1]}">${q[0]}</b> · SNR ${lt.snr ?? '—'} dB${sNet ? ' · na última leitura Cat-M' : ''}` : 'sem medição ainda', gauge(lt?.rsrp)));
-    const onlineMs = (sNet ? 30 : Math.max(5, (ivMin || 2) * 2.5)) * 60000, age = lastAny ? Date.now() - RX(lastAny) : null, on = age != null && age < onlineMs;
-    K.push(kpi(lastAny ? (on ? 'ok' : sNet && age < 1800000 ? 'ntn' : 'bad') : 'off', 'Último envio', lastAny ? 'há ' + agoS(age) : '—', lastAny ? `<span style="color:${on ? '#2fd27a' : sNet && age < 1800000 ? '#c79bff' : '#ff5470'}"><span class="dot"></span>${on ? 'Online' : sNet && age < 1800000 ? 'Buscando satélite' : 'Offline'}</span> · ${dmy(RX(lastAny))}` : 'aguardando primeira leitura'));
+    const onlineMs = 5 * 60000, age = lastAny ? Date.now() - RX(lastAny) : null, on = age != null && age < onlineMs;
+    K.push(kpi(lastAny ? (on ? 'ok' : 'off') : 'off', 'Último envio', lastAny ? 'há ' + agoS(age) : '—', lastAny ? `<span style="color:${on ? '#2fd27a' : '#9aa3ad'}"><span class="dot"></span>${on ? 'Online' : 'Desligado'}</span> · ${dmy(RX(lastAny))}` : 'aguardando primeira leitura'));
     const sim = [...rs].reverse().find((r) => r.event === 'sim'), sp = sim ? simParse(sim) : null;
     const simOk = sp && sp.pin === 'READY';
     K.push(kpi(sim ? (simOk ? 'ok' : 'bad') : 'off', 'SIM', sim ? (simOk ? 'Pronto' : 'Erro') : '—', sim ? `ICCID •••• ${esc(sp.ic || '—')} · PIN ${esc(sp.pin || '—')} · ${ago(sim.ts)}` : 'sem dados do SIM ainda'));

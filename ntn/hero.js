@@ -10,6 +10,7 @@
     search: { cls: 'search', ico: '🔎', txt: 'BUSCANDO SATÉLITE SKYLO', sub: 'Placa em modo NTN, ainda sem registro ou aguardando dados do satélite' },
     off: { cls: 'off', ico: '⛔', txt: 'SEM CONEXÃO / NTN DESCONECTADO', sub: 'Sem dados recentes ou rede perdida' },
     noresp: { cls: 'off', ico: '⛔', txt: 'SEM RESPOSTA DA PLACA', sub: 'Busca de satélite iniciada há mais de 30 min sem nenhum sinal de vida' },
+    desligado: { cls: 'desligado', ico: '', txt: 'DESLIGADO', sub: 'Sem nenhuma mensagem da placa há mais de 5 min' },
     nodata: { cls: 'off', ico: '⛔', txt: 'SEM DADOS DA PLACA', sub: 'Nenhum registro recebido no período' }
   };
   /* Mapeamento (somente campos reais):
@@ -21,6 +22,11 @@
   function state(all, now, src) {
     var s = P.liveStatus(all, now);
     if (!s) return { k: 'nodata', s: null };
+    if (src !== 'replay' && window.StatusDesligado) { // regra 5 min: sobrepõe busca/registro antigos
+      var lastAny = Math.max.apply(null, all.filter(function (r) { return t(r) <= now; }).map(function (r) { return Date.parse(r.rx || r.ts) || 0; }));
+      var dl = window.StatusDesligado.avaliar(lastAny > 0 ? lastAny : null, now);
+      if (dl.desligado) return { k: 'desligado', s: s, dl: dl };
+    }
     var bs = busca(all, now); // v46: busca NTN declarada pela placa tem prioridade sobre 'dado velho'
     if (bs && bs.ativa) return { k: 'search', s: s, b: bs };
     if (bs && bs.expirou) return { k: 'noresp', s: s, b: bs };
@@ -97,10 +103,14 @@
       ['Céu aberto com visada para o norte (satélite geoestacionário)', 'Sem teto metálico nem vidro com película térmica/metalizada acima da antena', 'Placa e antena perto do vidro ou do teto, antena voltada para cima', 'Veículo em movimento pode atrasar o registro; se possível, pare em local aberto', 'Aguardar o registro sem reiniciar a placa', 'Botão 4 acionado e LED indicando modo satélite', 'SIM Deutsche Telekom ativo com perfil NTN', 'Bandas NTN habilitadas no modem (23, 255, 256)'].map(function (x) { return '<li><label><input type="checkbox"> ' + x + '</label></li>'; }).join('') + '</ul></details>';
   }
   function fmtT(iso) { return iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'n/d'; }
-  window.drawHero = function (all, now, src) {
+  var ultimo = null; // timer local: vira Desligado mesmo sem novo poll
+  setInterval(function () { if (ultimo && ultimo.src !== 'replay' && !qs.get('ate')) window.drawHero(ultimo.all, Date.now(), ultimo.src, true); }, 30000);
+  window.drawHero = function (all, now, src, doTimer) {
+    if (!doTimer) ultimo = { all: all, src: src };
     var ate = Date.parse(qs.get('ate') || ''); if (ate) { all = all.filter(function (r) { return t(r) <= ate; }); now = ate; } // v48: vista histórica dos dados reais (?ate=ISO)
     var el = document.getElementById('hero'); if (!el) return;
     var r = state(all, now, src), k = qs.get('estado') && ST[qs.get('estado')] ? qs.get('estado') : r.k, d = ST[k], s = r.s;
+    if (k === 'desligado' && r.dl) d = { cls: 'desligado', ico: window.StatusDesligado.ICO, txt: 'DESLIGADO', sub: 'Sem nenhuma mensagem da placa há mais de 5 min · ' + window.StatusDesligado.texto(r.dl.min) };
     el.className = 'hero ' + d.cls;
     painelBusca((k === 'search' || k === 'noresp') && r.b && r.b.t0 ? r.b : null, all, now);
     el.innerHTML = '<div class="hero-ico">' + d.ico + '</div><div class="hero-main"><div class="hero-txt">' + d.txt + '</div><div class="hero-sub">' + d.sub + (src === 'replay' ? ' · REPLAY' : '') + (qs.get('estado') ? ' · ESTADO FORÇADO PARA TESTE' : '') + (ate ? ' · VISTA HISTÓRICA DOS DADOS REAIS EM ' + new Date(ate).toLocaleString('pt-BR') : '') + '</div></div>' +

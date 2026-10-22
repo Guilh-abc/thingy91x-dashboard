@@ -1,0 +1,22 @@
+/* status-desligado.js: regra única de "Desligado".
+   Sem nenhuma mensagem da placa há mais de 5 min => Desligado (cinza, ícone power-off),
+   sobrepondo estados antigos (buscando satélite, registrando NTN/Cat-M). Mensagem nova volta ao estado real. */
+(function (root) {
+  'use strict';
+  var LIM_MS = 5 * 60000;
+  function avaliar(lastMs, now) {
+    if (lastMs == null || !isFinite(lastMs)) return { desligado: false, min: null };
+    var age = (now == null ? Date.now() : now) - lastMs;
+    return { desligado: age > LIM_MS, min: Math.max(0, Math.floor(age / 60000)), ageMs: age };
+  }
+  function texto(min) { return 'última mensagem há ' + (min < 60 ? min + ' min' : Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0') + ' min'); }
+  var ICO = '<svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64A9 9 0 0 1 20.77 15"/><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68"/><path d="M12 2v4"/><path d="m2 2 20 20"/></svg>';
+  var api = { LIM_MS: LIM_MS, avaliar: avaliar, texto: texto, ICO: ICO };
+  if (typeof document !== 'undefined' && !document.getElementById('st-desligado-css')) {
+    var st = document.createElement('style'); st.id = 'st-desligado-css';
+    st.textContent = '.hero.desligado{background:var(--neutro,#5b6470);animation:none}.hero.desligado .hero-ico svg{width:1em;height:1em}';
+    document.head.appendChild(st);
+  }
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.StatusDesligado = api;
+})(typeof window !== 'undefined' ? window : globalThis);
