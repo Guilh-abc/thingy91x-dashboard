@@ -1,6 +1,6 @@
 # Checklist — demonstração nRF9151 NTN Pro para a Skylo
 
-Painel: https://guilhermeromio-netto-prog.github.io/thingy91x-dashboard/ntn/?v=36
+Painel: https://guilh-abc.github.io/thingy91x-dashboard/ntn/?v=36
 (replay direto: `?replay=1` · modo apresentação: `?present=1` ou botão **⛶ Apresentação**)
 
 ## 1. Preparação (D-2 a D-0)

@@ -4,7 +4,7 @@ Intercepta /.netlify/functions/ntn-lab (sem tokens) e serve os arquivos locais; 
 import json, os, sys, math, mimetypes, datetime as dt
 from playwright.sync_api import sync_playwright
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PAGES = 'https://guilhermeromio-netto-prog.github.io/thingy91x-dashboard/'
+PAGES = 'https://guilh-abc.github.io/thingy91x-dashboard/'
 OUT = '/workspace/thingy-debug'; os.makedirs(OUT, exist_ok=True)
 now = dt.datetime.now(dt.timezone.utc)
 iso = lambda d: d.isoformat().replace('+00:00', 'Z')
