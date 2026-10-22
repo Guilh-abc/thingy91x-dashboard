@@ -13,15 +13,16 @@ Os arquivos públicos da raiz são só código, que já é aberto no GitHub. Dad
 ## Fluxo
 
 1. A landing tem o botão **Entrar**, que leva a `/entrar/`.
-2. O Access pede o e-mail e envia um código para a caixa de entrada (sem senha).
+2. O Access mostra **Entrar com Google** e, como alternativa, o código por e-mail (sem senha). O papel vem do e-mail da conta, nos dois casos.
 3. `/entrar/` consulta `/api/me`. Um admin vai para `/app/?bemvindo=1`, onde aparece uma única vez a tela de boas-vindas (cadastrar a chave do nRF Cloud, conferir o rastreador, convidar pessoas). Um viewer vai para `/relatorio-demo/`.
 
 ## Tela de login do Access
 
 Ela é personalizada pela API (`PUT /accounts/{conta}/access/organizations`, campo `login_design`), com a logo `icon.svg`, o fundo `#0b1530`, texto branco, e cabeçalho e rodapé em PT-BR.
 
-## Ativar login com Google depois
+## Login com Google (ativo desde 22/10/2026)
 
-1. No Google Cloud Console, crie um cliente OAuth (tipo Aplicativo da Web) com a URI de redirecionamento `https://ntn-plataforma.cloudflareaccess.com/cdn-cgi/access/callback`.
-2. Em Zero Trust, Settings, Authentication, Login methods, adicione Google com o Client ID e o Client Secret. O segredo nunca vai para o repositório.
-3. Em cada app Access (admin, demo e sessão), inclua o novo IdP em `allowed_idps`, mantendo o código por e-mail. Os grupos por e-mail continuam valendo, então os papéis não mudam.
+1. Cliente OAuth do Google (Aplicativo da Web) com a URI de redirecionamento `https://ntn-plataforma.cloudflareaccess.com/cdn-cgi/access/callback`.
+2. IdP "Google" criado no Zero Trust pela API (`POST /accounts/{conta}/access/identity_providers`), com Client ID e Client Secret lidos do ambiente. O segredo nunca vai para o repositório.
+3. As apps Access admin (inclui os domínios de preview) e demo e sessão têm `allowed_idps` com Google e o código por e-mail, sem `auto_redirect_to_identity`, para a tela mostrar as duas opções.
+4. Os grupos por e-mail continuam valendo, então os papéis não mudam. Testar: Zero Trust, Settings, Authentication, Login methods, Google, Test.
