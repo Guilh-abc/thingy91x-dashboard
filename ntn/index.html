@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0f1a">
+<meta name="robots" content="noindex">
+<title>Connect · IoT Cat-M e Satélite NTN</title>
+<link rel="manifest" href="../manifest.json">
+<meta name="description" content="Connect — painel IoT Cat-M e Satélite NTN (nRF9151)">
+<meta property="og:title" content="Connect · IoT Cat-M e Satélite NTN">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="pro.css?v=51">
+<link rel="stylesheet" href="hero.css?v=50">
+<link rel="stylesheet" href="deck-theme.css?v=3">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><svg class="wm" viewBox="0 0 44 44" width="40" height="40" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#a45cff"/></linearGradient></defs><rect x="1" y="1" width="42" height="42" rx="12" fill="#111a2e" stroke="url(#cg)" stroke-width="1.5"/><path d="M28.5 14.5a10 10 0 1 0 0 15" fill="none" stroke="url(#cg)" stroke-width="3.2" stroke-linecap="round"/><circle cx="22" cy="22" r="3" fill="#fff"/><path d="M31 11.5a14 14 0 0 1 3.5 5.5M33.5 8.5a18 18 0 0 1 4.5 7" fill="none" stroke="#a45cff" stroke-width="1.8" stroke-linecap="round" opacity=".85"/></svg><div><h1 class="wordmark">Connect</h1><small class="tagline">IoT <span class="chip catm">Cat-M</span> e <span class="chip ntn">Satélite NTN</span></small></div></div>
+  <div class="actions">
+    <div class="seg" id="srcSeg"><button data-src="live" class="on">Ao vivo</button><button data-src="replay">Replay da demonstração</button></div>
+    <button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com status, mapa e KPIs; inicia o replay de 14/10. Esc para sair">◉ Modo Apresentação</button>
+    <button class="btn deck-exportlog" id="btnExportLog" title="Baixa o log filtrado em CSV (Excel) e JSON">⇩ Exportar log</button>
+    <div class="menu"><button class="btn" id="btnExport">⇩ Exportar</button>
+      <div class="menu-list" id="exportMenu" hidden><button data-x="csv">CSV</button><button data-x="json">JSON</button><button data-x="print">Relatório imprimível</button></div></div>
+    <a class="link" href="lab.html">NTN Lab (logs)</a>
+    <a class="link" href="connect.html">Demonstração</a>
+    <a class="link" href="../utilities/">Utilities</a>
+    <a class="link" href="../consumo/">Consumo</a>
+  </div>
+</header>
+<div id="healthBadge"></div>
+<div id="replayBanner" class="replay-banner" hidden>
+  <b>REPLAY</b> <span id="replayTitle"></span>
+  <span class="rp-ctl"><button id="rpPlay" class="btn sm">▶ Reproduzir</button><select id="rpSpeed"><option value="30">30×</option><option value="60" selected>60×</option><option value="120">120×</option></select><span id="rpClock" class="mono"></span></span>
+</div>
+<section id="hero" class="hero nodata" aria-live="polite"></section>
+<div id="alertVeic" aria-live="polite"></div>
+<section id="heroBusca" class="hbusca" hidden></section>
+<div id="simBanner2" class="sim2" hidden>SIMULAÇÃO: cards de trânsito, botão 2 e rotina com dados simulados (?sim=1). Os dados reais não foram alterados.</div>
+<section id="trajCard" class="card trcard"></section>
+<section id="trCard" class="card trcard"></section>
+<section class="live" id="live">
+  <div class="live-net"><span id="lvDot" class="dot"></span><div><small>Rede atual</small><b id="lvNet">—</b><span id="lvSince" class="muted"></span></div></div>
+  <div class="live-item"><small>Sinal</small><b id="lvSig">—</b><span id="lvOp" class="muted"></span></div>
+  <div class="live-item"><small>Última mensagem na nuvem</small><b id="lvAge">—</b><span id="lvRx" class="muted"></span></div>
+  <div class="live-item"><small>GPS</small><b id="lvGps">—</b><span id="lvGpsD" class="muted"></span></div>
+  <div class="live-item"><small>Placa</small><b id="lvDev">—</b><span id="lvCnt" class="muted"></span></div>
+</section>
+<section class="kpis" id="kpis"></section>
+<main class="grid">
+  <section class="card map-card">
+    <div class="card-h">
+      <h2>Mapa da trilha</h2>
+      <div class="filters">
+        <select id="fPeriod" aria-label="Período"><option value="1h">Última 1 h</option><option value="6h">6 h</option><option value="today">Hoje</option><option value="24h" selected>24 h</option><option value="7d">7 dias</option><option value="all">Tudo</option></select>
+        <div class="seg" id="fNet"><button data-net="all" class="on">Todas</button><button data-net="catm">Cat-M</button><button data-net="ntn">Satélite</button></div>
+        <div class="seg" id="fPos"><button data-pos="all" class="on">Todas fontes</button><button data-pos="gnss">GNSS</button><button data-pos="celula">Célula</button><button data-pos="salva">Salva</button></div>
+        <label class="chk"><input type="checkbox" id="fSw"> só comutações</label>
+      </div>
+    </div>
+    <div id="map"></div>
+    <div class="legend"><span><i style="background:#2f7cf6"></i>Cat-M (celular)</span><span><i style="background:#9b4dff"></i>Satélite NTN (Skylo)</span><span><i style="background:#2f7cf6;border:2px solid #fff"></i>GNSS (sólido)</span><span><i style="background:rgba(47,124,246,.25);border:1px dashed #2f7cf6;border-radius:50%"></i>Célula (círculo = precisão)</span><span><i style="background:#2f7cf6;opacity:.3"></i>Salva (sem trilha)</span><span><i style="background:#9b4dff;border:2px solid #ffd54a"></i>Injetada (NTN)</span><span><i class="ring"></i>entregue atrasada (store-and-forward)</span><span><i class="sq"></i>evento de comutação</span><span class="muted">posição pública arredondada (~100 m)</span></div>
+  </section>
+  <section class="card tbl-card" id="simCard">
+    <div class="card-h"><h2>Conectividade &amp; SIM</h2><span id="simState"></span></div>
+    <div id="simGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:8px 0"></div>
+    <div id="simHint" style="margin:6px 0;color:#ffcc66"></div>
+    <div class="table-wrap" style="max-height:260px"><table class="tbl"><thead><tr><th>Hora</th><th>Evento</th><th>Explicação</th></tr></thead><tbody id="simHist"></tbody></table></div>
+  </section>
+  <section class="card" id="b2Card" data-aberto style="grid-column:1/-1"><div class="card-h"><h2>Botão 2 via satélite</h2></div></section>
+  <section class="card" id="rtCard" data-aberto style="grid-column:1/-1"><div class="card-h"><h2>Rotina e rotas</h2></div></section>
+  <section class="card" id="ptCard" style="grid-column:1/-1"><div class="card-h"><h2>Apontamento do satélite</h2><span class="chip ntn">Skylo · GEO</span></div><div id="ptBox"></div>
+    <small class="muted">Cálculo com a última posição enviada pela placa. Satélite provável: Inmarsat-4 F3 a 97,65° O (Viasat/Inmarsat, banda L), parceiro da Skylo no Brasil; escolha outro candidato acima se necessário.</small></section>
+  <section class="card tbl-card" id="satCard" style="grid-column:1/-1">
+    <div class="card-h"><h2>Sinal satélite</h2><span id="satCount" class="pill"></span></div>
+    <div class="legend" style="margin:0 0 6px"><span><i style="background:#a45cff"></i>RSRP (dBm)</span><span><i style="background:#3d8bff"></i>SNR (dB, tracejado)</span><span><i style="background:#2fd27a;border-radius:2px"></i>registrado</span><span><i style="background:#ffb020;border-radius:2px"></i>buscando</span><span><i style="background:#ff5470;border-radius:2px"></i>perdido/negado</span></div>
+    <div id="satChart"></div>
+    <div class="table-wrap" style="max-height:240px"><table class="tbl"><thead><tr><th>Início</th><th>Tipo</th><th>Rede</th><th>Duração</th><th>Amostras</th><th>RSRP mín/méd/máx</th><th>SNR mín/méd/máx</th><th>% registrado</th><th>Tempo até registrar</th><th>Rejeição</th></tr></thead><tbody id="satBody"></tbody></table></div>
+  </section>
+  <section class="card tl-card">
+    <div class="card-h"><h2>Linha do tempo de comutações</h2><span id="swCount" class="pill"></span></div>
+    <div id="swBar" class="swbar"></div>
+    <ol id="swList" class="swlist"></ol>
+  </section>
+  <section class="card tbl-card">
+    <div class="card-h"><h2>Mensagens e eventos</h2><span id="msgCount" class="muted"></span></div>
+    <div class="table-wrap"><table class="tbl"><thead><tr><th>Hora</th><th>Seq</th><th>Rede (entrega)</th><th>Tipo</th><th>Detalhe</th><th>Sinal</th><th>Bytes</th><th>Latência</th><th>Entrega</th></tr></thead><tbody id="msgBody"></tbody></table></div>
+  </section>
+  <section class="card tbl-card" id="logCard">
+    <div class="card-h"><h2>Log completo</h2>
+      <div class="filters">
+        <div class="seg" id="lgNet"><button data-v="all" class="on">Todas entregas</button><button data-v="ntn">Via satélite</button><button data-v="catm">Via Cat-M</button></div>
+        <div class="seg" id="lgTr"><button data-v="all" class="on">HTTPS+UDP</button><button data-v="https">HTTPS</button><button data-v="udp">UDP</button></div>
+        <label class="chk"><input type="checkbox" id="lgLate"> só atrasadas</label>
+        <input id="lgQ" placeholder="buscar…" style="width:110px">
+        <button class="btn sm" id="lgCsv">CSV</button>
+      </div><span id="lgCount" class="muted"></span></div>
+    <div class="table-wrap" style="max-height:520px"><table class="tbl"><thead><tr><th>Criada</th><th>Chegada</th><th>Seq</th><th>Rede criação</th><th>Rede entrega</th><th>Transp.</th><th>Tipo</th><th>Descrição</th><th>Bytes</th><th>Latência (ACK)</th><th>Atraso</th></tr></thead><tbody id="lgBody"></tbody></table></div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Rede de entrega: HTTPS só existe em Cat-M; UDP é inferido pelo modo da placa (comutações) no momento da chegada, até o firmware enviar o campo próprio. Latência = ida e volta até o ACK/HTTP 200, informada pela placa na mensagem seguinte.</div>
+  </section>
+</main>
+<div id="empty" class="empty" hidden></div>
+<footer class="foot muted">nRF9151 DK · modem mfw_nrf9151-ntn_1.0.1 · painel <span id="footPanelVer">v?</span> · app <span id="footAppVer">v?</span> · mensagens ≤ 256 B, ≥ 30 s em NTN · <span id="foot"></span></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="../api-core.js?v=3"></script>
+<script src="../pwa.js?v=3"></script>
+<script src="../health-badge.js?v=1"></script>
+<script src="pro-core.js?v=47"></script>
+<script src="sim.js?v=47"></script>
+<script src="satsig.js?v=47"></script>
+<script src="pointing.js?v=1"></script>
+<script src="busca-ui.js?v=55"></script>
+<script src="hero.js?v=51"></script>
+<script src="trajeto.js?v=50"></script>
+<script src="insights.js?v=51"></script>
+<script src="../switch-timeline.js?v=1"></script>
+<script src="../apresentacao.js?v=2"></script>
+<script src="alerts-ui.js?v=1"></script>
+<script src="pro.js?v=60"></script>
+<a class="deck-fw" href="firmware.html">Firmware</a>
+</body>
+</html>
