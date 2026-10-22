@@ -59,7 +59,7 @@ async function rodar(env) {
     } else if (res) { r.disparadoEm = null; r.notificadoEm = null; }
   }
   let envio = null;
-  if (itens.length) { envio = await enviar(env, `Alarme: ${itens.map((i) => i.regra).join(', ')}`, emailHtml(itens, false), [{ filename: 'relatorio-alarme.pdf', content: relatorioPdf(itens, false, agora) }]); if (envio.ok) itens.forEach((i) => { i.r.notificadoEm = agora; }); }
+  if (itens.length) { envio = await enviar(env, `Alarme: ${itens.map((i) => i.regra).join(', ')}`, emailHtml(itens, false), [{ filename: 'relatorio-alarme.pdf', content_type: 'application/pdf', content: relatorioPdf(itens, false, agora) }]); if (envio.ok) itens.forEach((i) => { i.r.notificadoEm = agora; }); }
   await gravar(env, regras);
   return { avaliadas: regras.filter((r) => r.ativo).length, disparos: itens.map((i) => ({ id: i.r.id, regra: i.regra, valor: i.valor })), envio: envio && { ok: envio.ok, falta: envio.falta, id: envio.id, status: envio.status } };
 }
@@ -89,7 +89,7 @@ export async function onRequest({ request, env, params }) {
       { sistema: SISTEMAS.utilities.nome, regra: 'Consumo anômalo', quando: q, valor: 'Consumo anômalo detectado' },
       { sistema: SISTEMAS.consumo.nome, regra: 'Dados acima', quando: q, valor: '12 MB/dia (limite 10)' }
     ];
-    const r = await enviar(env, '[TESTE] Alarme IoT Cat-M + NTN', emailHtml(ex, true), [{ filename: 'relatorio-alarme-teste.pdf', content: relatorioPdf(ex, true) }]);
+    const r = await enviar(env, '[TESTE] Alarme IoT Cat-M + NTN', emailHtml(ex, true), [{ filename: 'relatorio-alarme-teste.pdf', content_type: 'application/pdf', content: relatorioPdf(ex, true) }]);
     return json(r, r.ok ? 200 : r.falta ? 503 : 502);
   }
   const lista = await ler(env);
