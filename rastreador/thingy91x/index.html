@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="../../design-tokens.css?v=2">
 <link rel="stylesheet" href="../../shell.css?v=4">
-<link rel="stylesheet" href="thingy-v2.css?v=1">
+<link rel="stylesheet" href="thingy-v2.css?v=2">
 </head>
 <body class="tg">
 <main class="tg-main">
@@ -45,12 +45,36 @@
   <details class="tg-c tg-det">
     <summary><svg class="ico" aria-hidden="true"><use href="#i-info"></use></svg>Detalhes do aparelho</summary>
     <dl class="tg-dl" id="det"></dl>
-    <p class="tg-s"><a href="classico.html">Painel técnico completo</a></p>
   </details>
+
+  <section class="tg-c tg-larga" aria-labelledby="hT">
+    <div class="tg-h2l"><h2 id="hT"><svg class="ico" aria-hidden="true"><use href="#i-viagem"></use></svg>Histórico</h2>
+      <label class="tg-per"><span>Período</span><select id="per"><option value="1">24 h</option><option value="7" selected>7 dias</option><option value="30">30 dias</option></select></label></div>
+    <dl class="tg-dl" id="hRes"></dl>
+    <h3>Viagens</h3>
+    <ul class="tg-vg" id="viagens"><li class="neutro">carregando...</li></ul>
+  </section>
+
+  <section class="tg-c tg-larga" aria-labelledby="gT">
+    <h2 id="gT"><svg class="ico" aria-hidden="true"><use href="#i-grafico"></use></svg>Gráficos por dia</h2>
+    <div class="tg-gs"><div><h3>Distância (km)</h3><div class="tg-g" id="gKm"></div></div><div><h3>Posições recebidas</h3><div class="tg-g cinza" id="gPts"></div></div></div>
+  </section>
+
+  <section class="tg-c" aria-labelledby="iT">
+    <h2 id="iT"><svg class="ico" aria-hidden="true"><use href="#i-desligado"></use></svg>Interrupções de envio</h2>
+    <ul class="tg-al" id="lacunas"><li class="neutro">carregando...</li></ul>
+  </section>
+
+  <section class="tg-c" aria-labelledby="eT" data-esconde-leitor>
+    <h2 id="eT"><svg class="ico" aria-hidden="true"><use href="#i-baixar"></use></svg>Exportar</h2>
+    <div class="tg-bt"><button type="button" class="btn" id="btnPdf"><svg class="ico" aria-hidden="true"><use href="#i-pdf"></use></svg>Relatório PDF</button>
+      <button type="button" class="btn" id="btnCsv"><svg class="ico" aria-hidden="true"><use href="#i-csv"></use></svg>Posições CSV</button></div>
+    <p class="tg-s">Coordenadas exportadas com 3 casas decimais.</p>
+  </section>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="../../thingy-dados.js?v=5"></script>
-<script src="thingy-v2.js?v=1"></script>
+<script src="thingy-v2.js?v=2"></script>
 <script src="../../icons.js?v=4"></script>
 <script src="../../roles.js?v=2"></script>
 <script src="../../pwa.js?v=6"></script>
