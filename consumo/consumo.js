@@ -91,7 +91,7 @@ function expCsv(){var rows=slots.map(function(s){return {inicio:window.ApiCore.f
  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='consumo-'+mode+'-'+dt.value+'.csv';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)}
 function expPdf(){var k=[].map.call(document.querySelectorAll('#pcards .card'),function(c){var b=c.querySelector('b');return [c.firstChild?String(c.firstChild.textContent).trim():'',b?b.textContent:'']});
  window.ApiCore.printReport('Consumo de dados por chip',k,'#bars',{period:periodTxt(),version:document.getElementById('st').textContent})}
-if(window.ApiCore){document.getElementById('btnCsvC').onclick=expCsv;document.getElementById('btnPdfC').onclick=expPdf}
+if(window.ApiCore){document.getElementById('btnCsvC').onclick=expCsv;document.getElementById('btnPdfC').onclick=function(){location.href='../app/relatorio/?fonte=consumo&dias=30'}}
 document.getElementById('dev').onchange=render;load();setInterval(load,45000);
 if(window.Apresentacao)window.Apresentacao.init(); // F3: RF-05
 })();

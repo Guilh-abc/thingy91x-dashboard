@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Relatório completo | IoT Cat-M + NTN Tecnologia</title>
+<link rel="icon" href="../../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="../../relatorio-demo/relatorio.css?v=2">
+<link rel="stylesheet" href="../../design-tokens.css?v=2">
+<link rel="stylesheet" href="relatorio-real.css?v=1">
+<link rel="stylesheet" href="../../shell.css?v=1">
+</head>
+<body data-pagina-real>
+<section class="capa" aria-label="Capa">
+  <div class="capa-marca"><svg viewBox="0 0 32 32" width="44" height="44" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0984e3"/><circle cx="16" cy="16" r="3.2" fill="#fff"/><path d="M9.5 16a6.5 6.5 0 0 1 13 0M6 16a10 10 0 0 1 20 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/></svg>
+    <span><span>IoT <b>Cat-M + NTN</b></span><small>Tecnologia</small></span></div>
+  <h1 id="capaTit">Relatório completo</h1>
+  <p id="capaPer">Carregando dados reais</p>
+  <p class="capa-nota">Dados reais lidos da API no momento da geração.</p>
+</section>
+<header class="topo">
+  <div><h1 id="tit">Relatório completo</h1><small id="sub">Carregando dados reais da API</small></div>
+  <nav class="rr-ctrl">
+    <label>Fonte <select id="fonte"><option value="meter">Utilities (medidor)</option><option value="tracker">Rastreador</option><option value="consumo">Consumo (todos)</option></select></label>
+    <label>Período <select id="per"><option value="1">Últimas 24 h</option><option value="7">7 dias</option><option value="30">30 dias</option><option value="62">62 dias</option><option value="x">Personalizado</option></select></label>
+    <span id="perX" hidden><input type="date" id="de" aria-label="De"> <input type="date" id="ate" aria-label="Até"></span>
+    <button class="btn btn-sm" id="csv" type="button"><svg class="ico" aria-hidden="true"><use href="#i-csv"></use></svg>Exportar CSV</button>
+    <button class="btn btn-primary btn-sm" id="pdf" type="button"><svg class="ico" aria-hidden="true"><use href="#i-pdf"></use></svg>Baixar PDF</button>
+  </nav>
+</header>
+<main>
+  <section><h2>Resumo do período</h2><p class="frase" id="fResumo"></p><div class="kpis" id="kpis"></div></section>
+  <section><h2>O que o módulo mostrou</h2><p class="frase">Cada capacidade com o dado real do período.</p><div class="caps" id="caps"></div></section>
+  <section class="duas">
+    <div class="card"><h2>Mapa e trilha</h2><p class="frase" id="fMapa">Posições arredondadas em cerca de 100 m.</p><div id="mapa" class="rr-mapa"></div></div>
+    <div class="card"><h2>Paradas e locais</h2><p class="frase">Áreas de cerca de 100 m onde o dispositivo ficou mais tempo.</p><div class="paradas" id="paradas"></div></div>
+  </section>
+  <section class="card"><h2>Linha do tempo</h2><p class="frase">Mensagens por hora: verde com envio, vermelho com alerta, cinza sem dado.</p><div id="faixa" class="faixa"></div><ol class="tl" id="tl"></ol></section>
+  <section class="duas">
+    <div class="card"><h2>Padrões por hora</h2><p class="frase" id="fHora"></p><div id="porHora"></div></div>
+    <div class="card"><h2>Padrões por dia</h2><p class="frase" id="fDia"></p><div id="porDia"></div></div>
+  </section>
+  <section class="duas">
+    <div class="card"><h2>Alertas</h2><p class="frase" id="fAl"></p><div id="alertas"></div></div>
+    <div class="card"><h2>Sinal e bateria</h2><p class="frase">RSRP em dBm e tensão em mV ao longo do período.</p><div id="saude"></div></div>
+  </section>
+  <section class="card"><h2>Eventos de rede</h2><p class="frase">Cat-M e satélite NTN, trocas de rede e sucesso de envio.</p><div class="kpis" id="rede"></div><div id="redeGraf"></div></section>
+  <section class="card anexo"><h2>Anexo: registros detalhados</h2><p class="frase" id="fAnexo"></p><div id="anexo"></div></section>
+</main>
+<footer class="frase" id="priv">Privacidade: posições arredondadas em cerca de 100 m, ICCID e IMSI mascarados, nenhum valor de custo.</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="../../icons.js?v=3"></script>
+<script src="../../roles.js?v=1"></script>
+<script src="relatorio-real.js?v=1"></script>
+<script src="../../shell.js?v=2" data-pagina="relatorio"></script>
+</body>
+</html>

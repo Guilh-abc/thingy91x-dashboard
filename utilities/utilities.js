@@ -234,7 +234,7 @@
     window.ApiCore.printReport('Utilities: relatório do medidor', window.ApiCore.kpisFromDom('#kpis'), '#cChart svg, #cChart canvas', { period: periodOf(filtered()), version: ($('foot') || {}).textContent || '' });
   }
   if ($('btnCsvU')) $('btnCsvU').onclick = exportCsv;
-  if ($('btnPdfU')) $('btnPdfU').onclick = exportPdf;
+  if ($('btnPdfU')) $('btnPdfU').onclick = function () { location.href = '../app/relatorio/?fonte=meter&dias=7'; }; // relatório completo no padrão do demo
 
   async function load() { try { recs = sanitizeNet(await window.ApiCore.fetchMeter(62)); /* B3: via api-core.js */ } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
   // A3: Poll 30 s: suficiente para o medidor.

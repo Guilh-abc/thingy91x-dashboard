@@ -9,7 +9,7 @@ const tudo = html + '\n' + js + '\n' + icons;
 
 // 1) Só carrega os scripts locais permitidos
 const scripts = [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1].split('?')[0]);
-assert.deepEqual(scripts.sort(), ['../icons.js', 'relatorio.js'].sort(), 'scripts inesperados: ' + scripts);
+assert.deepEqual(scripts.sort(), ['../icons.js', '../shell.js', 'relatorio.js'].sort(), 'scripts inesperados: ' + scripts);
 for (const proibido of ['api-core', 'ntn-lab', 'nrfcloud', 'nrf_api_key', 'roles.js', 'pwa.js', 'app.js', 'proxy.js']) {
   assert.ok(!tudo.includes(proibido), 'referência proibida: ' + proibido);
 }
@@ -40,3 +40,4 @@ for (const b of exp) {
 assert.ok(html.includes('Dados de exemplo'));
 assert.ok(!/[\u2013\u2014]/.test(tudo), 'travessão encontrado');
 console.log('demo-isolation: ok');
+assert.doesNotMatch(readFileSync(new URL('../shell.js', import.meta.url), 'utf8'), /netlify|nrfcloud|ntn-lab/, 'shell.js sem chamadas de dados');

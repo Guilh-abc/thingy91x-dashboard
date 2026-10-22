@@ -12,7 +12,7 @@ console.log('\n=== G2 Rastreador ===');
 {
   const js = rd('ntn/pro.js'), html = rd('ntn/index.html');
   ok('CSV via ApiCore.toCSV', /A\.toCSV\(/.test(js) && !/P\.toCSV\(/.test(js));
-  ok('relatório via ApiCore.printReport', /A\.printReport\(/.test(js) && !/=== 'print'\) window\.print\(\)/.test(js));
+  ok('relatório completo em app/relatorio', /app\/relatorio\/\?fonte=tracker/.test(js) && !/=== 'print'\) window\.print\(\)/.test(js));
   ok('colunas sem custo nem célula', !/'(cost|custo|cell|iccid|imsi)'/.test(js.match(/const CSV_COLS = \[[^\]]*\]/)[0]));
   ok('log completo sem separador vírgula', !/head\.join\(','\)/.test(js));
   ok('api-core com versão nova', /api-core\.js\?v=([2-9]|\d\d)/.test(html));

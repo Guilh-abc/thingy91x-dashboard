@@ -1,0 +1,31 @@
+/* relatorio-real.css: complemento do relatorio.css do demo para o relatório real e para impressão. */
+.capa{display:none}
+.rr-ctrl label{display:flex;gap:6px;align-items:center;font-size:.85rem;color:var(--texto-suave)}
+.rr-ctrl select,.rr-ctrl input{font:inherit;padding:5px 8px;border-radius:8px;border:1px solid var(--borda);background:var(--fundo-card);color:var(--texto)}
+.rr-mapa{height:300px;border-radius:12px;overflow:hidden;background:var(--cor-neutro-fundo)}
+.graf text{font-size:11px;fill:var(--texto-suave)}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--texto-suave);margin-top:6px}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.vazio{color:var(--texto-suave);font-size:.85rem;padding:10px;border:1px dashed var(--borda);border-radius:10px}
+.anexo table{border-collapse:collapse;width:100%;font-size:.78rem}
+.anexo th,.anexo td{border-bottom:1px solid var(--borda);padding:4px 6px;text-align:left;white-space:nowrap}
+.anexo th{background:var(--cor-neutro-fundo)}
+.anexo .pg{overflow-x:auto;margin-bottom:12px}
+.anexo .pg small{display:block;color:var(--texto-suave);margin:4px 0}
+.anexo .pg:not(:first-child){display:none}
+.anexo.todas .pg{display:block}
+@media print{
+  @page{size:A4;margin:12mm}
+  html,body{background:#fff!important}
+  .sh,.rr-ctrl,.topo nav{display:none!important}
+  .topo{position:static;border:0}
+  .capa{display:flex;flex-direction:column;justify-content:center;min-height:250mm;page-break-after:always;padding:0 10mm;background:linear-gradient(160deg,#0b1530,#10204a);color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .capa-marca{display:flex;gap:12px;align-items:center;font-size:20pt}.capa-marca small{display:block;font-size:9pt;letter-spacing:.1em;text-transform:uppercase;opacity:.75}
+  .capa-marca>span{display:flex;flex-direction:column;line-height:1.1}
+  .capa h1{font-size:30pt;margin:30mm 0 6mm}.capa p{font-size:13pt;color:#cfe0ff;margin:0 0 3mm}.capa .capa-nota{font-size:10pt;color:#9fb6e6}
+  main{padding:0;gap:10px}
+  .card,.kpi,.cap,section{break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .anexo{break-inside:auto}
+  .anexo .pg{display:block!important;break-before:page}
+  .anexo .pg:first-child{break-before:auto}
+  .rr-mapa{height:240px}
+}

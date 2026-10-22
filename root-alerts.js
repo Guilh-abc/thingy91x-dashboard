@@ -104,7 +104,7 @@
       if (head && !document.getElementById('rootCsv') && api) {
         head.insertAdjacentHTML('beforeend', '<span><button id="rootCsv" class="btn btn-ghost btn-sm" title="Trilha e mensagens em CSV, sem coordenada exata nem ICCID/IMSI">⇩ Exportar CSV</button> <button id="rootPdf" class="btn btn-ghost btn-sm">⎙ Relatório PDF</button></span>');
         document.getElementById('rootCsv').onclick = function () { exportDataCsv(api); };
-        document.getElementById('rootPdf').onclick = function () { exportPdf(api); };
+        document.getElementById('rootPdf').onclick = function () { location.href = 'relatorio/?fonte=tracker&dias=7'; };
       }
       window.AlertsPanel.render(trailRecords());
     });

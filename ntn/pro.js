@@ -218,10 +218,7 @@
     const A = window.ApiCore;
     if (kind === 'csv') download(`ntn-pro-${tag}-${stamp}.csv`, A.toCSV(P.sortRecs(rs), CSV_COLS, CSV_LABELS), 'text/csv;charset=utf-8'); // G2: via api-core
     if (kind === 'json') download(`ntn-pro-${tag}-${stamp}.json`, JSON.stringify({ schema: 'ntn-pro/1', source: tag, exportedAt: new Date().toISOString(), kpis: P.kpis(rs, nowRef()), switches: P.switches(rs), records: rs }, null, 1), 'application/json');
-    if (kind === 'print') { // G2: relatório via api-core (KPIs da tela + sinal satélite)
-      const per = st.src === 'replay' ? 'Replay do teste gravado' : ($('fPeriod').selectedOptions[0] || {}).textContent;
-      A.printReport('Rastreador NTN: relatório de conectividade', A.kpisFromDom('#kpis'), '#satChart svg, #satChart canvas', { period: per + ' · ' + rs.length + ' mensagens', version: (document.querySelector('.foot, footer') || {}).textContent || '' });
-    }
+    if (kind === 'print') { location.href = '../app/relatorio/?fonte=tracker&dias=7'; } // relatório completo no padrão do demo
   }
 
   // ---------- eventos de UI ----------
