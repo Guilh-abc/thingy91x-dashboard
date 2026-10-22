@@ -7,7 +7,7 @@ var mk=L.circleMarker(POS,{radius:9,color:'#fff',fillColor:'#2f7cf6',fillOpacity
 var lte=document.getElementById('tLte'),badge=document.getElementById('badge'),log=document.getElementById('log'),msgs=document.getElementById('msgs');
 var LIMIT=256,MIN_GAP=30000,lastSat=0;
 function sat(){return lte.checked;}
-function upd(){badge.textContent=sat()?'via satélite (NTN Skylo)':'via celular (LTE-M)';badge.className='badge '+(sat()?'sat':'cell');mk.setStyle({fillColor:sat()?'#9b4dff':'#2f7cf6'});}
+function upd(){badge.textContent=sat()?'via satélite (NTN Skylo)':'via celular (LTE-M)';badge.className='badge '+(sat()?'sat':'cell');mk.setStyle({fillColor:sat()?'#2fd27a':'#2f7cf6'});}
 lte.addEventListener('change',function(){upd();central(sat()?'Cobertura celular perdida. Conexão mantida via satélite.':'Cobertura celular restabelecida (LTE-M).');});
 function central(t){var li=document.createElement('li');li.textContent=hh()+' Central: '+t;msgs.insertBefore(li,msgs.firstChild);}
 function hh(){return new Date().toLocaleTimeString('pt-BR');}

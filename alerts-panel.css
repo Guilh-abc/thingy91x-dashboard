@@ -4,7 +4,7 @@
 .rbs{display:grid;gap:6px}.rb{display:inline-block;padding:6px 10px;border-radius:10px;font-weight:600;font-size:13px}
 .rb--sm{padding:1px 7px;font-size:11px}.rb--red{background:#ff547026;color:#ff8a9d;border:1px solid #ff5470}
 .rb--yellow{background:#ff8a8a22;color:#ff8a8a;border:1px solid #ff8a8a}.rb--orange{background:#ff9a3c22;color:#ffb36b;border:1px solid #ff9a3c}
-.rb--purple{background:#c79bff22;color:#c79bff;border:1px solid #c79bff}.rb--grey{background:#9aa4b822;color:#c3cad8;border:1px solid #9aa4b8}
+.rb--purple{background:#8fbaff22;color:#8fbaff;border:1px solid #8fbaff}.rb--grey{background:#9aa4b822;color:#c3cad8;border:1px solid #9aa4b8}
 .ah-unread td{font-weight:600}.ah-read td{opacity:.65}.btn-sm{padding:3px 9px;font-size:12px}
 .ai-grid{display:grid;grid-template-columns:minmax(220px,1fr) 2fr;gap:16px}@media(max-width:800px){.ai-grid{grid-template-columns:1fr}}
 .filters select{background:#111a2e;color:inherit;border:1px solid #ffffff22;border-radius:8px;padding:4px 8px}

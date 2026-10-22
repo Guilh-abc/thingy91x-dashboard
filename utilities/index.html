@@ -11,8 +11,8 @@
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="../ntn/pro.css?v=52">
-<link rel="stylesheet" href="utilities.css?v=8">
+<link rel="stylesheet" href="../ntn/pro.css?v=53">
+<link rel="stylesheet" href="utilities.css?v=9">
 <link rel="stylesheet" href="../ntn/hero.css?v=51">
 <link rel="stylesheet" href="../ntn/deck-theme.css?v=3">
 <link rel="stylesheet" href="../design-tokens.css?v=2">
@@ -28,10 +28,7 @@
     <button id="btnPdfU" class="btn" title="Relatório para imprimir ou salvar em PDF">⎙ Relatório PDF</button>
     <button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com status, KPIs, consumo e mapa. Esc para sair">◉ Modo Apresentação</button>
     <a class="link sh-velho" href="../app/">Início do sistema</a>
-    <a class="link" href="../ntn/">Rastreador</a>
-    <a class="link" href="../consumo/">Consumo</a>
-    <a class="link" href="../relatorio-demo/">Relatório (demo)</a>
-    <a class="link" href="../docs/connect-como-funciona.md">Como funciona</a>
+    <a class="link ajuda" id="linkAjuda" href="../docs/connect-como-funciona.md" title="Como funciona" aria-label="Como funciona"></a>
   </div>
 </header>
 <div id="healthBadge"></div>
@@ -44,7 +41,7 @@
     <div id="cChart" class="chart"></div><div class="legend"><span><i style="background:linear-gradient(#3d8bff,#a45cff)"></i>litros no intervalo (barras)</span><span><i class="ln" style="background:#2fd27a"></i>total acumulado (linha)</span></div></section>
   <section class="card"><div class="card-h"><h2>Identidade do dispositivo</h2><span class="pill">m1</span></div><div id="idCard" class="idk"></div></section>
   <section class="card span2"><div class="card-h"><h2>Sinal ao longo do tempo</h2><small class="muted">RSRP (dBm) · cor = rede</small></div>
-    <div id="sChart" class="chart"></div><div class="legend"><span><i style="background:#2f7cf6"></i>Cat-M</span><span><i style="background:#9b4dff"></i>Satélite Skylo (90198)</span><span><i style="background:#2fd27a33;border:1px solid #2fd27a"></i>faixa boa (&ge; −95)</span></div></section>
+    <div id="sChart" class="chart"></div><div class="legend"><span><i style="background:#2f7cf6"></i>Cat-M</span><span><i style="background:#2fd27a"></i>Satélite Skylo (90198)</span><span><i style="background:#2fd27a33;border:1px solid #2fd27a"></i>faixa boa (&ge; −95)</span></div></section>
   <section class="card"><div class="card-h"><h2>Envios por rede</h2><small class="muted">latência do envio anterior</small></div><div id="nChart"></div></section>
   <section class="card span3"><div class="card-h"><h2>Tentativas de satélite</h2><small class="muted">teste (B4) → GNSS → busca → registro / perda → volta ao Cat-M</small></div><ol id="tl" class="swlist"></ol></section>
   <section class="card span2" id="slCard"><div class="card-h"><h2>Satélite ao vivo</h2><span class="chip ntn">Skylo · 90198</span></div>
@@ -56,7 +53,7 @@
   <section class="card"><div class="card-h"><h2>Alertas</h2><span id="alCount" class="pill"></span></div><div id="alertLeak" aria-live="polite"></div><div id="alerts"></div></section>
   <section class="card"><div class="card-h"><h2>Comparação com a média</h2><small class="muted">média móvel das últimas 24 leituras</small></div><div id="metricDeltas" class="md"></div><div id="ruleBadges" class="rbs" aria-live="polite"></div></section>
   <section class="card span2"><div class="card-h"><h2>Histórico por métrica</h2><div class="seg" id="mcSeg"><button data-m="deltaL" class="on">Consumo</button><button data-m="rsrp">RSRP</button><button data-m="snr">SNR</button></div></div>
-    <div id="metricChart" class="chart"></div><div class="legend"><span><i style="background:#3d8bff"></i>valor lido</span><span><i class="ln" style="background:#2fd27a"></i>média móvel (tracejado)</span><span><i style="background:#ff5470"></i>A</span><span><i style="background:#ff8a8a"></i>B</span><span><i style="background:#ff9a3c"></i>C</span><span><i style="background:#c79bff"></i>D</span><span><i style="background:#9aa4b8"></i>E</span></div></section>
+    <div id="metricChart" class="chart"></div><div class="legend"><span><i style="background:#3d8bff"></i>valor lido</span><span><i class="ln" style="background:#2fd27a"></i>média móvel (tracejado)</span><span><i style="background:#ff5470"></i>A</span><span><i style="background:#ff8a8a"></i>B</span><span><i style="background:#ff9a3c"></i>C</span><span><i style="background:#8fbaff"></i>D</span><span><i style="background:#9aa4b8"></i>E</span></div></section>
   <section class="card span3" id="ahCard"><div class="card-h"><h2>Histórico de Alertas</h2><span id="ahUnread" class="pill"></span></div>
     <div class="filters"><select id="ahMetric"><option value="all">Todas as métricas</option><option value="deltaL">Consumo</option><option value="leituras">Leituras</option></select>
       <select id="ahRule"><option value="all">Todas as regras</option><option value="A">A: consumo acima da média</option><option value="B">B: queda de consumo</option><option value="C">C: tendência de alta</option><option value="D">D: consumo noturno atípico</option><option value="E">E: sem leituras</option></select>
@@ -95,9 +92,9 @@
 <script src="alerts-u.js?v=2"></script>
 <script src="alert-rules.js?v=3"></script>
 <script src="alerts-panel.js?v=3"></script>
-<script src="utilities.js?v=19"></script>
+<script src="utilities.js?v=20"></script>
 <a class="deck-fw" href="../ntn/firmware.html">Firmware</a>
-<script src="../icons.js?v=3"></script>
+<script src="../icons.js?v=4"></script>
 <script src="../roles.js?v=2"></script>
 <script src="../shell.js?v=5" data-pagina="utilities"></script>
 </body>

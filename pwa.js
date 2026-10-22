@@ -27,7 +27,7 @@
     let el = document.getElementById('pwaOffline');
     if (!el && create) {
       el = document.createElement('div'); el.id = 'pwaOffline'; el.setAttribute('role', 'status'); el.hidden = true;
-      el.style.cssText = 'position:sticky;top:0;z-index:9999;background:#b45309;color:#fff;font:600 14px/1.4 Inter,system-ui,sans-serif;padding:8px 14px;text-align:center';
+      el.style.cssText = 'position:sticky;top:0;z-index:9999;background:#1f6fe5;color:#fff;font:600 14px/1.4 Inter,system-ui,sans-serif;padding:8px 14px;text-align:center';
       document.body.insertBefore(el, document.body.firstChild);
     }
     return el;

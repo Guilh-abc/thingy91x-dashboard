@@ -13,3 +13,6 @@ assert.ok(/value="thingy"/.test(h) && /id="estNota"/.test(h));
 assert.ok(/Thingy:91X \(chip Telekom Cat-M\)/.test(c) && /sem chave/.test(c) && /não se aplica/.test(c));
 assert.ok(/controllerchange/.test(ler('pwa.js')) && /ntn-v55/.test(ler('service-worker.js')));
 console.log('consumo-thingy ok');
+for (const p of ['utilities/index.html', 'ntn/index.html', 'consumo/index.html', 'rastreador/thingy91x/index.html', 'admin/acessos/index.html', 'ntn/firmware.html'])
+  assert.ok(!/relatorio-demo\//.test(ler(p).replace(/relatorio-demo\/relatorio\.css/g, '')), 'sem link para demo: ' + p);
+assert.ok(!/#9b4dff/i.test(ler('ntn/pro.css') + ler('utilities/utilities.css')), 'sem roxo');

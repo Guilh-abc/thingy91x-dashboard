@@ -262,7 +262,7 @@
     return stops[stops.length - 1][1];
   }
   var SPEED_RAMP = [[0, '#22c55e'], [30, '#a3e635'], [55, '#ff8a8a'], [80, '#f97316'], [110, '#dc2626']];
-  var HOUR_RAMP = [[0, '#1e3a8a'], [6, '#7c3aed'], [9, '#ff8a8a'], [13, '#10b981'], [17, '#ef4444'], [20, '#be185d'], [24, '#1e3a8a']];
+  var HOUR_RAMP = [[0, '#1e3a8a'], [6, '#3d8bff'], [9, '#ff8a8a'], [13, '#10b981'], [17, '#ef4444'], [20, '#be185d'], [24, '#1e3a8a']];
   var BAT_RAMP = [[0, '#dc2626'], [20, '#f97316'], [50, '#ff8a8a'], [100, '#22c55e']];
   function speedColor(kmh) { return kmh == null ? '#94a3b8' : ramp(SPEED_RAMP, kmh); }
   function hourColor(h) { return h == null ? '#94a3b8' : ramp(HOUR_RAMP, h); }

@@ -12,10 +12,10 @@
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="pro.css?v=52">
+<link rel="stylesheet" href="pro.css?v=53">
 <link rel="stylesheet" href="hero.css?v=51">
 <link rel="stylesheet" href="deck-theme.css?v=3">
-<link rel="stylesheet" href="../alerts-panel.css?v=3">
+<link rel="stylesheet" href="../alerts-panel.css?v=4">
 <link rel="stylesheet" href="../design-tokens.css?v=2">
 <link rel="stylesheet" href="../shell.css?v=4">
 </head>
@@ -29,10 +29,6 @@
     <div class="menu"><button class="btn" id="btnExport">⇩ Exportar</button>
       <div class="menu-list" id="exportMenu" hidden><button data-x="csv">CSV</button><button data-x="json">JSON</button><button data-x="print">Relatório completo (PDF)</button></div></div>
     <a class="link sh-velho" href="../app/">Início do sistema</a>
-    <a class="link" href="connect.html">Demonstração</a>
-    <a class="link" href="../utilities/">Utilities</a>
-    <a class="link" href="../consumo/">Consumo</a>
-    <a class="link" href="../relatorio-demo/">Relatório (demo)</a>
   </div>
 </header>
 <div id="healthBadge"></div>
@@ -66,7 +62,7 @@
       </div>
     </div>
     <div id="map"></div>
-    <div class="legend"><span><i style="background:#2f7cf6"></i>Cat-M (celular)</span><span><i style="background:#9b4dff"></i>Satélite NTN (Skylo)</span><span><i style="background:#2f7cf6;border:2px solid #fff"></i>GNSS (sólido)</span><span><i style="background:rgba(47,124,246,.25);border:1px dashed #2f7cf6;border-radius:50%"></i>Célula (círculo = precisão)</span><span><i style="background:#2f7cf6;opacity:.3"></i>Salva (sem trilha)</span><span><i style="background:#9b4dff;border:2px solid #ffd54a"></i>Injetada (NTN)</span><span><i class="ring"></i>entregue atrasada (store-and-forward)</span><span><i class="sq"></i>evento de comutação</span><span class="muted">posição pública arredondada (~100 m)</span></div>
+    <div class="legend"><span><i style="background:#2f7cf6"></i>Cat-M (celular)</span><span><i style="background:#2fd27a"></i>Satélite NTN (Skylo)</span><span><i style="background:#2f7cf6;border:2px solid #fff"></i>GNSS (sólido)</span><span><i style="background:rgba(47,124,246,.25);border:1px dashed #2f7cf6;border-radius:50%"></i>Célula (círculo = precisão)</span><span><i style="background:#2f7cf6;opacity:.3"></i>Salva (sem trilha)</span><span><i style="background:#2fd27a;border:2px solid #ffd54a"></i>Injetada (NTN)</span><span><i class="ring"></i>entregue atrasada (store-and-forward)</span><span><i class="sq"></i>evento de comutação</span><span class="muted">posição pública arredondada (~100 m)</span></div>
   </section>
   <section class="card tbl-card" id="simCard">
     <div class="card-h"><h2>Conectividade &amp; SIM</h2><span id="simState"></span></div>
@@ -113,7 +109,7 @@
 <script src="../api-core.js?v=3"></script>
 <script src="../pwa.js?v=5"></script>
 <script src="../health-badge.js?v=1"></script>
-<script src="pro-core.js?v=48"></script>
+<script src="pro-core.js?v=49"></script>
 <script src="sim.js?v=47"></script>
 <script src="satsig.js?v=48"></script>
 <script src="pointing.js?v=2"></script>
@@ -131,7 +127,7 @@
 <script src="alerts-trk.js?v=1"></script>
 <script src="pro.js?v=64"></script>
 <a class="deck-fw" href="firmware.html">Firmware</a>
-<script src="../icons.js?v=3"></script>
+<script src="../icons.js?v=4"></script>
 <script src="../roles.js?v=2"></script>
 <script src="../shell.js?v=5" data-pagina="ntn"></script>
 </body>

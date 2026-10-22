@@ -197,8 +197,8 @@
     let g = `<rect x="${L}" y="${y(hi)}" width="${W - L - 10}" height="${y(-95) - y(hi)}" fill="#2fd27a0d"/>`;
     for (let v = Math.ceil(lo / 10) * 10; v <= hi; v += 10) g += `<line x1="${L}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}" stroke="#ffffff10"/><text x="${L - 4}" y="${y(v) + 3}" font-size="10" fill="#8e9ab5" text-anchor="end">${v}</text>`;
     const line = (arr, c) => { let d = '', p = null; arr.forEach((q) => { d += (p && q.t - p.t < 15 * 60000 ? 'L' : 'M') + x(q.t).toFixed(1) + ' ' + y(q.v).toFixed(1); p = q; }); return `<path d="${d}" fill="none" stroke="${c}" stroke-width="1.8" opacity=".8"/>`; };
-    g += line(pts.filter((p) => !p.n), '#2f7cf6') + line(pts.filter((p) => p.n), '#9b4dff');
-    pts.forEach((p) => (g += `<circle cx="${x(p.t)}" cy="${y(p.v)}" r="3" fill="${p.n ? '#9b4dff' : '#2f7cf6'}"><title>${dmy(p.t)} · ${p.n ? 'Satélite' : 'Cat-M'} · RSRP ${p.v} dBm · SNR ${p.s ?? '—'} dB</title></circle>`));
+    g += line(pts.filter((p) => !p.n), '#2f7cf6') + line(pts.filter((p) => p.n), '#2fd27a');
+    pts.forEach((p) => (g += `<circle cx="${x(p.t)}" cy="${y(p.v)}" r="3" fill="${p.n ? '#2fd27a' : '#2f7cf6'}"><title>${dmy(p.t)} · ${p.n ? 'Satélite' : 'Cat-M'} · RSRP ${p.v} dBm · SNR ${p.s ?? '—'} dB</title></circle>`));
     return `<svg viewBox="0 0 ${W} ${H}" style="width:100%">${g}${axisX(t0, t1, x, H, B)}</svg>`;
   }
   function redes(rs) {
@@ -207,7 +207,7 @@
     const lat = (a) => median(a.map((r) => r.prevRttMs).filter((v) => v != null)), late = (a) => median(a.map((r) => r.late).filter((v) => v != null));
     const bar = (k, nm, c) => `<div class="nbar"><div class="lbl"><span>${nm}</span><b>${g[k].length} (${Math.round((g[k].length / tot) * 100)}%)</b></div><div class="trk"><i style="width:${(g[k].length / tot) * 100}%;background:${c}"></i></div></div>`;
     const lc = lat(g.catm), ln = lat(g.ntn);
-    return bar('catm', 'Cat-M', '#2f7cf6') + bar('ntn', 'Satélite Skylo', '#9b4dff') +
+    return bar('catm', 'Cat-M', '#2f7cf6') + bar('ntn', 'Satélite Skylo', '#2fd27a') +
       `<div class="nstat"><div><small class="muted">Latência Cat-M (mediana)</small><b>${lc != null ? (lc / 1000).toFixed(1) + ' s' : '—'}</b><small class="muted">atraso fila ${late(g.catm) ?? '—'} s</small></div><div><small class="muted">Latência satélite</small><b>${ln != null ? (ln / 1000).toFixed(1) + ' s' : '—'}</b><small class="muted">${g.ntn.length ? 'atraso fila ' + (late(g.ntn) ?? '—') + ' s' : 'nenhum envio via satélite ainda'}</small></div></div>
       <small class="muted">Latência = tempo de ida e volta do envio anterior, medido pela placa.</small>`;
   }

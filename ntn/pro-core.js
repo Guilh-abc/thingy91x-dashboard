@@ -3,7 +3,7 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.NtnPro = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
-  const NET = { catm: { label: 'Cat-M', color: '#2f7cf6' }, ntn: { label: 'Satélite (NTN)', color: '#9b4dff' } };
+  const NET = { catm: { label: 'Cat-M', color: '#2f7cf6' }, ntn: { label: 'Satélite (NTN)', color: '#2fd27a' } };
   const t = (r) => Date.parse(r.ts || r.rx);
   const sortRecs = (rs) => rs.slice().sort((a, b) => t(a) - t(b) || (a.seq ?? 0) - (b.seq ?? 0));
 

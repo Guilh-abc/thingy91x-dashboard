@@ -3,7 +3,7 @@
 <meta http-equiv="Cache-Control" content="no-store">
 <title>Consumo de dados por chip | IoT Cat-M + NTN</title>
 <link rel="manifest" href="../manifest.json">
-<link rel="stylesheet" href="../ntn/pro.css?v=52">
+<link rel="stylesheet" href="../ntn/pro.css?v=53">
 <link rel="stylesheet" href="../ntn/deck-theme.css?v=3">
 <style>
 body{font-family:system-ui,sans-serif;background:#0b1220;color:#e5e7eb;margin:0}
@@ -25,7 +25,7 @@ body.apresentacao .wrap{max-width:none;padding:16px 34px}body.apresentacao h1{fo
 </style><link rel="stylesheet" href="../design-tokens.css?v=2">
 <link rel="stylesheet" href="../shell.css?v=4">
 </head><body><div class="wrap">
-<nav class="sh-velho"><a href="../app/">Início do sistema</a><a href="../ntn/">Rastreador</a><a href="../utilities/">Utilities</a><a href="./"><b>Consumo</b></a><a href="../relatorio-demo/">Relatório (demo)</a><button id="btnPdfC" class="btn" title="Relatório do período para imprimir ou salvar em PDF" style="float:right;margin-left:6px">⎙ Relatório PDF</button><button id="btnCsvC" class="btn" title="Baixa os totais do período em CSV (Excel)" style="float:right;margin-left:6px">⇩ Exportar CSV</button><button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com os totais e gráficos. Esc para sair" style="float:right">◉ Modo Apresentação</button></nav>
+<div class="acoes-c" style="overflow:hidden"><a class="link sh-velho" href="../app/">Início do sistema</a><button id="btnPdfC" class="btn" title="Relatório do período para imprimir ou salvar em PDF" style="float:right;margin-left:6px">⎙ Relatório PDF</button><button id="btnCsvC" class="btn" title="Baixa os totais do período em CSV (Excel)" style="float:right;margin-left:6px">⇩ Exportar CSV</button><button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com os totais e gráficos. Esc para sair" style="float:right">◉ Modo Apresentação</button></div>
 <h1>Consumo de dados por chip</h1>
 <p>Dispositivo: <select id="dev"><option value="all">Todos</option><option value="tracker">Rastreador (NTN)</option><option value="meter">Medidor (Utilities)</option><option value="thingy">Thingy:91X (Telekom Cat-M)</option></select>
 <span class="muted" id="st">carregando...</span></p>
@@ -57,7 +57,7 @@ body.apresentacao .wrap{max-width:none;padding:16px 34px}body.apresentacao h1{fo
 <script src="../api-core.js?v=3"></script>
 <script src="../pwa.js?v=5"></script>
 <script src="../apresentacao.js?v=2"></script>
-<script src="consumo.js?v=8"></script><script src="../thingy-dados.js?v=3"></script><script src="consumo-thingy.js?v=2"></script><script src="../icons.js?v=3"></script>
+<script src="consumo.js?v=8"></script><script src="../thingy-dados.js?v=3"></script><script src="consumo-thingy.js?v=2"></script><script src="../icons.js?v=4"></script>
 <script src="../roles.js?v=2"></script>
 <script src="../shell.js?v=5" data-pagina="consumo"></script>
 </body></html>
