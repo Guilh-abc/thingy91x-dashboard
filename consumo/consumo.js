@@ -84,6 +84,14 @@ function limAlert(proj){var el=document.getElementById('limAlert'),lim=limGet();
  if(lim&&proj!=null&&proj>lim){el.innerHTML='<div class="al al--warn">📊 Projeção: '+fb(Math.round(proj))+', acima do limite de '+fb(lim)+' configurado</div>'}else el.innerHTML=''}
 var ci=document.getElementById('chipLimit');if(ci){var l0=limGet();if(l0)ci.value=+(l0/1048576).toFixed(3);
  ci.onchange=function(){var mb=parseFloat(String(ci.value).replace(',','.'));if(mb>0)localStorage.setItem(LIMK,String(Math.round(mb*1048576)));else localStorage.removeItem(LIMK);render()}}
+/* G4: exportação dos slots do período atual (RF-06), só bytes reais recebidos pela API */
+function periodTxt(){var m={dia:'Dia',semana:'Semana',mes:'Mês'}[mode],d=document.getElementById('dev');return m+' de '+dt.value.split('-').reverse().join('/')+' · '+d.options[d.selectedIndex].text}
+function expCsv(){var rows=slots.map(function(s){return {inicio:window.ApiCore.fmtDateBRT(s.a),periodo:s.l,catm_bytes:s.c,sat_bytes:s.s,total_bytes:s.c+s.s,mensagens:s.n}});
+ var csv=window.ApiCore.toCSV(rows,['inicio','periodo','catm_bytes','sat_bytes','total_bytes','mensagens'],{inicio:'início (BRT)'});
+ var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='consumo-'+mode+'-'+dt.value+'.csv';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)}
+function expPdf(){var k=[].map.call(document.querySelectorAll('#pcards .card'),function(c){var b=c.querySelector('b');return [c.firstChild?String(c.firstChild.textContent).trim():'',b?b.textContent:'']});
+ window.ApiCore.printReport('Consumo de dados por chip',k,'#bars',{period:periodTxt(),version:document.getElementById('st').textContent})}
+if(window.ApiCore){document.getElementById('btnCsvC').onclick=expCsv;document.getElementById('btnPdfC').onclick=expPdf}
 document.getElementById('dev').onchange=render;load();setInterval(load,45000);
 if(window.Apresentacao)window.Apresentacao.init(); // F3: RF-05
 })();

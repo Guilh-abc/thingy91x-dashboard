@@ -21,7 +21,7 @@ body.apresentacao nav a,body.apresentacao table,body.apresentacao .aviso,body.ap
 body.apresentacao .wrap{max-width:none;padding:16px 34px}body.apresentacao h1{font-size:2rem}body.apresentacao .card b{font-size:30px}
 #btnApresentacao.on{background:#E20074;color:#fff}
 </style></head><body><div class="wrap">
-<nav><a href="../ntn/">Rastreador</a><a href="../utilities/">Utilities</a><a href="./"><b>Consumo</b></a><button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com os totais e gráficos. Esc para sair" style="float:right">◉ Modo Apresentação</button></nav>
+<nav><a href="../ntn/">Rastreador</a><a href="../utilities/">Utilities</a><a href="./"><b>Consumo</b></a><button id="btnPdfC" class="btn" title="Relatório do período para imprimir ou salvar em PDF" style="float:right;margin-left:6px">⎙ Relatório PDF</button><button id="btnCsvC" class="btn" title="Baixa os totais do período em CSV (Excel)" style="float:right;margin-left:6px">⇩ Exportar CSV</button><button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com os totais e gráficos. Esc para sair" style="float:right">◉ Modo Apresentação</button></nav>
 <h1>Consumo de dados por chip</h1>
 <p>Dispositivo: <select id="dev"><option value="all">Todos</option><option value="tracker">Rastreador (NTN)</option><option value="meter">Medidor (Utilities)</option></select>
 <span class="muted" id="st">carregando...</span></p>
@@ -41,5 +41,6 @@ body.apresentacao .wrap{max-width:none;padding:16px 34px}body.apresentacao h1{fo
 <p class="muted" id="lim"></p>
 <div class="aviso"><b>Origem do número.</b> Dados ao vivo da mesma API usada pelas páginas Rastreador e Utilities (função ntn-lab), atualizados a cada 45 s, sem cache. Os bytes são o tamanho do payload de cada mensagem recebida pelo servidor (campo bytes). Isso é uma <b>estimativa</b>: não inclui cabeçalhos de rede, TLS, retransmissões, registro na rede nem mensagens perdidas. O valor cobrado é o medido pela operadora. Limite da API: o rastreador devolve no máximo os últimos 14 dias e o medidor os últimos 62 dias, sempre contados a partir de hoje (a API não aceita data de início). Períodos fora dessa janela aparecem incompletos ou como "sem dados". A API não informa o ICCID; cada chip é identificado pelo dispositivo em que está instalado. Sem mensagens no mês, o chip aparece como "sem dados".</div>
 </div>
+<script src="../api-core.js?v=2"></script>
 <script src="../apresentacao.js?v=2"></script>
-<script src="consumo.js?v=3"></script></body></html>
+<script src="consumo.js?v=4"></script></body></html>

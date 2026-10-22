@@ -210,6 +210,31 @@
       `<div class="nstat"><div><small class="muted">Latência Cat-M (mediana)</small><b>${lc != null ? (lc / 1000).toFixed(1) + ' s' : '—'}</b><small class="muted">atraso fila ${late(g.catm) ?? '—'} s</small></div><div><small class="muted">Latência satélite</small><b>${ln != null ? (ln / 1000).toFixed(1) + ' s' : '—'}</b><small class="muted">${g.ntn.length ? 'atraso fila ' + (late(g.ntn) ?? '—') + ' s' : 'nenhum envio via satélite ainda'}</small></div></div>
       <small class="muted">Latência = tempo de ida e volta do envio anterior, medido pela placa.</small>`;
   }
+  // ---------- G3: exportação CSV e relatório PDF (RF-06), só dados reais carregados da API ----------
+  const CSV_U = ['ts', 'rx', 'type', 'net', 'totalL', 'deltaL', 'rsrp', 'snr', 'late', 'bytes', 'event', 'info'];
+  const LAB_U = { ts: 'leitura (BRT)', rx: 'chegada (BRT)', type: 'tipo', net: 'rede', totalL: 'total (L)', deltaL: 'consumo no envio (L)', rsrp: 'RSRP (dBm)', snr: 'SNR (dB)', late: 'atraso (s)', bytes: 'bytes', event: 'evento', info: 'detalhe' };
+  function filtered() {
+    const q = ($('fTxt').value || '').toLowerCase();
+    return [...recs].sort((a, b) => T(a) - T(b)).filter((r) => (fT === 'all' || r.type === fT || (fT === 'event' && /^sat/.test(r.type))) && (fN === 'all' || (fN === 'ntn') === isSat(r)) && (!q || JSON.stringify(r).toLowerCase().includes(q)));
+  }
+  function periodOf(rs) {
+    if (!rs.length) return 'sem dados';
+    const d = (t) => new Date(t).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    return d(T(rs[0])) + ' a ' + d(T(rs[rs.length - 1])) + ' · ' + rs.length + ' registros';
+  }
+  function exportCsv() {
+    const rows = filtered().map((r) => ({ ...r, net: isSat(r) ? 'satélite' : 'Cat-M', info: r.event === 'sim' ? '' : r.info })); // evento SIM pode trazer ICCID: não exporta
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([window.ApiCore.toCSV(rows, CSV_U, LAB_U)], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'utilities-leituras-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '') + '.csv'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  function exportPdf() {
+    window.ApiCore.printReport('Utilities: relatório do medidor', window.ApiCore.kpisFromDom('#kpis'), '#cChart svg, #cChart canvas', { period: periodOf(filtered()), version: ($('foot') || {}).textContent || '' });
+  }
+  if ($('btnCsvU')) $('btnCsvU').onclick = exportCsv;
+  if ($('btnPdfU')) $('btnPdfU').onclick = exportPdf;
+
   async function load() { try { recs = sanitizeNet(await window.ApiCore.fetchMeter(62)); /* B3: via api-core.js */ } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
   // A3: Poll 30 s: suficiente para o medidor.
   // Rastreador usa 15 s (troca de rede precisa aparecer rapido na demo).

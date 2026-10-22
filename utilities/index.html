@@ -21,6 +21,8 @@
   <div class="actions">
     <span id="testPill" class="chip ntn" hidden style="padding:4px 12px"></span>
     <span id="devPill" class="pill">medidor m1</span>
+    <button id="btnCsvU" class="btn" title="Baixa as leituras filtradas em CSV (Excel)">⇩ Exportar CSV</button>
+    <button id="btnPdfU" class="btn" title="Relatório para imprimir ou salvar em PDF">⎙ Relatório PDF</button>
     <button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com status, KPIs, consumo e mapa. Esc para sair">◉ Modo Apresentação</button>
     <a class="link" href="../ntn/">Rastreador</a>
     <a class="link" href="../consumo/">Consumo</a>
@@ -66,7 +68,7 @@
 </section>
 <footer class="foot muted" id="foot"></footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="../api-core.js?v=1"></script>
+<script src="../api-core.js?v=2"></script>
 <script src="../health-badge.js?v=1"></script>
 <script src="../ntn/pointing.js?v=1"></script>
 <script src="sat-live.js?v=4"></script>
@@ -75,7 +77,7 @@
 <script src="hero-u.js?v=10"></script>
 <script src="../switch-timeline.js?v=1"></script>
 <script src="alerts-u.js?v=2"></script>
-<script src="utilities.js?v=14"></script>
+<script src="utilities.js?v=15"></script>
 <a class="deck-fw" href="../ntn/firmware.html">Firmware</a>
 </body>
 </html>
