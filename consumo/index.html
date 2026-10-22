@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>Consumo de dados por chip | NTN</title>
+<link rel="stylesheet" href="../ntn/pro.css?v=47">
+<link rel="stylesheet" href="../ntn/deck-theme.css?v=3">
+<style>
+body{font-family:system-ui,sans-serif;background:#0b1220;color:#e5e7eb;margin:0}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+nav a{color:#93c5fd;margin-right:14px;text-decoration:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0}
+.card{background:#111a2e;border:1px solid #1f2a44;border-radius:10px;padding:12px}
+.card b{display:block;font-size:22px;margin-top:4px}
+table{width:100%;border-collapse:collapse;margin:10px 0}td,th{padding:6px 8px;border-bottom:1px solid #1f2a44;text-align:right}td:first-child,th:first-child{text-align:left}
+.aviso{background:#1e293b;border-left:4px solid #f59e0b;padding:10px;border-radius:6px;font-size:14px}
+canvas{width:100%;height:280px;background:#111a2e;border-radius:10px}
+select{background:#111a2e;color:#e5e7eb;border:1px solid #334155;padding:6px;border-radius:6px}
+.muted{color:#94a3b8;font-size:13px}
+</style></head><body><div class="wrap">
+<nav><a href="../ntn/">Rastreador</a><a href="../utilities/">Utilities</a><a href="./"><b>Consumo</b></a></nav>
+<h1>Consumo de dados por chip</h1>
+<p>Dispositivo: <select id="dev"><option value="all">Todos</option><option value="tracker">Rastreador (NTN)</option><option value="meter">Medidor (Utilities)</option></select>
+<span class="muted" id="st">carregando...</span></p>
+<div class="cards" id="cards"></div>
+<h2>Por chip e transporte (mês atual)</h2>
+<table><thead><tr><th>Chip</th><th>Mensagens</th><th>Cat-M</th><th>Satélite (NTN/Skylo)</th><th>Total</th><th>Última mensagem</th></tr></thead><tbody id="tb"></tbody></table>
+<h2>Acumulado do mês e projeção</h2>
+<canvas id="cv" width="1100" height="280"></canvas>
+<p class="muted">Linha cheia: acumulado real. Linha tracejada: projeção pela taxa média diária do mês até agora.</p>
+<div class="aviso"><b>Origem do número.</b> Dados ao vivo da mesma API usada pelas páginas Rastreador e Utilities (função ntn-lab), atualizados a cada 45 s, sem cache. Os bytes são o tamanho do payload de cada mensagem recebida pelo servidor (campo bytes). Isso é uma <b>estimativa</b>: não inclui cabeçalhos de rede, TLS, retransmissões, registro na rede nem mensagens perdidas. O valor cobrado é o medido pela operadora. A API não informa o ICCID; cada chip é identificado pelo dispositivo em que está instalado. Sem mensagens no mês, o chip aparece como "sem dados".</div>
+</div>
+<script>
+(function(){
+var on=/netlify\.app$/.test(location.hostname);
+var B=(on?'':'https://thingy91x-x-dashboard.netlify.app')+'/.netlify/functions/ntn-lab';
+var CHIPS={tracker:'Rastreador (chip do NTN)',meter:'Medidor (chip do Utilities)'};
+var recs=[];
+function devOf(r){return r.dv&&/^m/.test(r.dv)?'meter':'tracker'}
+function isSat(r){var n=(r.txNet||r.net||'').toLowerCase();return n&&n!=='catm'&&n!=='lte'&&n!=='ltem'}
+function fb(b){if(b==null)return 'sem dados';if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';return (b/1048576).toFixed(2)+' MB'}
+function fd(s){return new Date(s).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' (BRT)'}
+async function get(q){var r=await fetch(B+q+'&t='+Date.now(),{cache:'no-store'});var j=await r.json();return Array.isArray(j.records)?j.records:[]}
+async function load(){
+ try{var a=await Promise.all([get('?pro=1&days=31'),get('?meter=1&days=31')]);var m={};
+  a[0].concat(a[1]).forEach(function(r){if(typeof r.bytes!=='number')return;m[r.rx+'|'+r.seq+'|'+devOf(r)]=r});
+  recs=Object.values(m).sort(function(x,y){return Date.parse(x.rx)-Date.parse(y.rx)});
+  document.getElementById('st').textContent='atualizado '+fd(new Date())+' · próxima em 45 s';
+ }catch(e){document.getElementById('st').textContent='falha ao ler a API: '+e.message}
+ render()}
+function render(){
+ var now=new Date(),y=now.getFullYear(),mo=now.getMonth(),start=new Date(y,mo,1),dim=new Date(y,mo+1,0).getDate();
+ var el=(now-start)/864e5,rest=dim-el,sel=document.getElementById('dev').value;
+ var mon=recs.filter(function(r){return Date.parse(r.rx)>=start});
+ var tb='';Object.keys(CHIPS).forEach(function(k){var rs=mon.filter(function(r){return devOf(r)===k});
+  if(!rs.length){tb+='<tr><td>'+CHIPS[k]+'</td><td colspan="5">sem dados</td></tr>';return}
+  var c=0,s=0;rs.forEach(function(r){isSat(r)?s+=r.bytes:c+=r.bytes});
+  tb+='<tr><td>'+CHIPS[k]+'</td><td>'+rs.length+'</td><td>'+fb(c)+'</td><td>'+(s?fb(s):'0 B')+'</td><td>'+fb(c+s)+'</td><td>'+fd(rs[rs.length-1].rx)+'</td></tr>'});
+ document.getElementById('tb').innerHTML=tb;
+ var f=mon.filter(function(r){return sel==='all'||devOf(r)===sel});
+ var tot=0,sat=0;f.forEach(function(r){tot+=r.bytes;if(isSat(r))sat+=r.bytes});
+ var rate=el>0?tot/el:0,proj=tot+rate*rest,last=f.length?fd(f[f.length-1].rx):'sem dados';
+ document.getElementById('cards').innerHTML=[['Total no mês',f.length?fb(tot):'sem dados'],['Satélite no mês',f.length?fb(sat):'sem dados'],['Média diária',f.length?fb(Math.round(rate)):'sem dados'],['Projeção do mês',f.length?fb(Math.round(proj)):'sem dados'],['Dias decorridos / restantes',el.toFixed(1)+' / '+rest.toFixed(1)],['Última mensagem',last]].map(function(c){return '<div class="card">'+c[0]+'<b>'+c[1]+'</b></div>'}).join('');
+ var cv=document.getElementById('cv'),g=cv.getContext('2d'),W=cv.width,H=cv.height,P=40;g.clearRect(0,0,W,H);
+ if(!f.length){g.fillStyle='#94a3b8';g.font='16px sans-serif';g.fillText('sem dados neste mês',P,H/2);return}
+ var mx=Math.max(proj,1),X=function(d){return P+(W-2*P)*d/dim},Y=function(b){return H-P-(H-2*P)*b/mx};
+ g.strokeStyle='#334155';g.strokeRect(P,P,W-2*P,H-2*P);g.fillStyle='#94a3b8';g.font='12px sans-serif';g.fillText(fb(Math.round(mx)),4,P-6);g.fillText('dia 1',P,H-P+16);g.fillText('dia '+dim,W-P-40,H-P+16);
+ g.strokeStyle='#38bdf8';g.lineWidth=2;g.beginPath();g.moveTo(X(0),Y(0));var acc=0;f.forEach(function(r){acc+=r.bytes;g.lineTo(X((Date.parse(r.rx)-start)/864e5),Y(acc))});g.lineTo(X(el),Y(acc));g.stroke();
+ g.setLineDash([6,6]);g.strokeStyle='#f59e0b';g.beginPath();g.moveTo(X(el),Y(tot));g.lineTo(X(dim),Y(proj));g.stroke();g.setLineDash([])}
+document.getElementById('dev').onchange=render;load();setInterval(load,45000);
+})();
+</script></body></html>
