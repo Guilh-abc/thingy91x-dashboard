@@ -12,7 +12,7 @@
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   var f = document.createElement('div'); f.className = 'bv-fundo';
   f.innerHTML = '<div class="bv" role="dialog" aria-modal="true" aria-labelledby="bvT">' +
-    '<h2 id="bvT">Boas-vindas à NTN Plataforma</h2><p>Três passos para ver seus dados reais:</p><ol>' +
+    '<h2 id="bvT">Boas-vindas à IoT Cat-M + NTN</h2><p>Três passos para ver seus dados reais:</p><ol>' +
     '<li><b>Cadastre a chave do nRF Cloud</b> em Configurações (ícone de engrenagem). Ela fica só neste navegador.</li>' +
     '<li><b>Confira o rastreador</b> em Rastreador: posição, trilha e alertas.</li>' +
     '<li><b>Convide pessoas</b> em Admin, Acessos, como admin ou viewer.</li></ol>' +
