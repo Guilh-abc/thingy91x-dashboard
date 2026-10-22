@@ -42,7 +42,13 @@ async function nrf(request, env, url) {
   const up = await fetch(r.u, { headers: { Authorization: 'Bearer ' + k, Accept: 'application/json' } });
   if (!up.ok) return json({ error: 'nRF Cloud respondeu ' + up.status }, up.status === 401 || up.status === 403 ? 502 : up.status);
   let body = await up.text();
-  if (r.lista) body = JSON.stringify({ items: [JSON.parse(body)], total: 1 });
+  if (r.u.startsWith(`${NRF_API}/devices/`)) {
+    /* O device/shadow do nRF Cloud traz datas antigas; a atividade real é a última posição ou mensagem (mais recente primeiro). */
+    const d = JSON.parse(body), ult = async (p) => { try { const x = await fetch(`${NRF_API}/${p}?deviceId=${NRF_DEV}&pageLimit=1&pageSort=desc`, { headers: { Authorization: 'Bearer ' + k } }); const j = await x.json(); const i = (j.items || [])[0] || {}; return Date.parse(i.recordedAt || i.insertedAt || i.receivedAt) || 0; } catch (e) { return 0; } };
+    const t = Math.max(await ult('location/history'), await ult('messages'));
+    if (t) { d.lastActivityAt = new Date(t).toISOString(); d.last_seen = d.lastActivityAt; }
+    body = JSON.stringify(r.lista ? { items: [d], total: 1 } : d);
+  }
   return new Response(body, { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 

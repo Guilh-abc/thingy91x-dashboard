@@ -11,7 +11,7 @@ assert.equal(m.hoje, tot, 'envios e medidor batem');
 const c = ler('consumo/consumo.js'), h = ler('consumo/index.html');
 assert.ok(/value="thingy"/.test(h) && /id="estNota"/.test(h));
 assert.ok(/Thingy:91X \(chip Telekom Cat-M\)/.test(c) && /sem chave/.test(c) && /não se aplica/.test(c));
-assert.ok(/controllerchange/.test(ler('pwa.js')) && /ntn-v57/.test(ler('service-worker.js')));
+assert.ok(/controllerchange/.test(ler('pwa.js')) && /ntn-v58/.test(ler('service-worker.js')));
 console.log('consumo-thingy ok');
 for (const p of ['utilities/index.html', 'ntn/index.html', 'consumo/index.html', 'rastreador/thingy91x/index.html', 'admin/acessos/index.html', 'ntn/firmware.html'])
   assert.ok(!/relatorio-demo\//.test(ler(p).replace(/relatorio-demo\/relatorio\.css/g, '')), 'sem link para demo: ' + p);

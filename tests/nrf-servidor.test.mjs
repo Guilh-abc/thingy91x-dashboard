@@ -32,3 +32,14 @@ assert.equal((await req('l@x.com', '/api/nrfcloud/messages?deviceId=' + DEV + '&
 r = await onRequest({ request: new Request('https://ntn-plataforma.pages.dev/api/nrfcloud/messages?deviceId=' + DEV), env, next: () => new Response('x') }); assert.equal(r.status, 401);
 for (const f of ['thingy-dados.js', 'app/hub.js', 'status-cartoes.js', 'app/relatorio/relatorio-real.js', 'app.js']) assert.ok(/pages\\?\.dev\$\/i\.test\(location\.hostname\)/.test(readFileSync(new URL('../' + f, import.meta.url), 'utf8')), 'servidor em ' + f);
 console.log('nrf-servidor ok');
+// device enriquecido com a atividade mais recente (posição ou mensagem), não a data antiga do shadow
+globalThis.fetch = async (url) => { url = String(url);
+  if (url.includes('/cdn-cgi/access/certs')) return new Response(JSON.stringify({ keys: [jwk] }));
+  if (url.includes('/location/history')) return new Response(JSON.stringify({ items: [{ recordedAt: '2026-10-22T19:38:44.000Z' }] }));
+  if (url.includes('/messages')) return new Response(JSON.stringify({ items: [{ receivedAt: '2026-10-06T04:34:29Z' }] }));
+  return new Response(JSON.stringify({ id: DEV, state: { reported: { ts: '2026-09-23T15:08:10Z' } } })); };
+const dv = await (await req('a@x.com', '/api/nrfcloud/devices/' + DEV)).json();
+assert.equal(dv.lastActivityAt, '2026-10-22T19:38:44.000Z');
+const SC = {}; new Function('root', readFileSync(new URL('../status-cartoes.js', import.meta.url), 'utf8').replace(/\}\)\(typeof window[^)]*\);?\s*$/, '})(root);'))(SC);
+if (SC.StatusCartoes) assert.equal(SC.StatusCartoes.ultimaData(dv, Date.parse('2026-10-22T19:45:00Z')), Date.parse('2026-10-22T19:38:44.000Z'));
+console.log('atividade ok');
