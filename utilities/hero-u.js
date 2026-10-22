@@ -20,9 +20,8 @@
     el.innerHTML = '<div class="hero-ico">' + d[1] + '</div><div class="hero-main"><div class="hero-txt">' + d[2] + '</div><div class="hero-sub">' + d[3] + (o.note ? ' · ' + o.note : '') + (qs.get('estado') ? ' · ESTADO FORÇADO PARA TESTE' : '') + '</div></div>' +
       '<div class="hero-meta"><div><small>No estado atual</small><b>' + (o.since ? dur(now - o.since) : 'n/d') + '</b></div><div><small>Último dado</small><b>' + hm(o.lastRx) + '</b><span>' + (o.lastRx ? 'há ' + dur(now - o.lastRx) : '') + '</span></div></div>';
   };
-  function setPres(on) { document.body.classList.toggle('apresentacao', on); var b = document.getElementById('btnPres2'); if (b) b.classList.toggle('on', on); setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 150); }
-  var btn = document.getElementById('btnPres2'); if (btn) btn.onclick = function () { setPres(!document.body.classList.contains('apresentacao')); };
-  if (qs.get('modo') === 'apresentacao') setPres(true);
+  // F3: botão único de Modo Apresentação compartilhado (../apresentacao.js)
+  if (window.Apresentacao) window.Apresentacao.init();
   var saved = {}; try { saved = JSON.parse(localStorage.getItem(LS_COL) || '{}'); } catch (e) {}
   document.querySelectorAll('main.u2 > section.card').forEach(function (c, i) {
     if (c.querySelector('#map') || c.querySelector('#cChart')) return; // mapa e consumo sempre abertos

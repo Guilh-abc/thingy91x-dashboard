@@ -2,7 +2,7 @@
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-store">
 <title>Consumo de dados por chip | NTN</title>
-<link rel="stylesheet" href="../ntn/pro.css?v=47">
+<link rel="stylesheet" href="../ntn/pro.css?v=51">
 <link rel="stylesheet" href="../ntn/deck-theme.css?v=3">
 <style>
 body{font-family:system-ui,sans-serif;background:#0b1220;color:#e5e7eb;margin:0}
@@ -16,8 +16,12 @@ table{width:100%;border-collapse:collapse;margin:10px 0}td,th{padding:6px 8px;bo
 canvas{width:100%;height:280px;background:#111a2e;border-radius:10px}
 select{background:#111a2e;color:#e5e7eb;border:1px solid #334155;padding:6px;border-radius:6px}
 .muted{color:#94a3b8;font-size:13px}
+/* F3: Modo Apresentação (RF-05) */
+body.apresentacao nav a,body.apresentacao table,body.apresentacao .aviso,body.apresentacao #chipLimit,body.apresentacao #lim{display:none}
+body.apresentacao .wrap{max-width:none;padding:16px 34px}body.apresentacao h1{font-size:2rem}body.apresentacao .card b{font-size:30px}
+#btnApresentacao.on{background:#E20074;color:#fff}
 </style></head><body><div class="wrap">
-<nav><a href="../ntn/">Rastreador</a><a href="../utilities/">Utilities</a><a href="./"><b>Consumo</b></a></nav>
+<nav><a href="../ntn/">Rastreador</a><a href="../utilities/">Utilities</a><a href="./"><b>Consumo</b></a><button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com os totais e gráficos. Esc para sair" style="float:right">◉ Modo Apresentação</button></nav>
 <h1>Consumo de dados por chip</h1>
 <p>Dispositivo: <select id="dev"><option value="all">Todos</option><option value="tracker">Rastreador (NTN)</option><option value="meter">Medidor (Utilities)</option></select>
 <span class="muted" id="st">carregando...</span></p>
@@ -30,9 +34,12 @@ select{background:#111a2e;color:#e5e7eb;border:1px solid #334155;padding:6px;bor
 <div style="position:relative"><canvas id="bars" width="1100" height="300"></canvas><div id="tip" style="position:absolute;display:none;background:#0f172a;border:1px solid #475569;padding:6px 8px;border-radius:6px;font-size:13px;pointer-events:none;white-space:nowrap"></div></div>
 <p class="muted"><span style="color:#38bdf8">■</span> Cat-M &nbsp; <span style="color:#f59e0b">■</span> Satélite (NTN/Skylo). Horários em America/Sao_Paulo (BRT). Toque ou passe o mouse numa barra para ver o detalhe.</p>
 <div id="projbox"><h2>Acumulado do mês e projeção</h2>
+<div id="limAlert" aria-live="polite"></div>
 <canvas id="cv" width="1100" height="280"></canvas>
-<p class="muted">Linha cheia: acumulado real. Linha tracejada: projeção pela taxa média diária do mês até agora.</p></div>
+<p class="muted">Linha cheia: acumulado real. Linha tracejada: projeção pela taxa média diária do mês até agora.</p>
+<p class="muted"><label>Limite do chip no mês (MB): <input id="chipLimit" type="number" min="0" step="0.1" placeholder="MB" style="width:90px;background:#111a2e;color:#e5e7eb;border:1px solid #334155;padding:4px;border-radius:6px"></label> salvo só neste navegador; a placa não informa o limite.</p></div>
 <p class="muted" id="lim"></p>
 <div class="aviso"><b>Origem do número.</b> Dados ao vivo da mesma API usada pelas páginas Rastreador e Utilities (função ntn-lab), atualizados a cada 45 s, sem cache. Os bytes são o tamanho do payload de cada mensagem recebida pelo servidor (campo bytes). Isso é uma <b>estimativa</b>: não inclui cabeçalhos de rede, TLS, retransmissões, registro na rede nem mensagens perdidas. O valor cobrado é o medido pela operadora. Limite da API: o rastreador devolve no máximo os últimos 14 dias e o medidor os últimos 62 dias, sempre contados a partir de hoje (a API não aceita data de início). Períodos fora dessa janela aparecem incompletos ou como "sem dados". A API não informa o ICCID; cada chip é identificado pelo dispositivo em que está instalado. Sem mensagens no mês, o chip aparece como "sem dados".</div>
 </div>
-<script src="consumo.js?v=1"></script></body></html>
+<script src="../apresentacao.js?v=2"></script>
+<script src="consumo.js?v=3"></script></body></html>

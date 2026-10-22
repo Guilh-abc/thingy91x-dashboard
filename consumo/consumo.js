@@ -32,6 +32,7 @@ function renderM(){
  var tot=0,sat=0;f.forEach(function(r){tot+=r.bytes;if(isSat(r))sat+=r.bytes});
  var rate=el>0?tot/el:0,proj=tot+rate*rest,last=f.length?fd(f[f.length-1].rx):'sem dados';
  document.getElementById('cards').innerHTML=[['Total no mês',f.length?fb(tot):'sem dados'],['Satélite no mês',f.length?fb(sat):'sem dados'],['Média diária',f.length?fb(Math.round(rate)):'sem dados'],['Projeção do mês',f.length?fb(Math.round(proj)):'sem dados'],['Dias decorridos / restantes',el.toFixed(1)+' / '+rest.toFixed(1)],['Última mensagem',last]].map(function(c){return '<div class="card">'+c[0]+'<b>'+c[1]+'</b></div>'}).join('');
+ limAlert(f.length?proj:null);
  var cv=document.getElementById('cv'),g=cv.getContext('2d'),W=cv.width,H=cv.height,P=40;g.clearRect(0,0,W,H);
  if(!f.length){g.fillStyle='#94a3b8';g.font='16px sans-serif';g.fillText('sem dados neste mês',P,H/2);return}
  var mx=Math.max(proj,1),X=function(d){return P+(W-2*P)*d/dim},Y=function(b){return H-P-(H-2*P)*b/mx};
@@ -76,5 +77,13 @@ function tipAt(ev){var cv=document.getElementById('bars'),r=cv.getBoundingClient
  tp.style.left=Math.min(e.clientX-r.left+10,r.width-160)+'px';tp.style.top=(e.clientY-r.top-60)+'px'}
 var bc=document.getElementById('bars');bc.addEventListener('mousemove',tipAt);bc.addEventListener('touchstart',tipAt,{passive:true});bc.addEventListener('mouseleave',function(){document.getElementById('tip').style.display='none'});
 dt.onchange=render;document.getElementById('wkh').onchange=render;
+/* E3: limite do chip (RF-04.4), configurado pelo operador e salvo neste navegador */
+var LIMK='ntn.chipLimitBytes';
+function limGet(){var v=+localStorage.getItem(LIMK);return v>0?v:null}
+function limAlert(proj){var el=document.getElementById('limAlert'),lim=limGet();if(!el)return;
+ if(lim&&proj!=null&&proj>lim){el.innerHTML='<div class="al al--warn">📊 Projeção: '+fb(Math.round(proj))+', acima do limite de '+fb(lim)+' configurado</div>'}else el.innerHTML=''}
+var ci=document.getElementById('chipLimit');if(ci){var l0=limGet();if(l0)ci.value=+(l0/1048576).toFixed(3);
+ ci.onchange=function(){var mb=parseFloat(String(ci.value).replace(',','.'));if(mb>0)localStorage.setItem(LIMK,String(Math.round(mb*1048576)));else localStorage.removeItem(LIMK);render()}}
 document.getElementById('dev').onchange=render;load();setInterval(load,45000);
+if(window.Apresentacao)window.Apresentacao.init(); // F3: RF-05
 })();
