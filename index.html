@@ -12,14 +12,14 @@
 <link rel="preload" as="image" href="assets/hero-veicular.webp">
 <link rel="prefetch" href="entrar/">
 <link rel="stylesheet" href="design-tokens.css?v=2">
-<link rel="stylesheet" href="landing.css?v=3">
+<link rel="stylesheet" href="landing.css?v=4">
 </head>
 <body>
 <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 <header class="barra">
   <a class="marca" href="./" aria-label="IoT Cat-M + NTN Tecnologia, início">
     <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0984e3"/><circle cx="16" cy="16" r="3.2" fill="#fff"/><path d="M9.5 16a6.5 6.5 0 0 1 13 0M6 16a10 10 0 0 1 20 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/></svg>
-    <span class="marca-txt"><span>IoT <b>Cat-M + NTN</b></span><small>Tecnologia</small></span>
+    <span class="marca-txt"><span><i class="sh-i">I</i>oT <b>Cat-M + NTN</b></span><small>Tecnologia</small></span>
   </a>
   <input type="checkbox" id="menu-l" class="menu-chk" aria-label="Abrir menu">
   <label for="menu-l" class="menu-btn" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-menu"></use></svg></label>
@@ -93,6 +93,28 @@
         <li><svg class="ico" aria-hidden="true"><use href="#i-escudo"></use></svg><div><b>Acesso seguro</b><p>Login sem senha e cada pessoa vê só o que pode.</p></div></li>
         <li><svg class="ico" aria-hidden="true"><use href="#i-rota"></use></svg><div><b>Sob medida</b><p>Firmware e plataforma próprios, ajustados à operação.</p></div></li>
       </ul>
+    </div>
+  </section>
+
+  <section id="relatorio-exemplo" class="secao rel-ex">
+    <h2>Veja um relatório de exemplo</h2>
+    <p class="sub">PDF gerado pela plataforma com dados fictícios; o seu sai com os dados reais da sua operação.</p>
+    <div class="rel-ex-grid">
+      <a class="rel-capa" href="assets/relatorio-exemplo.pdf" download><img src="assets/relatorio-exemplo-capa.webp" alt="Capa do relatório de exemplo com resumo do dia" loading="lazy" width="510" height="660"><span class="exemplo">Dados de exemplo</span></a>
+      <div>
+        <a class="btn btn-primary btn-grande" href="assets/relatorio-exemplo.pdf" download="relatorio-exemplo.pdf"><svg class="ico" aria-hidden="true"><use href="#i-baixar"></use></svg>Baixar PDF de exemplo</a>
+        <p class="rel-nota">Veículo e cidade inventados, 4 páginas, cerca de 240 KB.</p>
+        <h3>Personalizações possíveis</h3>
+        <ul class="rel-pers">
+          <li><svg class="ico" aria-hidden="true"><use href="#i-cliente"></use></svg>Logo e cores do cliente</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-calendario"></use></svg>Período do relatório</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-velocidade"></use></svg>Indicadores escolhidos</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-desvio"></use></svg>Alertas da operação</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-info"></use></svg>Idioma</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-relogio"></use></svg>Envio agendado por e-mail</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-csv"></use></svg>Dados em CSV</li>
+        </ul>
+      </div>
     </div>
   </section>
 

@@ -93,3 +93,15 @@ body{margin:0;font:16px/1.55 Inter,-apple-system,'Segoe UI',Roboto,sans-serif;ba
 .ben li:first-child .ico{color:var(--cor-ok)}
 .ben b{display:block}.ben p{margin:2px 0 0;color:var(--texto-suave);font-size:.93rem}
 @media(prefers-reduced-motion:reduce){.hero-txt{animation:none}.sol,.sol img{transition:none}}
+
+.rel-ex .sub{color:#636e72;margin:0 0 22px}
+.rel-ex-grid{display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:clamp(20px,4vw,48px);align-items:start}
+.rel-capa{position:relative;display:block;border-radius:14px;overflow:hidden;border:1px solid #dfe6e9;box-shadow:0 20px 40px rgba(20,30,60,.15);transition:transform .15s}
+.rel-capa:hover{transform:translateY(-3px)}.rel-capa img{width:100%;height:auto;display:block}.rel-capa .exemplo{position:absolute;top:12px;left:12px}
+.rel-nota{color:#636e72;font-size:.9rem;margin:10px 0 22px}
+.rel-pers{list-style:none;padding:0;margin:10px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.rel-pers li{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:#fff;border:1px solid #dfe6e9;font-weight:600}
+.rel-pers .ico{width:20px;height:20px;color:var(--cor-info)}
+@media(max-width:720px){.rel-ex-grid{grid-template-columns:1fr}.rel-capa{max-width:320px}}
+@media(prefers-reduced-motion:reduce){.rel-capa{transition:none}}
+.sh-i{font-style:normal;font-family:'DejaVu Sans Mono',Menlo,Consolas,ui-monospace,monospace;font-weight:700;letter-spacing:-.06em}

@@ -10,7 +10,8 @@ assert.equal(S.ultimaData({}, agora), null);
 const st = ler('status-cartoes.js');
 assert.ok(/Sem dados/.test(st) && /comTempo/.test(st), 'fallback Sem dados com tempo limite');
 const hub = ler('app/index.html');
-for (const h of ['../rastreador/', '../utilities/', '../consumo/', '../relatorio-demo/', './relatorio/', '../admin/acessos/']) assert.ok(hub.includes('href="' + h), 'hub sem ' + h);
+for (const h of ['../rastreador/', '../utilities/', '../consumo/', './relatorio/', '../admin/acessos/']) assert.ok(hub.includes('href="' + h), 'hub sem ' + h);
+assert.ok(!hub.includes('relatorio-demo'), 'demo fora do hub');
 assert.ok(!/Asset Tracker|Deutsche Telekom IoT/.test(hub), 'painel saiu do hub');
 const icos = [...hub.matchAll(/#i-([a-z]+)/g)].map((m) => m[1]); assert.equal(new Set(icos).size, icos.length, 'ícones repetidos no hub');
 const sel = ler('rastreador/index.html');
@@ -18,6 +19,6 @@ assert.ok(sel.includes('href="thingy91x/"') && sel.includes('href="../ntn/"') &&
 assert.ok(existsSync(raiz + 'rastreador/thingy91x/index.html'));
 const pn = ler('rastreador/thingy91x/index.html');
 assert.ok(pn.includes('data-pagina="thingy91x"') && pn.includes('../app.js') && pn.includes('id="configBtn"'));
-assert.ok(/ntn-v47/.test(ler('service-worker.js')));
+assert.ok(/ntn-v48/.test(ler('service-worker.js')));
 assert.ok(/\/thingy91x \/rastreador\/thingy91x\/ 301/.test(ler('_redirects')));
 console.log('ok  - hub, seleção de rastreador, status com fallback e redirecionamentos');

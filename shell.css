@@ -47,3 +47,4 @@ header.sh{display:block;flex-wrap:nowrap;justify-content:normal;align-items:norm
 /* Navegações antigas das páginas viram redundantes */
 .ntn-nav,nav.sh-velho,a.link.sh-velho{display:none!important}
 @media(prefers-reduced-motion:reduce){.sh-nav.aberto,html.sh-fade body{animation:none}::view-transition-old(root),::view-transition-new(root){animation:none}}
+@media print{header.sh{display:none!important}}

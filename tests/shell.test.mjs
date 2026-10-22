@@ -7,6 +7,7 @@ const ctx = {}; new Function('globalThis', readFileSync(raiz + 'shell.js', 'utf8
 const S = ctx.Shell;
 assert.deepEqual(S.itensPara('viewer').map((i) => i.id), ['relatorio-demo']);
 assert.ok(S.itensPara('admin').some((i) => i.id === 'acessos'));
+assert.ok(!S.itensPara('admin').some((i) => i.id === 'relatorio-demo'), 'demo fora do menu admin');
 assert.equal(S.inicioPara('viewer'), 'relatorio-demo/');
 assert.equal(S.inicioPara('admin'), 'app/');
 assert.deepEqual(S.trilha('ntn', 'admin'), [{ rotulo: 'Início', href: 'app/' }, { rotulo: 'Rastreador', href: 'rastreador/' }, { rotulo: 'Rastreador NTN' }]);

@@ -29,6 +29,9 @@ for (const p of ['ntn/index.html', 'utilities/index.html', 'consumo/index.html',
 const { destino } = carregar('entrar/entrar.js');
 assert.equal(destino({ role: 'admin' }), '../app/?bemvindo=1');
 assert.equal(destino({ role: 'viewer' }), '../relatorio-demo/');
+{ const L = ler('index.html'); assert.ok(L.includes('id="relatorio-exemplo"') && L.includes('href="assets/relatorio-exemplo.pdf"') && /Personalizações possíveis/.test(L));
+  assert.ok(/rel-capa[^]*?Dados de exemplo/.test(L)); assert.ok(existsSync(raiz + 'assets/relatorio-exemplo.pdf') && existsSync(raiz + 'assets/relatorio-exemplo-capa.webp'));
+  const ic = [...L.slice(L.indexOf('id="relatorio-exemplo"'), L.indexOf('id="papeis"')).matchAll(/#i-([a-z]+)/g)].map((m) => m[1]); assert.equal(new Set(ic).size, ic.length); }
 assert.equal(destino(null), null);
 const { deveMostrar } = carregar('app/boas-vindas.js');
 assert.equal(deveMostrar('?bemvindo=1', null), true);
