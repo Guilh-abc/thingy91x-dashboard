@@ -52,7 +52,7 @@ export function foraDaCerca(p, c) {
   const min = Math.min(...c.pontos.map((q) => distM(p, q)));
   return dentro ? -min : min;
 }
-export const aprox = (m) => (m >= 1000 ? `cerca de ${(m / 1000).toFixed(1).replace('.', ',')} km` : `cerca de ${Math.max(10, Math.round(m / 10) * 10)} m`);
+export const aprox = (m) => (m >= 1000 ? `cerca de ${(m / 1000).toFixed(m >= 1e5 ? 0 : 1).replace('.', ',')} km` : `cerca de ${Math.max(10, Math.round(m / 10) * 10)} m`);
 export const brt = (ms) => new Date(ms).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' }) + ' (BRT)';
 // Avalia uma regra contra uma leitura { ts, lat, lon, vel_kmh, bateria_v, valor, anomalo }. Retorna { disparou, valor } ou null se sem dado.
 export function avaliar(r, d, agora = Date.now()) {
