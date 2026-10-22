@@ -22,7 +22,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     document.body.appendChild(f);
     document.getElementById('bvDepois').onclick = fechar;
-    document.getElementById('bvChave').onclick = function () { fechar(); var b = document.getElementById('configBtn'); if (b) b.click(); };
+    document.getElementById('bvChave').onclick = function () { fechar(); var b = document.getElementById('configBtn'); if (b) b.click(); else location.href = '../rastreador/thingy91x/?config=1'; };
     document.getElementById('bvChave').focus();
   });
 })();

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rastreador | IoT Cat-M + NTN</title>
+<link rel="manifest" href="../manifest.json"><link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../design-tokens.css?v=2">
+<link rel="stylesheet" href="../shell.css?v=2">
+<link rel="stylesheet" href="../hub.css?v=1">
+</head>
+<body class="hub-pg">
+<main>
+  <div class="hub-tit"><h1>Rastreador</h1><p>Escolha o modelo da solução veicular.</p></div>
+  <section class="hub" aria-label="Modelos de rastreador">
+    <a class="hub-c" data-hub="thingy91x" href="thingy91x/"><svg class="ico" aria-hidden="true"><use href="#i-sinal"></use></svg><b>Thingy:91X</b><small>Cat-M com SIM local Telekom, via nRF Cloud</small><span class="tags">Rede celular</span><span class="hub-st st-neutro">Verificando</span></a>
+    <a class="hub-c" data-hub="ntn" href="../ntn/"><svg class="ico" aria-hidden="true"><use href="#i-satelite"></use></svg><b>Rastreador NTN</b><small>nRF9151 com Cat-M e satélite</small><span class="tags">Rede celular + satélite</span><span class="hub-st st-neutro">Verificando</span></a>
+  </section>
+</main>
+<script src="../icons.js?v=3"></script>
+<script src="../roles.js?v=1"></script>
+<script src="../health-badge.js?v=1"></script>
+<script src="../status-cartoes.js?v=1"></script>
+<script src="../shell.js?v=3" data-pagina="rastreador"></script>
+</body>
+</html>

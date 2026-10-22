@@ -4,23 +4,27 @@
 (function (root) {
   var ITENS = [
     { id: 'app', rotulo: 'Início', href: 'app/', ico: 'casa', papeis: ['admin'] },
-    { id: 'ntn', rotulo: 'Rastreador', href: 'ntn/', ico: 'local', papeis: ['admin'] },
+    { id: 'rastreador', rotulo: 'Rastreador', href: 'rastreador/', ico: 'local', papeis: ['admin'] },
     { id: 'utilities', rotulo: 'Utilities', href: 'utilities/', ico: 'medicao', papeis: ['admin'] },
     { id: 'consumo', rotulo: 'Consumo', href: 'consumo/', ico: 'grafico', papeis: ['admin'] },
     { id: 'relatorio-demo', rotulo: 'Relatório (demo)', href: 'relatorio-demo/', ico: 'pdf', papeis: ['admin', 'viewer'] },
     { id: 'relatorio', rotulo: 'Relatório completo', href: 'app/relatorio/', ico: 'apresentacao', papeis: ['admin'] },
     { id: 'acessos', rotulo: 'Acessos', href: 'admin/acessos/', ico: 'admin', papeis: ['admin'] }
   ];
+  /* Subpáginas: mantêm o item pai ativo e entram como 3º nível da trilha. */
+  var SUB = { ntn: { pai: 'rastreador', rotulo: 'Rastreador NTN' }, thingy91x: { pai: 'rastreador', rotulo: 'Thingy:91X' } };
+  function ativo(pagina) { return SUB[pagina] ? SUB[pagina].pai : pagina; }
   /* Puro: itens visíveis para o papel. Sem papel conhecido (modo legado) mostra os de admin. */
   function itensPara(papel) { var p = papel || 'admin'; return ITENS.filter(function (i) { return i.papeis.indexOf(p) >= 0; }); }
   function inicioPara(papel) { return papel === 'viewer' ? 'relatorio-demo/' : 'app/'; }
   function trilha(pagina, papel) {
-    var atual = ITENS.filter(function (i) { return i.id === pagina; })[0];
+    var sub = SUB[pagina], atual = ITENS.filter(function (i) { return i.id === ativo(pagina); })[0];
     var ini = { rotulo: 'Início', href: inicioPara(papel) };
+    if (sub && atual) return [ini, { rotulo: atual.rotulo, href: atual.href }, { rotulo: sub.rotulo }];
     if (!atual || atual.href === ini.href) return [{ rotulo: atual ? atual.rotulo : 'Início' }];
     return [ini, { rotulo: atual.rotulo }];
   }
-  var api = { ITENS: ITENS, itensPara: itensPara, inicioPara: inicioPara, trilha: trilha };
+  var api = { ITENS: ITENS, itensPara: itensPara, inicioPara: inicioPara, trilha: trilha, ativo: ativo };
   root.Shell = api;
   if (typeof document === 'undefined') return;
 
@@ -36,10 +40,10 @@
     var itens = itensPara(estado.papel), tr = trilha(pagina, estado.papel);
     var h = '<div class="sh-barra"><a class="sh-marca" href="' + base + inicioPara(estado.papel) + '" aria-label="IoT Cat-M + NTN Tecnologia, início">' +
       '<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0984e3"/><circle cx="16" cy="16" r="3.2" fill="#fff"/><path d="M9.5 16a6.5 6.5 0 0 1 13 0M6 16a10 10 0 0 1 20 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/></svg>' +
-      '<span class="sh-mt"><span>IoT <b>Cat-M + NTN</b></span><small>Tecnologia</small></span></a>' +
+      '<span class="sh-mt"><span><i class="sh-i">I</i>oT <b>Cat-M + NTN</b></span><small>Tecnologia</small></span></a>' +
       '<button class="sh-burger" type="button" aria-expanded="false" aria-controls="sh-nav" aria-label="Menu">' + ico('menu') + '</button>' +
       '<nav id="sh-nav" class="sh-nav" aria-label="Sistemas">' +
-      itens.map(function (i) { return '<a href="' + base + i.href + '"' + (i.id === pagina ? ' aria-current="page"' : '') + '>' + ico(i.ico) + i.rotulo + '</a>'; }).join('') +
+      itens.map(function (i) { return '<a href="' + base + i.href + '"' + (i.id === ativo(pagina) ? ' aria-current="' + (SUB[pagina] ? 'true' : 'page') + '"' : '') + '>' + ico(i.ico) + i.rotulo + '</a>'; }).join('') +
       '<div class="sh-user"><button type="button" class="sh-ubtn" aria-expanded="false" aria-haspopup="true">' + ico('viewer') + '<span>' + esc(estado.email ? estado.email.split('@')[0] : 'Conta') + '</span></button>' +
       '<div class="sh-umenu" hidden><b>' + esc(estado.email || 'Sessão do navegador') + '</b><small>Papel: ' + (estado.papel === 'viewer' ? 'Viewer' : estado.papel === 'admin' ? 'Admin' : 'não identificado') + '</small>' +
       '<a class="btn btn-sm" href="/cdn-cgi/access/logout">' + ico('sair') + 'Sair</a></div></div></nav></div>' +
@@ -49,7 +53,8 @@
     var el = document.createElement('header'); el.id = 'shell'; el.className = 'sh'; el.innerHTML = h;
     document.body.insertBefore(el, document.body.firstChild);
     var nav = el.querySelector('.sh-nav'), bur = el.querySelector('.sh-burger');
-    bur.onclick = function () { var a = nav.classList.toggle('aberto'); bur.setAttribute('aria-expanded', a); };
+    bur.onclick = function () { var a = nav.classList.toggle('aberto'); bur.setAttribute('aria-expanded', a); el.classList.toggle('sh-aberto', a); };
+    nav.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('a[href]')) { nav.classList.remove('aberto'); el.classList.remove('sh-aberto'); bur.setAttribute('aria-expanded', 'false'); } });
     var ub = el.querySelector('.sh-ubtn'), um = el.querySelector('.sh-umenu');
     ub.onclick = function (e) { e.stopPropagation(); um.hidden = !um.hidden; ub.setAttribute('aria-expanded', !um.hidden); };
     document.addEventListener('click', function () { um.hidden = true; ub.setAttribute('aria-expanded', 'false'); });

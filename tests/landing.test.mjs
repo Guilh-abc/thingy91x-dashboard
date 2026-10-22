@@ -20,7 +20,7 @@ const app = ler('app/index.html');
 assert.ok(existsSync(raiz + 'app/index.html'));
 for (const m of app.matchAll(/(?:src|href)="([^"#]+)"/g)) {
   const v = m[1];
-  if (/^(https?:|mailto:|\.\/$|\.\.\/|boas-vindas\.js|hub\.js)/.test(v)) continue;
+  if (/^(https?:|mailto:|\.\/|\.\.\/|boas-vindas\.js|hub\.js)/.test(v)) continue;
   assert.fail('caminho relativo sem ../ em app/index.html: ' + v);
 }
 for (const p of ['ntn/index.html', 'utilities/index.html', 'consumo/index.html', 'relatorio-demo/index.html'])

@@ -4,14 +4,14 @@
    - Fontes Google e Leaflet (unpkg): Stale While Revalidate.
    - API ntn-lab: Network First; só GET com status 200 vai para o cache, com __cachedAt (ISO) injetado no JSON.
    - Tiles, Valhalla, OSRM, nRF Cloud e qualquer POST: direto da rede, nunca em cache. */
-const VERSION = 'ntn-v46';
+const VERSION = 'ntn-v47';
 const STATIC = VERSION + '-static';
 const CDN = VERSION + '-cdn';
 const API_CACHE = VERSION + '-api';
 const API_MAX_AGE_MS = 48 * 3600 * 1000;
 
 const ASSETS_V2 = [
-  './', './index.html', './app/', './app/index.html', './landing.css', './entrar/', './entrar/index.html', './entrar/entrar.js', './app/boas-vindas.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png',
+  './', './index.html', './app/', './app/index.html', './landing.css', './entrar/', './entrar/index.html', './entrar/entrar.js', './app/boas-vindas.js', './rastreador/', './rastreador/index.html', './rastreador/thingy91x/', './rastreador/thingy91x/index.html', './hub.css', './status-cartoes.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png',
   './api-core.js', './pwa.js', './health-badge.js', './switch-timeline.js', './apresentacao.js',
   './ntn/', './ntn/index.html', './ntn/pro-core.js', './ntn/pro.js', './ntn/sim.js', './ntn/satsig.js',
   './ntn/pointing.js', './ntn/busca-ui.js', './ntn/hero.js', './ntn/trajeto.js', './ntn/insights.js',

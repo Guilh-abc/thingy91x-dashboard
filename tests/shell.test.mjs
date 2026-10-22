@@ -9,13 +9,16 @@ assert.deepEqual(S.itensPara('viewer').map((i) => i.id), ['relatorio-demo']);
 assert.ok(S.itensPara('admin').some((i) => i.id === 'acessos'));
 assert.equal(S.inicioPara('viewer'), 'relatorio-demo/');
 assert.equal(S.inicioPara('admin'), 'app/');
-assert.deepEqual(S.trilha('ntn', 'admin'), [{ rotulo: 'Início', href: 'app/' }, { rotulo: 'Rastreador' }]);
+assert.deepEqual(S.trilha('ntn', 'admin'), [{ rotulo: 'Início', href: 'app/' }, { rotulo: 'Rastreador', href: 'rastreador/' }, { rotulo: 'Rastreador NTN' }]);
+assert.deepEqual(S.trilha('thingy91x', 'admin'), [{ rotulo: 'Início', href: 'app/' }, { rotulo: 'Rastreador', href: 'rastreador/' }, { rotulo: 'Thingy:91X' }]);
+assert.deepEqual(S.trilha('rastreador', 'admin'), [{ rotulo: 'Início', href: 'app/' }, { rotulo: 'Rastreador' }]);
+assert.equal(S.ativo('ntn'), 'rastreador'); assert.equal(S.ativo('thingy91x'), 'rastreador');
 assert.deepEqual(S.trilha('app', 'admin'), [{ rotulo: 'Início' }]);
 const src = readFileSync(raiz + 'shell.js', 'utf8') + readFileSync(raiz + 'shell.css', 'utf8');
 assert.match(src, /cdn-cgi\/access\/logout/);
-assert.match(src, /IoT <b>Cat-M \+ NTN<\/b>/);
+assert.match(src, /<i class="sh-i">I<\/i>oT <b>Cat-M \+ NTN<\/b>/);
 assert.doesNotMatch(src, /[\u2013\u2014]|BMW|Telecom/i);
-for (const p of ['app/index.html', 'ntn/index.html', 'utilities/index.html', 'consumo/index.html', 'admin/acessos/index.html', 'relatorio-demo/index.html']) {
+for (const p of ['app/index.html', 'ntn/index.html', 'utilities/index.html', 'consumo/index.html', 'admin/acessos/index.html', 'relatorio-demo/index.html', 'rastreador/index.html', 'rastreador/thingy91x/index.html']) {
   const h = readFileSync(raiz + p, 'utf8');
   assert.match(h, /shell\.js\?v=\d+" data-pagina="/, p);
   assert.doesNotMatch(h, /wordmark">Connect/, p);
