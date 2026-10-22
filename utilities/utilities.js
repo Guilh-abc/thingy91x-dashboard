@@ -42,12 +42,12 @@
   }
   const simParse = (s) => { const i = s.info || ''; return { ic: (/ic\*?(\d+)/.exec(i) || [])[1], im: (/im(\d+)\*?(\d+)/.exec(i) || []).slice(1).join('…'), pin: (/pin (\S+)/.exec(i) || [])[1] }; };
   function median(a) { if (!a.length) return null; a = [...a].sort((x, y) => x - y); return a[a.length >> 1]; }
-  function sigQ(rsrp) { return rsrp == null ? null : rsrp >= -95 ? ['Bom', '#2fd27a', 'ok'] : rsrp >= -110 ? ['Regular', '#ffb020', 'warn'] : ['Fraco', '#ff5470', 'bad']; }
+  function sigQ(rsrp) { return rsrp == null ? null : rsrp >= -95 ? ['Bom', '#2fd27a', 'ok'] : rsrp >= -110 ? ['Regular', '#ff8a8a', 'warn'] : ['Fraco', '#ff5470', 'bad']; }
   function gauge(rsrp) {
     const v = rsrp == null ? null : Math.max(-140, Math.min(-44, rsrp)), f = v == null ? 0 : (v + 140) / 96, a = Math.PI * (1 - f);
     const arc = (a0, a1, c) => { const p = (a) => [42 + 34 * Math.cos(a), 42 - 34 * Math.sin(a)]; const [x0, y0] = p(a0), [x1, y1] = p(a1); return `<path d="M${x0} ${y0}A34 34 0 0 1 ${x1} ${y1}" stroke="${c}" stroke-width="8" fill="none"/>`; };
     const fa = (d) => Math.PI * (1 - (d + 140) / 96);
-    return `<svg class="gauge" viewBox="0 0 84 48">${arc(Math.PI, fa(-110), '#ff547066')}${arc(fa(-110), fa(-95), '#ffb02066')}${arc(fa(-95), 0, '#2fd27a66')}${v == null ? '' : `<line x1="42" y1="42" x2="${42 + 30 * Math.cos(a)}" y2="${42 - 30 * Math.sin(a)}" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="42" cy="42" r="4" fill="#fff"/>`}</svg>`;
+    return `<svg class="gauge" viewBox="0 0 84 48">${arc(Math.PI, fa(-110), '#ff547066')}${arc(fa(-110), fa(-95), '#ff8a8a66')}${arc(fa(-95), 0, '#2fd27a66')}${v == null ? '' : `<line x1="42" y1="42" x2="${42 + 30 * Math.cos(a)}" y2="${42 - 30 * Math.sin(a)}" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="42" cy="42" r="4" fill="#fff"/>`}</svg>`;
   }
   /* sessões de satélite: sat_start (m1.4+) ou sw=1 (anteriores) */
   function sessions(rs) {

@@ -36,6 +36,8 @@ ok('F: 4 sensores parados viram UM alerta, sem minutos', gone.length === 1 && /A
 const ch3 = ctx2.window.RootAlerts.sensorChanges(['HUMID', 'AIR_PRESS', 'TEMP', 'BATTERY'].flatMap((id) => [400, 399, 398, 396].map((h) => msg(id, h))), now + 3600000);
 ok('F: mesma chave depois (não reabre)', ch3.filter((c) => /Telemetria/.test(c.message))[0].seq === gone[0].seq);
 r = run([100, 100, 100, 100, 100, 10, 5, 0, 3, 0, 2, 0]); ok('parado: queda para menos de 50 m não dispara B nem C', !r.fired.some((a) => a.rule === 'B' || a.rule === 'C'), JSON.stringify(r.fired.map((a) => a.rule)));
+{ const pts = []; let lat = -23.5; const n0 = Date.parse('2026-10-15T01:00:00Z'); for (let i = 0; i < 40; i++) { lat += (i >= 30 ? 400 : 100) / 100 * M; pts.push({ type: 'telemetry', seq: i, ts: new Date(n0 + i * 60000).toISOString(), lat, lon: -46.6 }); }
+  const rr = E.compute(pts, n0 + 40 * 60000), d = rr.fired.filter((a) => a.rule === 'D'); ok('D: um alerta por episódio na noite, não por leitura', d.length === 1, JSON.stringify(d.length)); }
 r = run([0, 2, 0, 1, 0, 3, 0, 0, 1, 0]); ok('carro parado o tempo todo: sem alertas A a C', !r.fired.some((a) => /[ABC]/.test(a.rule)), JSON.stringify(r.fired.map((a) => a.rule)));
 for (const file of ['movement-rules.js', 'root-alerts.js', 'utilities/alerts-panel.js', 'ntn/alerts-trk.js']) ok('sem travessão em ' + file, !fs.readFileSync(join(dir, '..', file), 'utf8').includes('\u2014'));
 console.log(f ? 'FALHAS: ' + f : 'TODOS OK'); if (f) process.exit(1);

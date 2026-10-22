@@ -51,7 +51,7 @@
       <div class="pt-kv"><div><small class="muted">Satélite</small><b>${sat.name}</b><span class="muted">${Math.abs(sat.lon)}° ${sat.lon < 0 ? 'O' : 'L'} · ${sat.prob}</span></div>
       <div><small class="muted">Azimute verdadeiro</small><b>${az.toFixed(1)}° ${card(az)}</b></div>
       <div><small class="muted">Azimute magnético</small><b>${azm.toFixed(1)}°</b><span class="muted">declinação ${d.toFixed(1)}° (aprox. ±2°)</span></div>
-      <div><small class="muted">Elevação</small><b style="color:${elev < 10 ? '#ff5470' : elev < 25 ? '#ffb020' : '#2fd27a'}">${elev.toFixed(1)}°</b><span class="muted">${elev < 0 ? 'abaixo do horizonte' : elev < 15 ? 'baixa, precisa de horizonte livre' : 'acima do horizonte'}</span></div>
+      <div><small class="muted">Elevação</small><b style="color:${elev < 10 ? '#ff5470' : elev < 25 ? '#ff8a8a' : '#2fd27a'}">${elev.toFixed(1)}°</b><span class="muted">${elev < 0 ? 'abaixo do horizonte' : elev < 15 ? 'baixa, precisa de horizonte livre' : 'acima do horizonte'}</span></div>
       <div><small class="muted">Posição usada</small><b class="mono">${p.lat.toFixed(3)}, ${p.lon.toFixed(3)}</b><span class="muted">${esc(p.posSrc || '')} · há ${ago(p.rx || p.ts)} (arredondada ~100 m)</span></div></div>
       <div class="pt-tip">Aponte a face da antena para <b>${card(azm)} magnético (${azm.toFixed(0)}° na bússola)</b>, inclinada ${elev.toFixed(0)}° acima do horizonte. Evite prédios, paredes, árvores ou telhados nessa direção.</div>
       <div class="pt-dev"><button class="btn sm" data-dev="1">${s.heading == null ? '🧭 Usar a bússola do celular' : '🧭 Bússola do celular ativa'}</button>
@@ -69,6 +69,6 @@
   const esc = (x) => String(x ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   window.Pointing = { render, look, decl, SATS };
   const css = document.createElement('style');
-  css.textContent = '.pt-wrap{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:center}.pt-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:10px 0}.pt-kv>div{display:flex;flex-direction:column;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 12px}.pt-kv b{font-size:17px}.pt-tip{padding:10px 12px;border-radius:10px;background:#ffb02014;border:1px solid #ffb02055;color:#ffd27a}.pt-dev{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}.pt-sats button{font-size:12px}@media(max-width:800px){.pt-wrap{grid-template-columns:1fr}}';
+  css.textContent = '.pt-wrap{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:center}.pt-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:10px 0}.pt-kv>div{display:flex;flex-direction:column;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 12px}.pt-kv b{font-size:17px}.pt-tip{padding:10px 12px;border-radius:10px;background:#ff8a8a14;border:1px solid #ff8a8a55;color:#ffd27a}.pt-dev{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}.pt-sats button{font-size:12px}@media(max-width:800px){.pt-wrap{grid-template-columns:1fr}}';
   document.head.appendChild(css);
 })();

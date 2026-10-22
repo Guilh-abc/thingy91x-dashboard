@@ -12,7 +12,7 @@
   const ago = (iso) => { if (!iso) return '—'; const s = (Date.now() - new Date(iso)) / 1000; return s < 60 ? 'há ' + Math.round(s) + ' s' : 'há ' + dur(s); };
   const ms = (v) => v == null ? '' : (v >= 10000 ? (v / 1000).toFixed(1).replace('.', ',') + ' s' : v + ' ms');
   const ACT = { '7': 'LTE-M (Cat-M)', '9': 'NB-IoT', '14': 'NTN NB-IoT (satélite)' };
-  const COLORS = { NTN: '#7b2ff7', CATM: '#1e6fff', GNSS: '#e49b0f' };
+  const COLORS = { NTN: '#7b2ff7', CATM: '#1e6fff', GNSS: '#ff8a8a' };
 
   let pings = [];
   let data = null, mode = 'live', selected = null, map, layer, fitted = false, tick = null;

@@ -79,7 +79,7 @@
       const sty = src === 'injetada' ? { color: '#ffd54a', weight: 2.5 } : {};
       const m = ev && ['sw', 'reg', 'fail'].includes(r.event)
         ? L.marker(ll, { icon: L.divIcon({ className: '', html: `<div style="width:14px;height:14px;background:${c};border:2px solid #fff;border-radius:3px;transform:rotate(45deg)"></div>`, iconSize: [14, 14] }) })
-        : L.circleMarker(ll, { radius: ev ? 3.5 : 4.5, color: r.late > 0 ? '#ffb020' : '#fff', dashArray: r.late > 0 ? '3' : null, weight: r.late > 0 ? 2.5 : 1.5, fillColor: c, fillOpacity: 0.95, ...sty });
+        : L.circleMarker(ll, { radius: ev ? 3.5 : 4.5, color: r.late > 0 ? '#ff8a8a' : '#fff', dashArray: r.late > 0 ? '3' : null, weight: r.late > 0 ? 2.5 : 1.5, fillColor: c, fillOpacity: 0.95, ...sty });
       m.bindPopup(popup(r)).addTo(layer);
     });
     if (pts.length) {
@@ -105,7 +105,7 @@
     const g = P.gpsStatus(all, nowRef());
     const noPos = /salva|sem posicao/.test(g.src || '');
     $('lvGps').textContent = noPos ? 'sem posição no momento' : g.age == null ? 'sem fix' : 'fix há ' + P.fmtDur(g.age);
-    $('lvGps').style.color = noPos ? '#ffb020' : '';
+    $('lvGps').style.color = noPos ? '#ff8a8a' : '';
     $('lvGpsD').textContent = [g.sats != null && g.sats + ' sats', g.src && 'posição: ' + g.src, g.acc != null && '±' + g.acc + ' m'].filter(Boolean).join(' · ');
     const fr = s.failReasons;
     $('lvCnt').textContent = (s.counters ? `envios ${s.counters.tries} · ok ${s.counters.ok} · falhas ${s.counters.fail} · comutações ${s.counters.switches}` : '') + (fr ? ` | motivos: aguardando dados ${fr.wait} · DNS ${fr.dns} · timeout ${fr.timeout} · outros ${fr.other}` : '');

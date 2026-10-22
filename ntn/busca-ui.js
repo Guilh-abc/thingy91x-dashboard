@@ -5,7 +5,7 @@
   function dur(ms) { var s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? s + ' s' : s < 3600 ? Math.floor(s / 60) + ' min ' + String(s % 60).padStart(2, '0') + ' s' : Math.floor(s / 3600) + ' h ' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + ' min'; }
   function medidor(sinal) {
     if (!sinal || sinal.rsrp == null) return '<div class="bm-sig nd"><div class="bm-bar"><i style="width:0"></i></div><b>sinal não reportado pela placa</b><small>Durante a busca a placa ainda não enviou medição do satélite</small></div>';
-    var f = Math.max(0, Math.min(1, (sinal.rsrp + 140) / 50)), c = sinal.rsrp >= -110 ? '#2fd27a' : sinal.rsrp >= -125 ? '#ffb020' : '#ff5470';
+    var f = Math.max(0, Math.min(1, (sinal.rsrp + 140) / 50)), c = sinal.rsrp >= -110 ? '#2fd27a' : sinal.rsrp >= -125 ? '#ff8a8a' : '#ff5470';
     return '<div class="bm-sig"><div class="bm-bar"><i style="width:' + Math.round(f * 100) + '%;background:' + c + '"></i></div><b>' + sinal.rsrp + ' dBm' + (sinal.snr != null ? ' · SNR ' + sinal.snr + ' dB' : '') + '</b><small>última medição do satélite recebida' + (sinal.at ? ' às ' + new Date(sinal.at).toLocaleTimeString('pt-BR') : '') + '</small></div>';
   }
   window.BuscaUI = {

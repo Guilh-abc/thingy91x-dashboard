@@ -1,5 +1,5 @@
 [hidden]{display:none!important}
-:root{--bg:#0b0f1a;--card:#121829;--card2:#182036;--line:#26304a;--tx:#e8ecf6;--mu:#8e9ab5;--catm:#2f7cf6;--ntn:#9b4dff;--ok:#2fd27a;--warn:#ffb020;--bad:#ff5470;--mag:#E20074}
+:root{--bg:#0b0f1a;--card:#121829;--card2:#182036;--line:#26304a;--tx:#e8ecf6;--mu:#8e9ab5;--catm:#2f7cf6;--ntn:#9b4dff;--ok:#2fd27a;--warn:#ff8a8a;--bad:#ff5470;--mag:#E20074}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#1b1440 0,transparent 60%),var(--bg);color:var(--tx);font:14px/1.45 Inter,system-ui,sans-serif}
 .top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .brand{display:flex;gap:12px;align-items:center}.logo{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--catm),var(--ntn));font-size:20px}
@@ -17,7 +17,7 @@ h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}h1 em{font-styl
 .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px}.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}.legend i.ring{border:2px dashed var(--warn)}.legend i.sq{border-radius:2px;background:#fff}
 .swbar{display:flex;height:22px;border-radius:8px;overflow:hidden;background:#0d1322;margin-bottom:10px}.swbar div{height:100%}.swlist{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto}.swlist li{display:grid;grid-template-columns:62px 1fr auto;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line);align-items:center}.swlist .arrow{font-weight:700}.swlist .ok{color:var(--ok)}.swlist .bad{color:var(--bad)}.swlist .pend{color:var(--warn)}
 .pill{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px}.muted{color:var(--mu)}.mono{font-family:ui-monospace,Menlo,monospace}
-.table-wrap{max-height:340px;overflow:auto}.tbl{width:100%;border-collapse:collapse;font-size:12.5px}.tbl th{position:sticky;top:0;background:var(--card);text-align:left;color:var(--mu);font-weight:600;padding:6px}.tbl td{padding:6px;border-top:1px solid var(--line);white-space:nowrap}.tag{padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600}.tag.catm{background:#2f7cf633;color:#9cc0ff}.tag.ntn{background:#9b4dff33;color:#d4b3ff}.tag.late{background:#ffb02033;color:#ffd27a}
+.table-wrap{max-height:340px;overflow:auto}.tbl{width:100%;border-collapse:collapse;font-size:12.5px}.tbl th{position:sticky;top:0;background:var(--card);text-align:left;color:var(--mu);font-weight:600;padding:6px}.tbl td{padding:6px;border-top:1px solid var(--line);white-space:nowrap}.tag{padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600}.tag.catm{background:#2f7cf633;color:#9cc0ff}.tag.ntn{background:#9b4dff33;color:#d4b3ff}.tag.late{background:#ff8a8a33;color:#ffd27a}
 .empty{margin:0 22px 14px;padding:14px;border:1px dashed var(--line);border-radius:12px;color:var(--mu)}.foot{padding:10px 22px 24px;font-size:12px}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#141b2e;color:var(--tx)}.leaflet-popup-content{font-size:12.5px;line-height:1.5}.leaflet-container a{color:#9fb6ff}
 body.present .top .link,body.present .foot{display:none}body.present .live b{font-size:26px}body.present #map{height:calc(100vh - 330px);min-height:420px}body.present .kpi b{font-size:26px}
@@ -54,10 +54,10 @@ body.present .live,body.present .kpis,body.present .grid{margin-left:34px;margin
 .hb{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;font-size:13px;background:#1e293b;color:#e2e8f0;margin:6px 12px}
 .hb-dot{width:10px;height:10px;border-radius:50%}
 .hb--online .hb-dot{background:#22c55e;box-shadow:0 0 6px #22c55e}
-.hb--atrasado .hb-dot{background:#eab308}
+.hb--atrasado .hb-dot{background:#ff8a8a}
 .hb--parado .hb-dot{background:#ef4444}
 .hb-age{opacity:.75}
-.hb-banner{position:sticky;top:0;z-index:999;background:#facc15;color:#1c1917;padding:10px 14px;font-weight:600;display:flex;gap:12px;align-items:center;justify-content:center}
+.hb-banner{position:sticky;top:0;z-index:999;background:#ff8a8a;color:#1c1917;padding:10px 14px;font-weight:600;display:flex;gap:12px;align-items:center;justify-content:center}
 .hb-dismiss{background:#1c1917;color:#fff;border:0;border-radius:6px;padding:4px 10px;cursor:pointer}
 
 /* D2: linha do tempo de comutações (switch-timeline.js, RF-03) */
@@ -65,7 +65,7 @@ body.present .live,body.present .kpis,body.present .grid{margin-left:34px;margin
 .sw-time{font-family:ui-monospace,monospace;font-size:13px}.sw-time small{display:block;color:#8a94a6}
 .sw-arrow b{color:#c8a2ff}.sw-item--catm .sw-arrow b{color:#8fb6ff}
 .sw-why,.sw-gnss{font-size:12px;color:#9aa4b5}
-.sw-result{font-size:13px;margin-top:2px}.sw-result--ok{color:#2fd27a}.sw-result--fail{color:#ff5470;font-weight:600}.sw-result--pend{color:#ffb020}
+.sw-result{font-size:13px;margin-top:2px}.sw-result--ok{color:#2fd27a}.sw-result--fail{color:#ff5470;font-weight:600}.sw-result--pend{color:#ff8a8a}
 .sw-map-btn{background:transparent;border:1px solid #ffffff33;color:inherit;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;white-space:nowrap}
 .sw-map-btn--off{opacity:.5;cursor:default;border-style:dashed}
 

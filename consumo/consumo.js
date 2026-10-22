@@ -38,7 +38,7 @@ function renderM(){
  var mx=Math.max(proj,1),X=function(d){return P+(W-2*P)*d/dim},Y=function(b){return H-P-(H-2*P)*b/mx};
  g.strokeStyle='#334155';g.strokeRect(P,P,W-2*P,H-2*P);g.fillStyle='#94a3b8';g.font='12px sans-serif';g.fillText(fb(Math.round(mx)),4,P-6);g.fillText('dia 1',P,H-P+16);g.fillText('dia '+dim,W-P-40,H-P+16);
  g.strokeStyle='#38bdf8';g.lineWidth=2;g.beginPath();g.moveTo(X(0),Y(0));var acc=0;f.forEach(function(r){acc+=r.bytes;g.lineTo(X((Date.parse(r.rx)-start)/864e5),Y(acc))});g.lineTo(X(el),Y(acc));g.stroke();
- g.setLineDash([6,6]);g.strokeStyle='#f59e0b';g.beginPath();g.moveTo(X(el),Y(tot));g.lineTo(X(dim),Y(proj));g.stroke();g.setLineDash([])}
+ g.setLineDash([6,6]);g.strokeStyle='#ff8a8a';g.beginPath();g.moveTo(X(el),Y(tot));g.lineTo(X(dim),Y(proj));g.stroke();g.setLineDash([])}
 var H3=3*36e5,mode='dia';
 function bd(t){var d=new Date(t-H3);return {y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate(),h:d.getUTCHours(),w:d.getUTCDay()}}
 function T(y,m,d,h){return Date.UTC(y,m,d,h||0)+H3}
@@ -69,7 +69,7 @@ function renderP(){
  var mx=Math.max.apply(null,slots.map(function(s){return s.c+s.s}))||1,bw=(W-2*P)/slots.length,ev=Math.ceil(slots.length/24);
  g.fillStyle='#94a3b8';g.font='12px sans-serif';g.fillText(fb(mx),4,P-8);g.strokeStyle='#334155';g.strokeRect(P,P,W-2*P,Hh-2*P);
  slots.forEach(function(s,i){var x=P+i*bw,hc=(Hh-2*P)*s.c/mx,hs=(Hh-2*P)*s.s/mx;s.x=x;s.w=bw;
-  g.fillStyle='#38bdf8';g.fillRect(x+1,Hh-P-hc,Math.max(1,bw-2),hc);g.fillStyle='#f59e0b';g.fillRect(x+1,Hh-P-hc-hs,Math.max(1,bw-2),hs);
+  g.fillStyle='#38bdf8';g.fillRect(x+1,Hh-P-hc,Math.max(1,bw-2),hc);g.fillStyle='#ff8a8a';g.fillRect(x+1,Hh-P-hc-hs,Math.max(1,bw-2),hs);
   if(i%ev===0){g.fillStyle='#94a3b8';g.fillText(s.l,x+1,Hh-P+16)}})}
 function tipAt(ev){var cv=document.getElementById('bars'),r=cv.getBoundingClientRect(),e=ev.touches?ev.touches[0]:ev,x=(e.clientX-r.left)*cv.width/r.width,tp=document.getElementById('tip');
  var s=slots.filter(function(q){return q.x!=null&&x>=q.x&&x<q.x+q.w})[0];if(!s){tp.style.display='none';return}

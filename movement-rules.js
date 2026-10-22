@@ -66,7 +66,7 @@
     /* A, B, C, D sobre distância e velocidade. */
     function evaluateReadings(list) {
       var fired = [], streak = { distM: 0, speedKmh: 0 }, nightDist = [], prevRule = { distM: {}, speedKmh: {} };
-      var prevO = null;
+      var prevO = null, prevD = { on: false, night: null };
       list.forEach(function (o) {
         var t = Date.parse(o.ts);
         /* v3: parado (deslocamento abaixo de 50 m) é estado normal: B e C não disparam. B só quando estava em
@@ -90,7 +90,9 @@
         // D: entre 22h e 6h BRT, deslocamento acima de 1,5x a média noturna
         if (Base.isNightBRT(t) && typeof o.distM === 'number') {
           var n = Base.rollingStat(nightDist, o.distM);
-          if (n && n.mean > 0 && o.distM > n.mean * NIGHT_FACTOR) fired.push({ rule: 'D', metric: 'distM', at: t, seq: o.seq, value: o.distM, threshold: r1(n.mean * NIGHT_FACTOR),
+          var isD = !!(n && n.mean > 0 && o.distM > n.mean * NIGHT_FACTOR), nightId = new Date(t - 9 * 3600000).toISOString().slice(0, 10); // noite BRT (22h a 6h) como um dia só
+          var startD = isD && !(prevD.on && prevD.night === nightId); prevD = { on: isD, night: nightId };
+          if (isD) fired.push({ streakStartD: startD, rule: 'D', metric: 'distM', at: t, seq: o.seq, value: o.distM, threshold: r1(n.mean * NIGHT_FACTOR),
             message: 'Movimento noturno atípico: ' + o.distM + ' m, acima de 1,5x a média noturna ' + nTxt(n.n) + ' (' + n.mean + ' m)' });
           nightDist.push(o.distM);
         }
@@ -100,7 +102,7 @@
     function compute(records, now) {
       now = now == null ? Date.now() : now;
       var list = annotate(records).filter(function (o) { return Date.parse(o.ts) <= now; });
-      var all = evaluateReadings(list), last = list[list.length - 1], fired = Base.onlyStreakStarts(all);
+      var all = evaluateReadings(list), last = list[list.length - 1], fired = Base.onlyStreakStarts(all).filter(function (a) { return a.rule !== 'D' || a.streakStartD !== false; });
       var active = all.filter(function (a) { return last && a.at === Date.parse(last.ts); });
       // E: sem posição nova há mais de 2x o intervalo esperado (o indicador de saúde segue marcando "parado" em 3x)
       var iv = Base.expectedIntervalMs(list.map(function (o) { return { ts: o.ts }; }));

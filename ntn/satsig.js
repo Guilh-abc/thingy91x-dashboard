@@ -5,7 +5,7 @@
   const dmy = (t) => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   const dur = (s) => (s == null ? '—' : s < 90 ? s + ' s' : Math.round(s / 60) + ' min');
   const band = (st) => (st === 1 || st === 5 ? 'reg' : st === 2 ? 'busca' : 'perdido');
-  const BC = { reg: '#2fd27a', busca: '#ffb020', perdido: '#ff5470' };
+  const BC = { reg: '#2fd27a', busca: '#ff8a8a', perdido: '#ff5470' };
   let sel = null;
   function sessions(all) {
     const m = new Map();

@@ -910,7 +910,7 @@ function refreshGeofenceUi(lat, lon) {
         checkGeofence(Number(lat), Number(lon));
     } else {
         setText(elements.geoState, 'Cerca ativa: aguardando fix.');
-        if (elements.geoState) elements.geoState.style.color = '#fdcb6e';
+        if (elements.geoState) elements.geoState.style.color = '#ff8a8a';
     }
 }
 function setStatus(connectedOrPresence, label) {
@@ -935,7 +935,7 @@ function updateConnPanel({ connected, presence, lastSeen, lastMsg, msgCount, lat
     let color = '#636e72';
     if (p) {
         if (p.kind === 'online') { stateTxt = '● ONLINE'; color = '#00b894'; }
-        else if (p.kind === 'sleeping') { stateTxt = '◐ EM ESPERA'; color = '#fdcb6e'; }
+        else if (p.kind === 'sleeping') { stateTxt = '◐ EM ESPERA'; color = '#ff8a8a'; }
         else if (p.kind === 'offline') { stateTxt = '○ OFFLINE'; color = '#d63031'; }
         else if (p.kind === 'nodata') { stateTxt = '○ SEM DADOS'; color = '#636e72'; }
     } else if (connected === true) { stateTxt = '● ONLINE'; color = '#00b894'; }
@@ -2052,7 +2052,7 @@ function renderFleetGrid(fleetData) {
         const alias = getDeviceAlias(f.id, f.nickname || f.name || 'Asset Tracker');
         const showAlias = alias && alias !== f.id && alias !== (f.name || '');
         return `<button class="fleet-card${f.id === config.deviceId ? ' active' : ''}" data-id="${escHtml(f.id)}">
-      <span class="fleet-dot" style="background:${(() => { const pr = fleetPresence(f); return pr.isOnline ? '#00b894' : pr.isSleeping ? '#fdcb6e' : pr.isOffline ? '#d63031' : '#636e72'; })()}"></span>
+      <span class="fleet-dot" style="background:${(() => { const pr = fleetPresence(f); return pr.isOnline ? '#00b894' : pr.isSleeping ? '#ff8a8a' : pr.isOffline ? '#d63031' : '#636e72'; })()}"></span>
       <span class="fleet-name">${escHtml(alias || f.name || f.id)}</span>
       ${showAlias && f.name && f.name !== alias ? `<span class="fleet-alias">${escHtml(f.name)}</span>` : ''}
       <span class="fleet-meta">${(() => { const pr = fleetPresence(f); return `${pr.shortLabel} · ${pr.activityAt ? timeAgo(pr.activityAt) : 'n/d'}`; })()}</span>

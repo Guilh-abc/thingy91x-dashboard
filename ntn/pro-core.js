@@ -151,11 +151,13 @@
     return [CSV_COLS.join(','), ...sortRecs(recs).map((r) => CSV_COLS.map((c) => esc(r[c])).join(','))].join('\n');
   }
   function fmtDur(s) {
-    if (s == null || !isFinite(s)) return '—';
+    if (s == null || !isFinite(s)) return 'n/d';
     s = Math.round(s);
     if (s < 60) return s + ' s';
     if (s < 3600) return Math.floor(s / 60) + ' min ' + String(s % 60).padStart(2, '0') + ' s';
-    return Math.floor(s / 3600) + ' h ' + String(Math.floor((s % 3600) / 60)).padStart(2, '0') + ' min';
+    if (s < 86400) return Math.floor(s / 3600) + ' h ' + String(Math.floor((s % 3600) / 60)).padStart(2, '0') + ' min';
+    var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600);
+    return d + (d === 1 ? ' dia' : ' dias') + (h ? ' e ' + h + ' h' : '');
   }
   function fmtMs(ms) { if (ms == null) return '—'; return ms >= 1000 ? (ms / 1000).toFixed(ms >= 10000 ? 0 : 1) + ' s' : Math.round(ms) + ' ms'; }
   const EVENT_PT = { sw: 'Comutação', reg: 'Registrado', lost: 'Perdeu rede', fix: 'Fix GNSS', fail: 'Falha', auto: 'Modo automático', demo: 'Demo de comutação', boot: 'Placa ligou', rst: 'Reinício Cat-M', ping: 'Ping', wait: 'Aguardando dados do satélite/rede', wdog: 'Watchdog: reinício da rede' };
