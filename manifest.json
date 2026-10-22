@@ -1,7 +1,7 @@
 {
-  "name": "Connect NTN: Cat-M e Satelite Skylo",
+  "name": "Connect NTN: Cat-M e Satélite Skylo",
   "short_name": "Connect NTN",
-  "description": "Paineis ao vivo do rastreador e medidor IoT Cat-M e satelite NTN Skylo (nRF9151).",
+  "description": "Painéis ao vivo do rastreador e medidor IoT Cat-M e satélite NTN Skylo (nRF9151).",
   "start_url": "/thingy91x-dashboard/ntn/",
   "scope": "/thingy91x-dashboard/",
   "display": "standalone",
