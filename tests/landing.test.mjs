@@ -7,7 +7,7 @@ const ler = (p) => readFileSync(raiz + p, 'utf8');
 const carregar = (p) => { const module = { exports: {} }; vm.runInNewContext(ler(p), { module }); return module.exports; };
 
 const landing = ler('index.html');
-assert.match(landing, /IoT <b>Cat-M \+ NTN<\/b>/);
+assert.match(landing, /<i class="sh-i">I<\/i>oT <b>Cat-M \+ NTN<\/b>/);
 assert.doesNotMatch(landing, /BMW|Telecom/i);
 assert.match(landing, /Dados de exemplo/);
 assert.match(landing, /entre com sua conta Google ou receba um código por e-mail/);
