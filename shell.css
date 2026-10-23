@@ -59,3 +59,4 @@ header.sh{display:block;flex-wrap:nowrap;justify-content:normal;align-items:norm
 /* Leitor: sem exportação, relatório completo ou acessos (o servidor também bloqueia) */
 html[data-papel=leitor] :is([data-esconde-leitor],#btnExportLog,#btnExport,#exportMenu,#lgCsv,#exportCsv,#exportGeo,#exportShadow,#exportLog,#rootCsv,#rootPdf,#ahExport,#btnCsvU,#btnPdfU,#btnPdfC,#btnCsvC,#btnApresentacao,a[download],a[href*="app/relatorio"],a[href*="admin/acessos"]){display:none!important}
 @media print{html[data-papel=leitor] body{display:none!important}}
+.sh-umenu a[aria-current]{background:rgba(9,132,227,.15);color:var(--cor-info,#0984e3)}

@@ -9,8 +9,11 @@
     { id: 'consumo', rotulo: 'Consumo', href: 'consumo/', ico: 'grafico', papeis: ['admin', 'leitor'] },
     { id: 'relatorio-demo', rotulo: 'Relatório (demo)', href: 'relatorio-demo/', ico: 'pdf', papeis: ['viewer'] },
     { id: 'relatorio', rotulo: 'Relatório completo', href: 'app/relatorio/', ico: 'apresentacao', papeis: ['admin'] },
-    { id: 'alarmes', rotulo: 'Alarmes', href: 'alarmes/', ico: 'alerta', papeis: ['admin', 'leitor'] },
-    { id: 'acessos', rotulo: 'Acessos', href: 'admin/acessos/', ico: 'admin', papeis: ['admin'] }
+  ];
+  /* Páginas fora da barra (abertas pelo menu do e-mail): entram só na trilha. */
+  var EXTRAS = [
+    { id: 'alarmes', rotulo: 'Regras de alarme', href: 'alarmes/' },
+    { id: 'acessos', rotulo: 'Gerenciar acessos', href: 'admin/acessos/' }
   ];
   /* Subpáginas: mantêm o item pai ativo e entram como 3º nível da trilha. */
   var SUB = { ntn: { pai: 'rastreador', rotulo: 'Rastreador NTN' }, thingy91x: { pai: 'rastreador', rotulo: 'Thingy:91X' } };
@@ -19,13 +22,13 @@
   function itensPara(papel) { var p = papel || 'admin'; return ITENS.filter(function (i) { return i.papeis.indexOf(p) >= 0; }); }
   function inicioPara(papel) { return papel === 'viewer' ? 'relatorio-demo/' : 'app/'; }
   function trilha(pagina, papel) {
-    var sub = SUB[pagina], atual = ITENS.filter(function (i) { return i.id === ativo(pagina); })[0];
+    var sub = SUB[pagina], atual = ITENS.concat(EXTRAS).filter(function (i) { return i.id === ativo(pagina); })[0];
     var ini = { rotulo: 'Início', href: inicioPara(papel) };
     if (sub && atual) return [ini, { rotulo: atual.rotulo, href: atual.href }, { rotulo: sub.rotulo }];
     if (!atual || atual.href === ini.href) return [{ rotulo: atual ? atual.rotulo : 'Início' }];
     return [ini, { rotulo: atual.rotulo }];
   }
-  var api = { ITENS: ITENS, itensPara: itensPara, inicioPara: inicioPara, trilha: trilha, ativo: ativo };
+  var api = { ITENS: ITENS, EXTRAS: EXTRAS, itensPara: itensPara, inicioPara: inicioPara, trilha: trilha, ativo: ativo };
   root.Shell = api;
   if (typeof document === 'undefined') return;
 
@@ -48,7 +51,7 @@
       itens.map(function (i) { return '<a href="' + base + i.href + '"' + (i.id === ativo(pagina) ? ' aria-current="' + (SUB[pagina] ? 'true' : 'page') + '"' : '') + '>' + ico(i.ico) + i.rotulo + '</a>'; }).join('') +
       '<div class="sh-user"><button type="button" class="sh-ubtn" aria-expanded="false" aria-haspopup="true">' + ico('viewer') + '<span>' + esc(estado.email ? estado.email.split('@')[0] : 'Conta') + '</span></button>' +
       '<div class="sh-umenu" role="menu" hidden><div class="sh-uid"><b>' + esc(estado.email || 'Sessão do navegador') + '</b><span class="sh-papel">' + ({ viewer: 'Viewer', admin: 'Admin', leitor: 'Leitor' }[estado.papel] || 'Papel não identificado') + '</span></div>' +
-      (estado.papel === 'admin' ? '<a role="menuitem" href="' + base + 'admin/acessos/">' + ico('cadeado') + 'Gerenciar acessos</a><a role="menuitem" href="' + base + 'alarmes/">' + ico('sino') + 'Regras de alarme</a>' : '') +
+      (estado.papel === 'admin' ? '<a role="menuitem" href="' + base + 'admin/acessos/"' + (pagina === 'acessos' ? ' aria-current="page"' : '') + '>' + ico('cadeado') + 'Gerenciar acessos</a><a role="menuitem" href="' + base + 'alarmes/"' + (pagina === 'alarmes' ? ' aria-current="page"' : '') + '>' + ico('sino') + 'Regras de alarme</a>' : '') +
       '<a role="menuitem" href="' + base + '?site=1">' + ico('globo') + 'Ver site</a>' +
       '<a role="menuitem" class="sh-sair" href="/cdn-cgi/access/logout">' + ico('sair') + 'Sair</a></div></div></nav></div>' +
       '<ol class="sh-trilha" aria-label="Você está em">' + tr.map(function (t, k) {
