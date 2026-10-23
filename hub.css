@@ -42,7 +42,7 @@ body.hub-pg{margin:0;font-family:Inter,system-ui,sans-serif;background:#f4f6f8;c
 @keyframes sk{to{background-position:-200% 0}}
 a:focus-visible,.btn:focus-visible{outline:3px solid var(--foco,#0984e3);outline-offset:2px}
 @media(max-width:900px){.hub-kpis{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.hub-kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi-h{flex-direction:column;gap:6px;padding:12px}.kpi-h .kv b{font-size:1.3rem}.ks{white-space:normal}.capa{height:110px}.hub-banner{flex-wrap:wrap}}
+@media(max-width:520px){.hub-kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi-h{flex-direction:column;gap:6px;padding:12px}.kpi-h .kv b{font-size:1.3rem}.hub-kpis .ks{white-space:normal;align-items:flex-start}.capa{height:110px}.hub-banner{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.hub-c,.sk{animation:none;transition:none}}
 /* Seleção de rastreador (/rastreador/) usa cartões-link simples */
 a.hub-c{display:grid;gap:4px;padding:18px;color:#2d3436;text-decoration:none}a.hub-c>.ico{width:30px;height:30px;color:var(--cor-info)}
