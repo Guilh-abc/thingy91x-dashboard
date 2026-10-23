@@ -27,4 +27,6 @@ for (const p of ['app/index.html', 'ntn/index.html', 'utilities/index.html', 'co
   assert.doesNotMatch(h, /wordmark">Connect/, p);
 }
 for (const a of ['hero-veicular', 'medidor', 'dashboard', 'placa']) assert.ok(readFileSync(raiz + 'assets/' + a + '.webp').length < 120000, a);
+assert.deepEqual(ctx.Shell.ITENS.filter(i => i.grupo === 'geral').map(i => i.id), ['consumo', 'relatorio-demo', 'relatorio']);
+assert.match(src, /sh-div/); assert.match(src, /sh-grupo/);
 console.log('ok  - shell: navegação comum, papéis, trilha, marca e imagens');

@@ -14,6 +14,10 @@ header.sh{display:block;flex-wrap:nowrap;justify-content:normal;align-items:norm
 .sh-nav{display:flex;align-items:center;gap:4px;flex:1}
 .sh-nav>a{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:9px;color:#b9c8e8;text-decoration:none;font-weight:600;transition:background-color .15s,color .15s}
 .sh-nav>a:hover{background:rgba(255,255,255,.07);color:#fff}
+.sh-div{width:1px;height:22px;background:rgba(185,200,232,.28);margin:0 6px 0 10px}
+.sh-grupo{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8494b4;margin-right:2px}
+.sh-nav>a.sh-geral{font-weight:500;color:#a3b2d0;font-size:.95em}
+.sh-nav>a.sh-geral:hover{color:#fff}
 .sh-nav>a[aria-current]{background:var(--cor-info,#0984e3);color:#fff}
 .sh-user{position:relative;margin-left:auto}
 .sh-ubtn{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font:inherit;cursor:pointer}
@@ -45,6 +49,8 @@ header.sh{display:block;flex-wrap:nowrap;justify-content:normal;align-items:norm
   .sh-marca{min-width:0;margin-right:0}
   .sh-nav.aberto{max-height:calc(100dvh - 64px);overflow-y:auto;border-top:1px solid rgba(255,255,255,.08);animation:sh-acc .18s ease-out}
   .sh-nav>a{padding:11px 12px}
+  .sh-div{width:auto;height:1px;margin:8px 12px 4px}
+  .sh-grupo{padding:4px 12px 2px;margin:0}
   .sh-user{width:100%}.sh-ubtn{width:100%;justify-content:flex-start}
   .sh-trilha{overflow-x:auto;white-space:nowrap;scrollbar-width:none}
   .sh-trilha::-webkit-scrollbar{display:none}

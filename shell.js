@@ -6,9 +6,9 @@
     { id: 'app', rotulo: 'Início', href: 'app/', ico: 'casa', papeis: ['admin', 'leitor'] },
     { id: 'rastreador', rotulo: 'Rastreador', href: 'rastreador/', ico: 'local', papeis: ['admin', 'leitor'] },
     { id: 'utilities', rotulo: 'Utilities', href: 'utilities/', ico: 'medicao', papeis: ['admin', 'leitor'] },
-    { id: 'consumo', rotulo: 'Consumo', href: 'consumo/', ico: 'grafico', papeis: ['admin', 'leitor'] },
-    { id: 'relatorio-demo', rotulo: 'Relatório (demo)', href: 'relatorio-demo/', ico: 'pdf', papeis: ['viewer'] },
-    { id: 'relatorio', rotulo: 'Relatório completo', href: 'app/relatorio/', ico: 'apresentacao', papeis: ['admin'] },
+    { id: 'consumo', grupo: 'geral', rotulo: 'Consumo', href: 'consumo/', ico: 'grafico', papeis: ['admin', 'leitor'] },
+    { id: 'relatorio-demo', grupo: 'geral', rotulo: 'Relatório (demo)', href: 'relatorio-demo/', ico: 'pdf', papeis: ['viewer'] },
+    { id: 'relatorio', grupo: 'geral', rotulo: 'Relatório completo', href: 'app/relatorio/', ico: 'apresentacao', papeis: ['admin'] },
   ];
   /* Páginas fora da barra (abertas pelo menu do e-mail): entram só na trilha. */
   var EXTRAS = [
@@ -48,7 +48,9 @@
       '<a class="sh-site" href="' + base + '?site=1" title="Abrir a página pública sem sair da sessão">' + ico('globo') + '<span>Ver site</span></a>' +
       '<button class="sh-burger" type="button" aria-expanded="false" aria-controls="sh-nav" aria-label="Menu">' + ico('menu') + '</button>' +
       '<nav id="sh-nav" class="sh-nav" aria-label="Sistemas">' +
-      itens.map(function (i) { return '<a href="' + base + i.href + '"' + (i.id === ativo(pagina) ? ' aria-current="' + (SUB[pagina] ? 'true' : 'page') + '"' : '') + '>' + ico(i.ico) + i.rotulo + '</a>'; }).join('') +
+      itens.map(function (i, n) {
+        var div = (i.grupo === 'geral' && n > 0 && itens[n - 1].grupo !== 'geral') ? '<span class="sh-div" role="separator" aria-hidden="true"></span><span class="sh-grupo" aria-hidden="true">Geral</span>' : '';
+        return div + '<a href="' + base + i.href + '"' + (i.grupo === 'geral' ? ' class="sh-geral"' : '') + (i.id === ativo(pagina) ? ' aria-current="' + (SUB[pagina] ? 'true' : 'page') + '"' : '') + '>' + ico(i.ico) + i.rotulo + '</a>'; }).join('') +
       '<div class="sh-user"><button type="button" class="sh-ubtn" aria-expanded="false" aria-haspopup="true">' + ico('viewer') + '<span>' + esc(estado.email ? estado.email.split('@')[0] : 'Conta') + '</span></button>' +
       '<div class="sh-umenu" role="menu" hidden><div class="sh-uid"><b>' + esc(estado.email || 'Sessão do navegador') + '</b><span class="sh-papel">' + ({ viewer: 'Viewer', admin: 'Admin', leitor: 'Leitor' }[estado.papel] || 'Papel não identificado') + '</span></div>' +
       (estado.papel === 'admin' ? '<a role="menuitem" href="' + base + 'admin/acessos/"' + (pagina === 'acessos' ? ' aria-current="page"' : '') + '>' + ico('cadeado') + 'Gerenciar acessos</a><a role="menuitem" href="' + base + 'alarmes/"' + (pagina === 'alarmes' ? ' aria-current="page"' : '') + '>' + ico('sino') + 'Regras de alarme</a>' : '') +
