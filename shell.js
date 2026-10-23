@@ -40,7 +40,7 @@
     var velho = document.getElementById('shell'); if (velho) velho.remove();
     var itens = itensPara(estado.papel), tr = trilha(pagina, estado.papel);
     var h = '<div class="sh-barra"><a class="sh-marca" href="' + base + inicioPara(estado.papel) + '" aria-label="IoT Cat-M + NTN Tecnologia, início">' +
-      '<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0984e3"/><circle cx="16" cy="16" r="3.2" fill="#fff"/><path d="M9.5 16a6.5 6.5 0 0 1 13 0M6 16a10 10 0 0 1 20 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/></svg>' +
+      '<img class="sh-logo" src="' + base + 'assets/logo-iot-hub-128.png?v=1" width="36" height="36" alt="" aria-hidden="true">' +
       '<span class="sh-mt"><span><i class="sh-i">I</i>oT <b>Cat-M + NTN</b></span><small>Tecnologia</small></span></a>' +
       '<a class="sh-site" href="' + base + '?site=1" title="Abrir a página pública sem sair da sessão">' + ico('globo') + '<span>Ver site</span></a>' +
       '<button class="sh-burger" type="button" aria-expanded="false" aria-controls="sh-nav" aria-label="Menu">' + ico('menu') + '</button>' +

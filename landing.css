@@ -134,3 +134,6 @@ button.btn-claro{background:transparent;cursor:pointer}
   .hero::after{display:none}
   .hero-txt{padding:24px 16px 40px}
 }
+
+.marca-logo{width:40px;height:40px;flex:none;border-radius:50%;display:block;filter:drop-shadow(0 0 6px rgba(226,0,116,.5))}
+.rodape{align-items:center}.rodape-logo{display:block;width:76px;height:auto;margin:0}
