@@ -17,9 +17,16 @@ header.sh{display:block;flex-wrap:nowrap;justify-content:normal;align-items:norm
 .sh-user{position:relative;margin-left:auto}
 .sh-ubtn{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font:inherit;cursor:pointer}
 .sh-ubtn:hover{background:rgba(255,255,255,.07)}
-.sh-umenu{position:absolute;right:0;top:calc(100% + 8px);min-width:240px;background:#fff;color:#2d3436;border-radius:12px;padding:14px;display:grid;gap:6px;box-shadow:0 14px 34px rgba(0,0,0,.25)}
-.sh-umenu[hidden]{display:none}.sh-umenu small{color:#636e72}
-.sh-umenu .btn{color:var(--cor-alerta,#d63031)!important;border-color:var(--cor-alerta,#d63031)!important;text-decoration:none;justify-self:start}
+.sh-umenu{position:absolute;right:0;top:calc(100% + 8px);min-width:250px;background:#fff;color:#2d3436;border-radius:12px;padding:8px;display:grid;gap:2px;box-shadow:0 14px 34px rgba(0,0,0,.25);z-index:50}
+.sh-umenu[hidden]{display:none}
+.sh-uid{display:grid;gap:4px;padding:8px 10px 10px;border-bottom:1px solid #eef1f3;margin-bottom:4px}.sh-uid b{font-size:.86rem;word-break:break-all}
+.sh-papel{justify-self:start;font-size:.72rem;font-weight:600;padding:2px 9px;border-radius:999px;background:#e8f2fc;color:#0a5fa8}
+.sh-umenu a{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:#2d3436!important;text-decoration:none;font-size:.88rem}
+.sh-umenu a:hover{background:#f4f6f8}.sh-umenu a .ico{width:18px;height:18px;color:#636e72}
+.sh-umenu a.sh-sair{color:var(--cor-alerta,#d63031)!important;border-top:1px solid #eef1f3;border-radius:0 0 8px 8px;margin-top:4px}.sh-umenu a.sh-sair .ico{color:inherit}
+.sh-site{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;margin-right:10px;border-radius:999px;border:1px solid rgba(255,255,255,.25);color:#fff;text-decoration:none;font-size:.82rem;white-space:nowrap}
+.sh-site:hover{background:rgba(255,255,255,.08)}.sh-site .ico{width:16px;height:16px}
+@media(max-width:900px){.sh-site span{display:none}.sh-site{padding:6px;margin-right:4px}}
 .sh-burger{display:none;margin-left:auto;width:38px;height:38px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;cursor:pointer;align-items:center;justify-content:center}
 .sh-burger .ico{width:20px;height:20px}
 .sh-trilha{list-style:none;margin:0;padding:5px clamp(12px,3vw,28px) 7px;display:flex;gap:6px;font-size:12.5px;color:#9fb6e6;border-top:1px solid rgba(255,255,255,.06)}

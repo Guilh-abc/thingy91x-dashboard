@@ -119,16 +119,19 @@
     $('banner').hidden = !crit;
     if (crit) $('bannerTxt').textContent = d.ultAlTxt + ' ' + HubCalc.rel(d.ultAl, agora) + '.';
     var g = d.online === d.total ? ['ok', 'Tudo online'] : d.disp.every(function (x) { return x.ultimo == null; }) ? ['neutro', 'Sem dado'] : ['alerta', (d.total - d.online) + ' precisam de atenção'];
-    $('kDisp').innerHTML = '<b>' + d.online + '/' + d.total + '</b><span class="hub-st st-' + g[0] + '">' + g[1] + '</span>';
-    $('kDispS').textContent = d.disp.map(function (x) { return x.nome + ': ' + ROT[x.estado]; }).join(' · ');
-    $('kDados').innerHTML = '<b>' + (d.bytesHoje ? bytes(d.bytesHoje) : 'sem dado') + '</b>' + (d.bytesHoje ? spark(d.porHora) : '');
-    $('kDadosS').textContent = 'Cat-M ' + bytes(d.totHoje.catm) + ' · NTN ' + bytes(d.totHoje.ntn) + ' (3 soluções)';
+    /* Cards de cima: um número, um rótulo e uma linha curta. O detalhe por dispositivo fica nos cards de baixo. */
+    var off = d.total - d.online;
+    $('kDisp').innerHTML = '<b>' + d.online + '/' + d.total + '</b>';
+    $('kDispS').innerHTML = '<span class="pt st-' + g[0] + '"></span>' + (d.online === d.total ? 'Todos enviando' : g[0] === 'neutro' ? 'Sem dado' : off + (off > 1 ? ' precisam' : ' precisa') + ' de atenção');
+    $('kDados').innerHTML = '<b>' + (d.bytesHoje ? bytes(d.bytesHoje) : 'sem dado') + '</b>';
+    $('kDadosS').textContent = d.bytesHoje ? 'Cat-M ' + bytes(d.totHoje.catm) + ' · NTN ' + bytes(d.totHoje.ntn) : 'Nenhum envio hoje';
     $('kDados').parentNode.parentNode.title = 'Hoje por solução: ' + d.sol.map(function (x) { var m = d.mat.hoje[x[0]]; return x[0] + ' ' + (m.semDado ? 'sem dado' : x[1].map(function (k) { return (k === 'ntn' ? 'NTN ' : 'Cat-M ') + bytes(m[k]); }).join(' + ')); }).join('; ') + '. Thingy:91X estimado pelo tamanho das mensagens.';
-    $('kAl').innerHTML = '<b>' + d.al + '</b><span class="hub-st st-' + (d.al ? 'alerta' : 'ok') + '">' + (d.sev ? 'Severidade ' + d.sev : 'Nenhum') + '</span>';
-    $('kAlS').textContent = d.al ? Object.keys(d.alPor).map(function (k) { return k + ': ' + d.alPor[k]; }).join(' · ') + ' · último ' + HubCalc.rel(d.ultAl, agora) : 'Nenhum sistema com alarme em 24 h';
+    $('kAl').innerHTML = '<b>' + d.al + '</b>';
+    $('kAlS').innerHTML = '<span class="pt st-' + (d.al ? 'alerta' : 'ok') + '"></span>' + (d.al ? (d.sev ? 'Severidade ' + d.sev + ', ' : '') + 'último ' + HubCalc.rel(d.ultAl, agora) : 'Nenhum nas últimas 24 h');
     var rec = d.sis.reduce(function (a, x) { return x.ultimo && (!a || x.ultimo > a.ultimo) ? x : a; }, null);
-    $('kUlt').innerHTML = '<b>' + (rec ? HubCalc.rel(rec.ultimo, agora) : 'sem dado') + '</b>' + (rec ? '<span class="hub-st st-info">' + esc(rec.nome) + '</span>' : '');
-    $('kUltS').innerHTML = '<ul class="sis">' + d.sis.map(function (x) { return '<li' + (x === rec ? ' class="rec"' : '') + '><span>' + esc(x.nome) + '</span><span>' + HubCalc.rel(x.ultimo, agora) + '</span><span class="hub-st st-' + (x.qual === 'bom' ? 'ok' : x.qual === 'fraco' ? 'alerta' : x.qual ? 'info' : 'neutro') + '" title="' + (x.rsrp == null ? 'RSRP sem dado' : 'RSRP ' + x.rsrp + ' dBm') + '">' + (x.qual ? 'Sinal ' + x.qual + ' ' + x.rsrp + ' dBm' : 'Sinal sem dado') + '</span></li>'; }).join('') + '</ul>';
+    $('kUlt').innerHTML = '<b>' + (rec ? HubCalc.rel(rec.ultimo, agora) : 'sem dado') + '</b>';
+    $('kUltS').textContent = rec ? 'Envio mais recente: ' + rec.nome : 'Nenhum sistema enviou';
+    $('kUlt').parentNode.parentNode.title = 'Último envio por sistema: ' + d.sis.map(function (x) { return x.nome + ' ' + HubCalc.rel(x.ultimo, agora) + (x.rsrp != null ? ' (RSRP ' + x.rsrp + ' dBm)' : ''); }).join('; ');
     var th = d.disp[0], nt = d.disp[1], mt = d.disp[2];
     $('cRast').innerHTML = [th, nt].map(function (x) { return '<li><span>' + x.nome + '</span>' + pill(x.estado) + '<small>' + (x.estado === 'sem chave' ? 'cadastre a chave do nRF Cloud' : (x.mov || (x.ultimo ? 'último envio ' + HubCalc.rel(x.ultimo, agora) : 'sem dado'))) + '</small></li>'; }).join('');
     var mm = $('miniMapa');

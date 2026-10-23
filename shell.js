@@ -42,12 +42,15 @@
     var h = '<div class="sh-barra"><a class="sh-marca" href="' + base + inicioPara(estado.papel) + '" aria-label="IoT Cat-M + NTN Tecnologia, início">' +
       '<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0984e3"/><circle cx="16" cy="16" r="3.2" fill="#fff"/><path d="M9.5 16a6.5 6.5 0 0 1 13 0M6 16a10 10 0 0 1 20 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/></svg>' +
       '<span class="sh-mt"><span><i class="sh-i">I</i>oT <b>Cat-M + NTN</b></span><small>Tecnologia</small></span></a>' +
+      '<a class="sh-site" href="' + base + '?site=1" title="Abrir a página pública sem sair da sessão">' + ico('globo') + '<span>Ver site</span></a>' +
       '<button class="sh-burger" type="button" aria-expanded="false" aria-controls="sh-nav" aria-label="Menu">' + ico('menu') + '</button>' +
       '<nav id="sh-nav" class="sh-nav" aria-label="Sistemas">' +
       itens.map(function (i) { return '<a href="' + base + i.href + '"' + (i.id === ativo(pagina) ? ' aria-current="' + (SUB[pagina] ? 'true' : 'page') + '"' : '') + '>' + ico(i.ico) + i.rotulo + '</a>'; }).join('') +
       '<div class="sh-user"><button type="button" class="sh-ubtn" aria-expanded="false" aria-haspopup="true">' + ico('viewer') + '<span>' + esc(estado.email ? estado.email.split('@')[0] : 'Conta') + '</span></button>' +
-      '<div class="sh-umenu" hidden><b>' + esc(estado.email || 'Sessão do navegador') + '</b><small>Papel: ' + ({ viewer: 'Viewer', admin: 'Admin', leitor: 'Leitor' }[estado.papel] || 'não identificado') + '</small>' +
-      '<a class="btn btn-sm" href="/cdn-cgi/access/logout">' + ico('sair') + 'Sair</a></div></div></nav></div>' +
+      '<div class="sh-umenu" role="menu" hidden><div class="sh-uid"><b>' + esc(estado.email || 'Sessão do navegador') + '</b><span class="sh-papel">' + ({ viewer: 'Viewer', admin: 'Admin', leitor: 'Leitor' }[estado.papel] || 'Papel não identificado') + '</span></div>' +
+      (estado.papel === 'admin' ? '<a role="menuitem" href="' + base + 'admin/acessos/">' + ico('cadeado') + 'Gerenciar acessos</a><a role="menuitem" href="' + base + 'alarmes/">' + ico('sino') + 'Regras de alarme</a>' : '') +
+      '<a role="menuitem" href="' + base + '?site=1">' + ico('globo') + 'Ver site</a>' +
+      '<a role="menuitem" class="sh-sair" href="/cdn-cgi/access/logout">' + ico('sair') + 'Sair</a></div></div></nav></div>' +
       '<ol class="sh-trilha" aria-label="Você está em">' + tr.map(function (t, k) {
         return '<li>' + (t.href ? '<a href="' + base + t.href + '">' + t.rotulo + '</a>' : '<span aria-current="page">' + t.rotulo + '</span>') + (k < tr.length - 1 ? ico('seta') : '') + '</li>';
       }).join('') + '</ol>';
