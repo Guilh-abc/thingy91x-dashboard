@@ -42,7 +42,7 @@ body.hub-pg{margin:0;font-family:Inter,system-ui,sans-serif;background:#f4f6f8;c
 @keyframes sk{to{background-position:-200% 0}}
 a:focus-visible,.btn:focus-visible{outline:3px solid var(--foco,#0984e3);outline-offset:2px}
 @media(max-width:900px){.hub-kpis{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.hub-kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi-h{flex-direction:column;gap:6px;padding:12px}.kpi-h .kv b{font-size:1.3rem}.hub-kpis .ks{white-space:normal;align-items:flex-start}.capa{height:110px}.hub-banner{flex-wrap:wrap}}
+@media(max-width:520px){.hub-kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi-h{flex-direction:column;gap:6px;padding:12px}.kpi-h .kv b{font-size:1.3rem}.capa{height:110px}.hub-banner{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.hub-c,.sk{animation:none;transition:none}}
 /* Seleção de rastreador (/rastreador/) usa cartões-link simples */
 a.hub-c{display:grid;gap:4px;padding:18px;color:#2d3436;text-decoration:none}a.hub-c>.ico{width:30px;height:30px;color:var(--cor-info)}
@@ -56,5 +56,5 @@ a.hub-c b{font-size:1.1rem;margin-top:4px}a.hub-c small{color:#636e72}a.hub-c>.h
 .trilho{grid-column:1/-1;display:flex;height:8px;border-radius:4px;background:#eef1f3;overflow:hidden}.trilho i{display:block;height:100%}
 .sis{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:3px}.sis li{display:grid;grid-template-columns:1fr auto;gap:0 8px;font-size:.76rem;color:#636e72}.sis li .hub-st{grid-column:1/-1;justify-self:start;font-size:.68rem;padding:1px 8px}
 .sis li.rec{color:#2d3436;font-weight:700}
-.kpi-h .kv b{font-size:1.7rem}.ks{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pt{width:8px;height:8px;border-radius:50%;flex:none;background:var(--cor-neutro)}.pt.st-ok{background:var(--cor-ok)}.pt.st-alerta{background:var(--cor-alerta)}.pt.st-info{background:var(--cor-info)}
+.kpi-h .kv b{font-size:1.7rem}.ks{display:block}
+.pt{display:inline-block;margin-right:6px;vertical-align:1px;width:8px;height:8px;border-radius:50%;background:var(--cor-neutro)}.pt.st-ok{background:var(--cor-ok)}.pt.st-alerta{background:var(--cor-alerta)}.pt.st-info{background:var(--cor-info)}
