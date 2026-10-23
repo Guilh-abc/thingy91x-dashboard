@@ -16,3 +16,17 @@ const hu = fs.readFileSync(new URL('../utilities/hero-u.js', import.meta.url), '
 assert.match(hu, /dl\.desligado \? 'desligado'/);
 assert.match(fs.readFileSync(new URL('../icons.js', import.meta.url), 'utf8'), /id="i-desligado"/);
 console.log('status-desligado: ok');
+// v69: busca/modo satélite NTN => tolerância de 15 min
+{
+  const iso = (x) => new Date(x).toISOString();
+  r = SD.avaliar(now - 6 * m, now, true); assert.equal(r.desligado, false); assert.equal(r.buscando, true);
+  r = SD.avaliar(now - 14 * m, now, true); assert.equal(r.desligado, false);
+  r = SD.avaliar(now - 16 * m, now, true); assert.equal(r.desligado, true);
+  const base = [{ type: 'event', event: 'boot', ts: iso(now - 12 * m) }, { type: 'telemetry', net: 'catm', ts: iso(now - 10 * m) }];
+  assert.equal(SD.emBusca(base, now), false);
+  const sat = base.concat([{ type: 'event', event: 'stest', value: 1, ts: iso(now - 8 * m) }, { type: 'event', event: 'sat_start', value: 2, ts: iso(now - 8 * m) }]);
+  assert.equal(SD.emBusca(sat, now), true);
+  assert.equal(SD.emBusca(sat.concat([{ type: 'event', event: 'back_catm', ts: iso(now - 2 * m) }]), now), false);
+  assert.equal(SD.emBusca(sat.concat([{ type: 'telemetry', net: 'catm', ts: iso(now - 2 * m) }]), now), false);
+  console.log('status-desligado v69 busca 15 min: ok');
+}

@@ -120,13 +120,14 @@
   /* E: sem leitura nova há mais de 2x o intervalo esperado -> badge cinza.
      Convive com o indicador de saúde (health-badge.js), que marca "parado" só em 3x ou 24 h:
      E avisa antes, o indicador de saúde continua sendo a fonte do estado online/parado. */
-  function evaluateStale(annotated, now) {
+  var RULE_E_BUSCA_MS = 15 * MIN;          // v69: em busca/modo satélite NTN, tolerância mínima de 15 min
+  function evaluateStale(annotated, now, busca) {
     var last = annotated[annotated.length - 1], iv = expectedIntervalMs(annotated);
     if (!last || !iv) return null;
-    var age = now - timeOf(last);
-    if (age <= RULE_E_STALE_FACTOR * iv) return null;
+    var age = now - timeOf(last), lim = busca ? Math.max(RULE_E_STALE_FACTOR * iv, RULE_E_BUSCA_MS) : RULE_E_STALE_FACTOR * iv;
+    if (age <= lim) return null;
     var minutes = Math.round(age / MIN);
-    return { rule: 'E', metric: 'leituras', at: timeOf(last), seq: last.seq, value: minutes, threshold: Math.round((RULE_E_STALE_FACTOR * iv) / MIN),
+    return { rule: 'E', metric: 'leituras', at: timeOf(last), seq: last.seq, value: minutes, threshold: Math.round(lim / MIN),
       message: 'Sem leituras há ' + minutes + ' minutos (esperado a cada ~' + Math.max(1, Math.round(iv / MIN)) + ' min)' };
   }
 
@@ -134,7 +135,7 @@
   function compute(records, now) {
     now = now == null ? Date.now() : now;
     var annotated = annotate(records).filter(function (r) { return timeOf(r) <= now; });
-    var all = evaluateReadings(annotated), stale = evaluateStale(annotated, now);
+    var all = evaluateReadings(annotated), stale = evaluateStale(annotated, now, !!(root.StatusDesligado && root.StatusDesligado.emBusca(records, now)));
     var last = annotated[annotated.length - 1];
     var active = all.filter(function (a) { return last && a.at === timeOf(last); });
     var fired = onlyStreakStarts(all);

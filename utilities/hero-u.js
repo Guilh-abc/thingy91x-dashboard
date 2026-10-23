@@ -16,9 +16,9 @@
   setInterval(function () { if (ultimo) window.drawHeroU(ultimo); }, 30000); // timer local da regra Desligado
   window.drawHeroU = function (o) {
     var el = document.getElementById('hero'); if (!el) return; ultimo = o;
-    var now = Date.now(), dl = window.StatusDesligado && o.key !== 'nodata' ? window.StatusDesligado.avaliar(o.lastRx, now) : { desligado: false };
+    var now = Date.now(), dl = window.StatusDesligado && o.key !== 'nodata' ? window.StatusDesligado.avaliar(o.lastRx, now, !!o.buscaSat) : { desligado: false };
     var k = qs.get('estado') && ST[qs.get('estado')] ? qs.get('estado') : dl.desligado ? 'desligado' : o.key, d = ST[k];
-    if (k === 'desligado' && dl.desligado) d = ['desligado', window.StatusDesligado.ICO, 'DESLIGADO', 'Sem nenhuma mensagem da placa há mais de 5 min · ' + window.StatusDesligado.texto(dl.min) + (o.lastNet ? ' · última rede conhecida: ' + o.lastNet : '')];
+    if (k === 'desligado' && dl.desligado) d = ['desligado', window.StatusDesligado.ICO, 'DESLIGADO', 'Sem nenhuma mensagem da placa há mais de ' + Math.round(dl.limMs / 60000) + ' min · ' + window.StatusDesligado.texto(dl.min) + (o.lastNet ? ' · última rede conhecida: ' + o.lastNet : '')];
     if (k === 'off' && o.lastRx && !qs.get('estado')) d = ['off', '⛔', 'OFFLINE: SEM DADOS DA PLACA HÁ ' + dur(now - o.lastRx).toUpperCase(), 'Último dado ' + hm(o.lastRx) + (o.lastNet ? ' · última rede conhecida: ' + o.lastNet : '')];
     el.className = 'hero ' + d[0];
     if (window.BuscaUI) window.BuscaUI.render(document.getElementById('heroBusca'), d[0] === 'search' ? (o.busca || { t0: o.since || now }) : null);

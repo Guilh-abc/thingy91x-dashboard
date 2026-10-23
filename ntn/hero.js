@@ -24,7 +24,7 @@
     if (!s) return { k: 'nodata', s: null };
     if (src !== 'replay' && window.StatusDesligado) { // regra 5 min: sobrepõe busca/registro antigos
       var lastAny = Math.max.apply(null, all.filter(function (r) { return t(r) <= now; }).map(function (r) { return Date.parse(r.rx || r.ts) || 0; }));
-      var dl = window.StatusDesligado.avaliar(lastAny > 0 ? lastAny : null, now);
+      var dl = window.StatusDesligado.avaliar(lastAny > 0 ? lastAny : null, now, window.StatusDesligado.emBusca(all, now));
       if (dl.desligado) return { k: 'desligado', s: s, dl: dl };
     }
     var bs = busca(all, now); // v46: busca NTN declarada pela placa tem prioridade sobre 'dado velho'
@@ -110,7 +110,7 @@
     var ate = Date.parse(qs.get('ate') || ''); if (ate) { all = all.filter(function (r) { return t(r) <= ate; }); now = ate; } // v48: vista histórica dos dados reais (?ate=ISO)
     var el = document.getElementById('hero'); if (!el) return;
     var r = state(all, now, src), k = qs.get('estado') && ST[qs.get('estado')] ? qs.get('estado') : r.k, d = ST[k], s = r.s;
-    if (k === 'desligado' && r.dl) d = { cls: 'desligado', ico: window.StatusDesligado.ICO, txt: 'DESLIGADO', sub: 'Sem nenhuma mensagem da placa há mais de 5 min · ' + window.StatusDesligado.texto(r.dl.min) };
+    if (k === 'desligado' && r.dl) d = { cls: 'desligado', ico: window.StatusDesligado.ICO, txt: 'DESLIGADO', sub: 'Sem nenhuma mensagem da placa há mais de ' + Math.round(r.dl.limMs / 60000) + ' min · ' + window.StatusDesligado.texto(r.dl.min) };
     el.className = 'hero ' + d.cls;
     painelBusca((k === 'search' || k === 'noresp') && r.b && r.b.t0 ? r.b : null, all, now);
     el.innerHTML = '<div class="hero-ico">' + d.ico + '</div><div class="hero-main"><div class="hero-txt">' + d.txt + '</div><div class="hero-sub">' + d.sub + (src === 'replay' ? ' · REPLAY' : '') + (qs.get('estado') ? ' · ESTADO FORÇADO PARA TESTE' : '') + (ate ? ' · VISTA HISTÓRICA DOS DADOS REAIS EM ' + new Date(ate).toLocaleString('pt-BR') : '') + '</div></div>' +
