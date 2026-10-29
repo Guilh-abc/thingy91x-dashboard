@@ -89,7 +89,7 @@
     const sNet = catmNow ? null : sCur;
     const st1 = [...rs].reverse().find((r) => r.type === 'event' && r.event === 'stest');
     const tOn = !catmNow && (!!sCur || (st1 && st1.value === 1 && !ses.some((s) => s.start >= T(st1) && !s.open) && !(window.StatusDesligado && StatusDesligado.voltouCatm && StatusDesligado.voltouCatm(rs.concat(locais), RX(st1)))));
-    rapido = !!sNet || tOn || !!(window.StatusDesligado && StatusDesligado.emBusca(rs)); // v71: polling de 5 s
+    rapido = !!sNet || tOn || !!(window.SatCmdU && SatCmdU.ativo()) || !!(window.StatusDesligado && StatusDesligado.emBusca(rs)); // v71: polling de 5 s
     $('testPill').hidden = !tOn; if (tOn) $('testPill').textContent = 'Modo teste satélite ativo';
 
     /* KPIs */
@@ -269,10 +269,11 @@
       locais = window.ApiCore.dedup(locais.concat(loc)).filter((r) => Date.now() - RX(r) < 2 * 3600000);
       for (const r of novos) if (r.rx && (!ultRx || Date.parse(r.rx) > Date.parse(ultRx))) ultRx = r.rx;
     } catch (e) { console.warn('utilities: falha ao carregar', e); }
-    carregando = false; render(); agenda();
+    carregando = false; render(); if (window.SatCmdU) SatCmdU.atualiza(recs.concat(locais)); agenda();
   }
   // v71: polling adaptativo: 5 s com teste satélite ou troca de rede em aberto, 30 s no resto; pausa com a aba oculta
   function agenda() { clearTimeout(timer); if (!document.hidden) timer = setTimeout(load, rapido ? 5000 : 30000); }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); else clearTimeout(timer); });
+  if (window.SatCmdU && $('satCmd')) SatCmdU.monta($('satCmd')); // v72
   load(); setInterval(render, 15000); // v8: reavalia offline sem dado novo
 })();

@@ -76,6 +76,9 @@ export async function onRequest(ctx) {
   if (/\/nrfcloud(\/|$)/.test(url.pathname)) return nrf(request, env, url);
   const h = new Headers(request.headers);
   for (const k of ['cookie', 'cf-access-jwt-assertion', 'cf-access-authenticated-user-email', 'host']) h.delete(k);
+  /* v72: identidade do usuário para o Netlify (rota ?cmd=). Nunca aceita esses headers vindos do navegador. */
+  for (const k of ['x-ntn-proxy', 'x-ntn-user', 'x-ntn-role']) h.delete(k);
+  if (env.NTN_PROXY_TOKEN) { h.set('x-ntn-proxy', 'Bearer ' + env.NTN_PROXY_TOKEN); h.set('x-ntn-user', s.email); h.set('x-ntn-role', s.role); }
   const r = await fetch(alvo, { method: request.method, headers: h, body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body, redirect: 'manual' });
   const out = new Response(r.body, r);
   out.headers.set('Cache-Control', 'no-store');

@@ -123,6 +123,86 @@ export function normalizeLocal(m, rxIso) {
 }
 const LOCAL_MAX = 2000, LOCAL_JANELA_MS = 2 * 3600000;
 
+/* ---------- v72: comando "Migrar para satélite" (sat-cmd) ----------
+   Usuário logado no Pages (Cloudflare Access) cria o comando; o _middleware.js do Pages valida a sessão e repassa
+   com X-NTN-Proxy (segredo compartilhado NTN_PROXY_TOKEN), X-NTN-User e X-NTN-Role. O token da placa NÃO serve aqui.
+   Ciclo: pendente -> entregue (na resposta de um ingest Cat-M) -> recebido (cmd_rx x:1) ou recusado (cmd_rx x:0, final).
+   pendente sem entrega por 10 min -> expirado. Cancelar só enquanto pendente. */
+/** fw 1.9: mensagens do medidor podem vir sem dv. Único ponto do mapeamento token do medidor -> dv.
+    Só vale para METER_DEVICE_TOKEN; o token do rastreador nunca ganha dv de medidor por omissão. */
+export const METER_DV_PADRAO = 'm1';
+export function meterDevDe(dv, tokenMedidor) {
+  if (typeof dv === 'string' && /^m[0-9a-z]{1,7}$/.test(dv)) return dv;
+  return tokenMedidor ? METER_DV_PADRAO : null;
+}
+export const CMD_TTL_MS = 10 * 60000;
+const CMD_KEY = 'cmd/atual', CMD_HIST = 'cmd/hist';
+export function proxyUser(req) {
+  if (!tokenOk(req.headers.get('x-ntn-proxy'), 'NTN_PROXY_TOKEN')) return null;
+  const email = String(req.headers.get('x-ntn-user') || '').toLowerCase().slice(0, 120), role = String(req.headers.get('x-ntn-role') || '');
+  return email ? { email, role } : null;
+}
+/** Status efetivo (expira na leitura, sem cron). */
+export function cmdVivo(c, now = Date.now()) {
+  if (!c) return null;
+  if (c.status === 'pendente' && now > Date.parse(c.expira)) return { ...c, status: 'expirado', expiradoEm: c.expira };
+  return c;
+}
+/** fw 1.9: resposta do ingest com comando é exatamente {"ok":1,"cmd":"sat","cid":"<id>"} (sem espaços). */
+export function cmdNaResposta(c) { return { cmd: c.cmd, cid: c.cid }; }
+export function respostaIngest(extra) { return extra ? '{"ok":1,"cmd":' + JSON.stringify(String(extra.cmd)) + ',"cid":' + JSON.stringify(String(extra.cid)) + '}' : '{"ok":1}'; }
+async function cmdSalva(store, c) {
+  await store.setJSON(CMD_KEY, c);
+  if (['cancelado', 'expirado', 'recebido', 'recusado'].includes(c.status)) {
+    const h = (await store.get(CMD_HIST, { type: 'json' }).catch(() => null)) || [];
+    if (!h.some((x) => x.cid === c.cid && x.status === c.status)) { h.push(c); await store.setJSON(CMD_HIST, h.slice(-20)); }
+  }
+}
+async function cmdRota(req, store, url) {
+  const u = proxyUser(req);
+  if (!u) return json(401, { ok: false, error: 'sem sessão' });
+  let c = cmdVivo(await store.get(CMD_KEY, { type: 'json' }).catch(() => null));
+  if (req.method === 'GET') return json(200, { ok: true, cmd: c, serverTime: new Date().toISOString() });
+  if (u.role !== 'admin') return json(403, { ok: false, error: 'somente admin' });
+  let b; try { b = JSON.parse((await req.text()).slice(0, 1024) || '{}'); } catch { return json(400, { ok: false, error: 'invalid json' }); }
+  const now = new Date();
+  if (b.acao === 'criar') {
+    if (b.cmd !== 'sat') return json(400, { ok: false, error: 'cmd inválido' });
+    if (c && (c.status === 'pendente' || c.status === 'entregue')) return json(409, { ok: false, error: 'já existe comando ' + c.status, cmd: c });
+    const dv = typeof b.dv === 'string' && /^m[0-9a-z]{1,7}$/.test(b.dv) ? b.dv : null;
+    c = { cid: createHash('sha256').update(now.toISOString() + Math.random()).digest('hex').slice(0, 8), cmd: 'sat', dv, criado: now.toISOString(),
+      expira: new Date(now.getTime() + CMD_TTL_MS).toISOString(), status: 'pendente', por: u.email };
+    await cmdSalva(store, c);
+    return json(201, { ok: true, cmd: c });
+  }
+  if (b.acao === 'cancelar') {
+    if (!c || c.cid !== b.cid) return json(404, { ok: false, error: 'comando não encontrado' });
+    if (c.status !== 'pendente') return json(409, { ok: false, error: 'não dá para cancelar: ' + c.status, cmd: c });
+    c = { ...c, status: 'cancelado', canceladoEm: now.toISOString(), canceladoPor: u.email };
+    await cmdSalva(store, c);
+    return json(200, { ok: true, cmd: c });
+  }
+  return json(400, { ok: false, error: 'acao inválida' });
+}
+/** No ingest: cmd_rx marca recebido; ingest Cat-M (HTTPS) do medidor entrega o pendente uma única vez. Retorna o extra da resposta. */
+async function cmdNoIngest(store, rec) {
+  let c = cmdVivo(await store.get(CMD_KEY, { type: 'json' }).catch(() => null));
+  if (!c) return null;
+  if (c.status === 'expirado') { await cmdSalva(store, c); return null; }
+  // fw 1.9: {t:'e',n:'c',e:'cmd_rx',x:1|0,i:cid}. x:1 recebido (vai migrar); x:0 recusado (final, nunca reentrega).
+  if (rec.type === 'event' && rec.event === 'cmd_rx' && rec.info === c.cid && (c.status === 'entregue' || c.status === 'pendente')) {
+    const base = { ...c, entregueEm: c.entregueEm || rec.rx };
+    await cmdSalva(store, rec.value === 0 ? { ...base, status: 'recusado', recusadoEm: rec.rx } : { ...base, status: 'recebido', recebidoEm: rec.rx });
+    return null;
+  }
+  const alvoOk = !c.dv || c.dv === rec.dv;
+  if (c.status === 'pendente' && alvoOk && rec.dv && rec.net === 'catm' && rec.transport !== 'udp') {
+    await cmdSalva(store, { ...c, status: 'entregue', entregueEm: rec.rx, entregueSeq: rec.seq });
+    return cmdNaResposta(c);
+  }
+  return null;
+}
+
 /** v37: "cl":"72410,C423,0C5F2C16" (PLMN,TAC hex,ECI hex) -> objeto lte do nRF Cloud ground fix. */
 export function parseCell(cl, rsrp) {
   const m = /^(\d{3})(\d{2,3}),([0-9A-Fa-f]{1,8}),([0-9A-Fa-f]{1,8})$/.exec(String(cl || ''));
@@ -249,6 +329,7 @@ export default async (req) => {
     const records = withMovement(out).map(publicView);
     return json(200, { ok: true, schema: 'ntn-pro/1', serverTime: new Date().toISOString(), records });
   }
+  if (url.searchParams.get('cmd')) return cmdRota(req, store, url); // v72: comando sat (usuário logado via proxy do Pages)
   if (req.method === 'POST' && url.searchParams.get('local')) {
     // v71: ingest local do leitor serial do Mac (fonte=usb). Mesmo token de escrita do Mac (NTN_LAB_WRITE_TOKEN).
     if (!process.env.NTN_LAB_WRITE_TOKEN) return json(503, { ok: false, error: 'write token not configured' });
@@ -272,7 +353,7 @@ export default async (req) => {
     const raw = await req.text();
     if (raw.length > 256) return json(413, { ok: false, error: 'payload > 256 B' });
     let m; try { m = JSON.parse(scrub(raw)); } catch { return json(400, { ok: false, error: 'invalid json' }); }
-    const meterDev = typeof m.dv === 'string' && /^m[0-9a-z]{1,7}$/.test(m.dv) ? m.dv : null;
+    const meterDev = meterDevDe(m.dv, okMeter && !okTrk); // fw 1.9: sem dv + token do medidor -> dv do token
     // medidor: token proprio; via relay UDP (HMAC do relay) chega com o token do relay
     if (meterDev ? !(okMeter || (okTrk && url.searchParams.get('tr') === 'udp')) : !okTrk) return json(401, { ok: false, error: 'unauthorized' });
     const rx = new Date().toISOString();
@@ -299,7 +380,8 @@ export default async (req) => {
       rec.rolling = withRolling([...history.slice(-ROLLING_WINDOW), rec]).pop().rolling;
     }
     if (!dup) { list.push(rec); await store.setJSON(key, list.slice(-DAY_MAX)); }
-    return new Response('{"ok":1}', { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    const extra = await cmdNoIngest(store, rec); // v72: comando pendente vai na resposta (poucos bytes)
+    return new Response(respostaIngest(extra), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
   }
   if (req.method === 'GET') {
     const rec = await store.get(KEY, { type: 'json' }).catch(() => null);
