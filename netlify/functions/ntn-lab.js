@@ -387,7 +387,7 @@ export default async (req) => {
     if (!dup) { list.push(rec); await store.setJSON(key, list.slice(-DAY_MAX)); }
     const extra = await cmdNoIngest(store, rec); // v72: comando pendente vai na resposta (poucos bytes)
     const corpo = respostaIngest(extra); // corpo de tamanho fixo: Content-Length explícito, sem chunked
-    return new Response(corpo, { status: 200, headers: { 'Content-Type': 'application/json', 'Content-Length': String(Buffer.byteLength(corpo)), 'Connection': 'close', 'Cache-Control': 'no-store' } });
+    return new Response(corpo, { status: 200, headers: { 'Content-Type': 'application/json', 'Content-Length': String(Buffer.byteLength(corpo)), 'Connection': 'close' } });
   }
   if (req.method === 'GET') {
     const rec = await store.get(KEY, { type: 'json' }).catch(() => null);
