@@ -332,14 +332,17 @@ export default async (req) => {
   if (url.searchParams.get('cmd')) return cmdRota(req, store, url); // v72: comando sat (usuário logado via proxy do Pages)
   if (req.method === 'POST' && url.searchParams.get('local')) {
     // v71: ingest local do leitor serial do Mac (fonte=usb). Mesmo token de escrita do Mac (NTN_LAB_WRITE_TOKEN).
-    if (!process.env.NTN_LAB_WRITE_TOKEN) return json(503, { ok: false, error: 'write token not configured' });
-    if (!tokenOk(req.headers.get('authorization'))) return json(401, { ok: false, error: 'unauthorized' });
+    // v73: aceita também o token do medidor (METER_DEVICE_TOKEN), e nesse caso força dv do medidor.
+    if (!process.env.NTN_LAB_WRITE_TOKEN && !process.env.METER_DEVICE_TOKEN) return json(503, { ok: false, error: 'write token not configured' });
+    const authL = req.headers.get('authorization'), okW = tokenOk(authL), okM = !okW && tokenOk(authL, 'METER_DEVICE_TOKEN');
+    if (!okW && !okM) return json(401, { ok: false, error: 'unauthorized' });
     const raw = await req.text();
     if (raw.length > 512) return json(413, { ok: false, error: 'payload > 512 B' });
     let m; try { m = JSON.parse(scrub(raw)); } catch { return json(400, { ok: false, error: 'invalid json' }); }
     const rx = new Date().toISOString();
     const rec = normalizeLocal(m, rx);
     if (!rec) return json(400, { ok: false, error: 'bad message' });
+    if (okM) rec.dv = METER_DV_PADRAO;
     const key = 'local/' + rx.slice(0, 10);
     const list = (await store.get(key, { type: 'json' }).catch(() => null)) || [];
     list.push(rec); await store.setJSON(key, list.slice(-LOCAL_MAX));
@@ -405,8 +408,10 @@ export default async (req) => {
     return json(200, { ok: true, rx, seq: rec.seq });
   }
   if (req.method === 'POST') {
-    if (!process.env.NTN_LAB_WRITE_TOKEN) return json(503, { ok: false, error: 'write token not configured' });
-    if (!tokenOk(req.headers.get('authorization'))) return json(401, { ok: false, error: 'unauthorized' });
+    // v73: aceita também o token do medidor (METER_DEVICE_TOKEN), e nesse caso força dv do medidor.
+    if (!process.env.NTN_LAB_WRITE_TOKEN && !process.env.METER_DEVICE_TOKEN) return json(503, { ok: false, error: 'write token not configured' });
+    const authL = req.headers.get('authorization'), okW = tokenOk(authL), okM = !okW && tokenOk(authL, 'METER_DEVICE_TOKEN');
+    if (!okW && !okM) return json(401, { ok: false, error: 'unauthorized' });
     const raw = await req.text();
     if (raw.length > MAX_BYTES) return json(413, { ok: false, error: 'payload too large' });
     let data;

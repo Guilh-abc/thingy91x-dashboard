@@ -51,4 +51,14 @@ assert.deepEqual([loc[1].rsrp, loc[1].nivel], [-118, 'MEDIO']);
 assert.deepEqual([loc[2].rsrp, loc[2].nivel], [null, 'NA']);
 assert.equal(loc[3].estado, 'CATM');
 assert.equal(globalThis.__mem.get('meter/' + rx1.slice(0, 10)).includes('"local"'), false, 'locais fora da lista do medidor');
+// v73: token do medidor também grava local=1, com dv forçado m1
+{
+  const MTK = 'm'.repeat(32), loc = () => [...globalThis.__mem].filter(([k]) => k.startsWith('local/')).flatMap(([, v]) => JSON.parse(v));
+  const n0 = loc().length;
+  assert.equal((await post('local=1', { fonte: 'usb', dv: 'm9', linha: 'APP|31234|STATE|BUSCA' }, MTK)).status, 200, 'token do medidor aceito');
+  const ult = loc().at(-1); assert.equal(loc().length, n0 + 1); assert.equal(ult.dv, 'm1', 'dv forçado m1');
+  assert.equal((await post('local=1', { fonte: 'usb', linha: 'APP|1|STATE|BUSCA' }, 'd'.repeat(32))).status, 401, 'outro token = 401');
+  const sem = await h(new Request('https://x/.netlify/functions/ntn-lab?local=1', { method: 'POST', body: '{}' }));
+  assert.equal(sem.status, 401, 'sem Authorization = 401');
+}
 console.log('ntn-lab v71 OK');
