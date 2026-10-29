@@ -44,7 +44,9 @@ await import('../utilities/sat-cmd.js'); const S = globalThis.SatCmdU;
 const e = S.etapas({ ...g, status: 'recusado' }, [{ type: 'local', estado: 'BUSCA', rx: new Date(Date.now() + 60000).toISOString() }]);
 assert.equal(e.fim, 'recusado'); assert.equal(e.idx, 1); assert.ok(e.t.recusado);
 const fe = readFileSync(new URL('../utilities/sat-cmd.js', import.meta.url), 'utf8');
-assert.ok(fe.includes('placa recusou: já em teste, fora do Cat-M ou ocupada'));
+assert.ok(fe.includes("recusado: 'Recusado' + at(e.t.recusado)")); // v76: rótulo curto
+for (const t of ["sem_resposta: 'Sem resposta'", "cancelado: 'Cancelado'", "encerrado_catm: 'Encerrado' + at(cmd.encerradoEm)", "encerrado_reboot: 'Encerrado'", "cancelado_offline: 'Cancelado'"]) assert.ok(fe.includes(t), t);
+assert.ok(!/Você já pode|continua no Cat-M|placa recusou/.test(fe), 'sem frases longas');
 assert.ok(!/\u2014/.test(fe), 'sem travessão');
 console.log('sat-cmd fw1.9 OK');
 
