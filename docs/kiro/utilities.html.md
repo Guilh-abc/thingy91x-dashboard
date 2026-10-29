@@ -1,0 +1,140 @@
+# Utilities: estrutura da página
+
+Arquivo: `utilities/index.html` (branch `redesign-v2`, não publicado).
+
+## Como funciona
+
+- `#hero` é a faixa de status (Cat-M, satélite, busca, offline, desligado), desenhada por `hero-u.js`.
+- `#heroBusca` recebe o cartão único de estado do satélite (`busca-card.js`); em busca, a faixa `#hero` some para não repetir o título.
+- `#kpis` e `main.u2` têm os indicadores e cartões antigos; todos os IDs são lidos por `utilities.js` e não podem mudar.
+- `tema-v2.css` é carregado por último e unifica o visual (escuro, tokens).
+
+## Pontos para o Kiro
+
+- KIRO: A página ainda tem 17 blocos. Sugira como reduzir a 3 zonas (Estado, Consumo e mapa, Detalhes) sem quebrar IDs.
+- KIRO: Os indicadores de `#kpis` repetem a faixa de status (rede atual, último envio). Proponha quais esconder em cada estado.
+- KIRO: `#waitBanner` é o único estado vazio global. Proponha vazio, carregando e erro por cartão.
+- KIRO: O modo Apresentação esconde blocos por CSS; avalie se o cartão de satélite deve aparecer nele.
+
+## Código atual
+
+```html
+<!DOCTYPE html>
+<html lang="pt-BR" data-pagina-real data-tema="escuro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0f1a">
+<meta name="robots" content="noindex">
+<title>Utilities | IoT Cat-M + NTN Tecnologia</title>
+<link rel="manifest" href="../manifest.json">
+<meta property="og:title" content="Utilities | IoT Cat-M + NTN Tecnologia">
+<link rel="icon" href="../favicon-32.png?v=1" type="image/png" sizes="32x32"><link rel="apple-touch-icon" href="../apple-touch-icon.png?v=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="../ntn/pro.css?v=54">
+<link rel="stylesheet" href="utilities.css?v=12">
+<link rel="stylesheet" href="../ntn/hero.css?v=52">
+<link rel="stylesheet" href="../ntn/deck-theme.css?v=3">
+<link rel="stylesheet" href="../design-tokens.css?v=2">
+<link rel="stylesheet" href="../shell.css?v=8">
+<link rel="stylesheet" href="../tema-v2.css?v=1">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><svg class="wm" viewBox="0 0 44 44" width="40" height="40" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d8bff"/><stop offset="1" stop-color="#3d8bff"/></linearGradient></defs><rect x="1" y="1" width="42" height="42" rx="12" fill="#111a2e" stroke="url(#cg)" stroke-width="1.5"/><path d="M28.5 14.5a10 10 0 1 0 0 15" fill="none" stroke="url(#cg)" stroke-width="3.2" stroke-linecap="round"/><circle cx="22" cy="22" r="3" fill="#fff"/><path d="M31 11.5a14 14 0 0 1 3.5 5.5M33.5 8.5a18 18 0 0 1 4.5 7" fill="none" stroke="#3d8bff" stroke-width="1.8" stroke-linecap="round" opacity=".85"/></svg><div><h1 class="wordmark">Utilities</h1><small class="tagline">Medidor IoT · <span class="chip catm">Cat-M</span> e <span class="chip ntn">Satélite NTN</span></small></div></div>
+  <div class="actions">
+    <span id="testPill" class="chip ntn" hidden style="padding:4px 12px"></span>
+    <span id="devPill" class="pill">medidor m1</span>
+    <button id="btnCsvU" class="btn" title="Baixa as leituras filtradas em CSV (Excel)">⇩ Exportar CSV</button>
+    <button id="btnPdfU" class="btn" title="Relatório para imprimir ou salvar em PDF">⎙ Relatório PDF</button>
+    <button id="btnApresentacao" class="btn" aria-pressed="false" title="Tela cheia com status, KPIs, consumo e mapa. Esc para sair">◉ Modo Apresentação</button>
+    <a class="link sh-velho" href="../app/">Início do sistema</a>
+    <button type="button" class="btn ajuda" id="linkAjuda" title="Como funciona" aria-label="Como funciona" aria-haspopup="dialog" aria-controls="dlgAjuda"></button>
+  </div>
+</header>
+<dialog id="dlgAjuda" class="dlg-ajuda" aria-labelledby="dlgAjudaT">
+  <h2 id="dlgAjudaT">Como funciona</h2>
+  <ul>
+    <li>O medidor envia a leitura pelo Cat-M (chip Telekom) e usa o satélite NTN Skylo quando não há rede terrestre.</li>
+    <li>Leituras saem a cada 1 h e alarmes (vazamento, consumo anômalo, violação, bateria baixa) saem na hora.</li>
+    <li>Vazamento é fluxo contínuo por 60 min; consumo anômalo é mais de 500 L em 1 h; bateria baixa é abaixo de 3,3 V.</li>
+    <li>O GNSS liga só até obter a primeira posição e depois desliga para poupar bateria, então a posição do mapa é a última obtida.</li>
+    <li>Posições aparecem arredondadas em cerca de 100 m e o ICCID fica mascarado.</li>
+    <li>O total acumulado fica salvo na placa e não zera ao reiniciar.</li>
+  </ul>
+  <form method="dialog"><button class="btn btn-primary" value="fechar">Fechar</button></form>
+</dialog>
+<div id="healthBadge"></div>
+<div id="waitBanner" class="wait-banner">Aguardando a primeira leitura do medidor. Esta página mostra apenas dados reais enviados pela placa; ainda não há nenhum.</div>
+<section id="hero" class="hero off" aria-live="polite"></section>
+<section id="heroBusca" class="hbusca" hidden></section>
+<section class="kpis" id="kpis" aria-label="Indicadores principais"></section>
+<main class="u2">
+  <section class="card span2"><div class="card-h"><h2>Consumo</h2><div class="seg" id="aggSeg"><button data-a="i" class="on">Por envio</button><button data-a="h">Por hora</button><button data-a="d">Por dia</button></div></div>
+    <div id="cChart" class="chart"></div><div class="legend"><span><i style="background:#3d8bff"></i>litros no intervalo (barras)</span><span><i class="ln" style="background:#2fd27a"></i>total acumulado (linha)</span></div></section>
+  <section class="card"><div class="card-h"><h2>Identidade do dispositivo</h2><span class="pill">m1</span></div><div id="idCard" class="idk"></div></section>
+  <section class="card span2"><div class="card-h"><h2>Sinal ao longo do tempo</h2><small class="muted">RSRP (dBm) · cor = rede</small></div>
+    <div id="sChart" class="chart"></div><div class="legend"><span><i style="background:#2f7cf6"></i>Cat-M</span><span><i style="background:#2fd27a"></i>Satélite Skylo (90198)</span><span><i style="background:#2fd27a33;border:1px solid #2fd27a"></i>faixa boa (&ge; −95)</span></div></section>
+  <section class="card"><div class="card-h"><h2>Envios por rede</h2><small class="muted">latência do envio anterior</small></div><div id="nChart"></div></section>
+  <section class="card span3"><div class="card-h"><h2>Tentativas de satélite</h2><small class="muted">teste (B4) → GNSS → busca → registro / perda → volta ao Cat-M</small></div><ol id="tl" class="swlist"></ol></section>
+  <section class="card span2" id="slCard"><div class="card-h"><h2>Satélite ao vivo</h2><span class="chip ntn">Skylo · 90198</span></div>
+    <div id="slSteps" class="sl-steps"></div><div id="slNote" class="muted" style="margin:6px 0 10px"></div>
+    <div id="slGrid" class="kv"></div>
+    <details class="mini"><summary>Sinal do satélite e histórico</summary><div class="sl-2"><div><div id="slChart"></div></div>
+      <div class="table-wrap" style="max-height:200px"><table class="tbl"><thead><tr><th>Hora</th><th>Registros, perdas e trocas</th></tr></thead><tbody id="slHist"></tbody></table></div></div></details>
+  </section>
+  <section class="card"><div class="card-h"><h2>Alertas</h2><span id="alCount" class="pill"></span></div><div id="alertLeak" aria-live="polite"></div><div id="alerts"></div></section>
+  <section class="card"><div class="card-h"><h2>Comparação com a média</h2><small class="muted">média móvel das últimas 24 leituras</small></div><div id="metricDeltas" class="md"></div><div id="ruleBadges" class="rbs" aria-live="polite"></div></section>
+  <section class="card span2"><div class="card-h"><h2>Histórico por métrica</h2><div class="seg" id="mcSeg"><button data-m="deltaL" class="on">Consumo</button><button data-m="rsrp">RSRP</button><button data-m="snr">SNR</button></div></div>
+    <div id="metricChart" class="chart"></div><div class="legend"><span><i style="background:#3d8bff"></i>valor lido</span><span><i class="ln" style="background:#2fd27a"></i>média móvel (tracejado)</span><span><i style="background:#ff5470"></i>A</span><span><i style="background:#ff8a8a"></i>B</span><span><i style="background:#ff9a3c"></i>C</span><span><i style="background:#8fbaff"></i>D</span><span><i style="background:#9aa4b8"></i>E</span></div></section>
+  <section class="card span3" id="ahCard"><div class="card-h"><h2>Histórico de Alertas</h2><span id="ahUnread" class="pill"></span></div>
+    <div class="filters"><select id="ahMetric"><option value="all">Todas as métricas</option><option value="deltaL">Consumo</option><option value="leituras">Leituras</option></select>
+      <select id="ahRule"><option value="all">Todas as regras</option><option value="A">A: consumo acima da média</option><option value="B">B: queda de consumo</option><option value="C">C: tendência de alta</option><option value="D">D: consumo noturno atípico</option><option value="E">E: sem leituras</option></select>
+      <button id="ahAllRead" class="btn btn-sm">Marcar todos como lidos</button><button id="ahExport" class="btn btn-sm" title="Baixa o histórico completo em CSV">⇩ Exportar agora</button></div>
+    <div class="table-wrap" style="max-height:320px"><table class="tbl"><thead><tr><th>Data e hora (BRT)</th><th>Métrica</th><th>Regra</th><th>Valor lido</th><th>Limiar</th><th>Mensagem</th><th></th></tr></thead><tbody id="ahList"></tbody></table></div>
+    <small class="muted">Regras: A consumo mais de 20% acima da média; B mais de 30% abaixo; C 5 leituras seguidas acima da média; D leitura entre 22h e 6h acima de 1,5x a média noturna; E sem leitura há mais de 2x o intervalo esperado. O histórico fica salvo neste navegador e apaga entradas com mais de 30 dias.</small></section>
+  <section class="card span2" id="ptCard"><details class="mini" id="ptDet"><summary><b>Apontamento do satélite</b> <span id="ptSum" class="muted"></span></summary><div id="ptBox"></div>
+    <small class="muted">Cálculo com a última posição GNSS da placa. Satélite provável: Inmarsat-4 F3 a 97,65° O (banda L), parceiro da Skylo no Brasil.</small></details></section>
+  <section class="card"><div class="card-h"><h2>Local do medidor</h2><span id="posInfo" class="muted"></span></div><div id="map" style="height:190px;border-radius:12px"></div></section>
+</main>
+<section class="tech">
+  <h2 class="tech-h">Detalhes técnicos</h2>
+  <details class="card"><summary>Leituras e eventos <span id="rdCount" class="muted"></span></summary>
+    <div class="filters"><div class="seg" id="fType"><button data-f="all" class="on">Tudo</button><button data-f="telemetry">Leituras</button><button data-f="event">Eventos</button><button data-f="alarm">Alarmes</button></div>
+      <div class="seg" id="fNet"><button data-n="all" class="on">Todas redes</button><button data-n="catm">Cat-M</button><button data-n="ntn">Satélite</button></div>
+      <input id="fTxt" type="search" placeholder="filtrar (ex.: sim, wdog, boot)"></div>
+    <div class="table-wrap" style="max-height:420px"><table class="tbl"><thead><tr><th>Hora</th><th>Seq</th><th>Tipo</th><th>Rede</th><th>Total</th><th>Consumo</th><th>Sinal</th><th>Detalhe</th><th>Atraso</th></tr></thead><tbody id="rdBody"></tbody></table></div></details>
+  <details class="card"><summary>Amostras SAT (sessões de teste)</summary><div id="satRaw"></div></details>
+  <details class="card"><summary>Conectividade &amp; SIM (histórico)</summary><div id="simGrid" class="kv"></div><div class="table-wrap" style="max-height:260px"><table class="tbl"><thead><tr><th>Hora</th><th>SIM</th><th>IMSI</th><th>PIN</th><th>Estado</th></tr></thead><tbody id="simBody"></tbody></table></div></details>
+  <details class="card"><summary>Faturamento estimado</summary><label class="muted">Tarifa R$/m³ <input id="tariff" type="number" step="0.01" min="0" style="width:80px"></label>
+    <div class="table-wrap"><table class="tbl"><thead><tr><th>Mês</th><th>Leitura inicial</th><th>Leitura final</th><th>Consumo</th><th>Valor estimado</th><th>Leituras</th></tr></thead><tbody id="billBody"></tbody></table></div>
+    <small class="muted">Só com leituras reais e a tarifa informada (salva neste navegador). Não é fatura oficial.</small></details>
+</section>
+<footer class="foot muted" id="foot"></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="../api-core.js?v=3"></script>
+<script src="../pwa.js?v=6"></script>
+<script src="../health-badge.js?v=1"></script>
+<script src="../ntn/pointing.js?v=3"></script>
+<script src="sat-live.js?v=5"></script>
+<script src="../ntn/busca-ui.js?v=56"></script>
+<script src="busca-card.js?v=1"></script>
+<script src="../apresentacao.js?v=2"></script>
+<script src="../status-desligado.js?v=3"></script>
+<script src="hero-u.js?v=13"></script>
+<script src="../switch-timeline.js?v=1"></script>
+<script src="alerts-u.js?v=2"></script>
+<script src="alert-rules.js?v=4"></script>
+<script src="alerts-panel.js?v=3"></script>
+<script src="utilities.js?v=23"></script>
+<a class="deck-fw" href="../ntn/firmware.html">Firmware</a>
+<script src="../icons.js?v=5"></script>
+<script src="../roles.js?v=2"></script>
+<script src="../shell.js?v=9" data-pagina="utilities"></script>
+</body>
+</html>
+
+```
+
+byGui

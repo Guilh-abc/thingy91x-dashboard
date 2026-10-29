@@ -1,0 +1,89 @@
+# Tema único escuro (tema-v2.css)
+
+Arquivo: `tema-v2.css` (branch `redesign-v2`, não publicado).
+
+## Como funciona
+
+- Carregado por último em Início, Rastreador, Utilities, NTN, Consumo, Alarmes e Entrar.
+- Remapeia nomes antigos (`--bg`, `--card`, `--mu`) para os tokens.
+- Remove listras laterais, barras no topo de cartões, texto com gradiente e fundos decorativos.
+- Define o padrão de estados `.vazio`, `.vazio.erro`, `.vazio.carregando`, foco e hover iguais em tudo.
+
+## Pontos para o Kiro
+
+- KIRO: Hoje é uma camada de sobreposição com muitos `!important`. Sugira a ordem para migrar cada CSS antigo para os tokens e apagar a camada.
+- KIRO: Sugira estados de hover e foco para linhas de tabela e cartões clicáveis.
+- KIRO: A landing (`/`) segue com a identidade magenta própria. Opine se deve usar o mesmo tema.
+
+## Código atual
+
+```css
+/* tema-v2.css: sistema visual único (escuro) de todas as páginas. Carregar POR ÚLTIMO.
+   Só visual: não muda IDs, scripts nem dados. Cores e medidas vêm de design-tokens.css. */
+:root,html[data-tema]{
+  --cor-ok:#2fd27a;--cor-ok-fundo:rgba(47,210,122,.14);--cor-ok-texto:#7be8ad;
+  --cor-alerta:#ff5470;--cor-alerta-fundo:rgba(255,84,112,.14);--cor-alerta-texto:#ff97a8;
+  --cor-info:#2563eb;--cor-info-fundo:rgba(37,99,235,.18);--cor-info-texto:#a9c4ff;--cor-info-hover:#1d4ed8;
+  --cor-neutro:#8e9ab5;--cor-neutro-fundo:#182036;--cor-neutro-texto:#e8ecf6;--cor-aviso:#ffc04d;
+  --fundo:#0b0f1a;--fundo-card:#121829;--fundo-card-2:#182036;--borda:#26304a;--texto:#e8ecf6;--texto-suave:#a3aec6;
+  --foco:0 0 0 3px rgba(96,145,255,.6);--sombra-1:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.25);
+  /* nomes antigos usados por pro.css, hub.css e deck-theme.css apontando para os tokens */
+  --bg:var(--fundo);--card:var(--fundo-card);--card2:var(--fundo-card-2);--line:var(--borda);--tx:var(--texto);--mu:var(--texto-suave);
+  color-scheme:dark;
+}
+body{background:var(--fundo)!important;color:var(--texto);font-family:var(--fonte)!important;font-size:15px;line-height:1.5}
+body::before,body::after{display:none!important}
+h1,h2,h3,.wordmark,.card h2,.card h3,.kpi span,.live span,.kpi b,.live b{font-family:var(--fonte)!important;letter-spacing:-.01em}
+/* Cartões: borda fina, sem listra lateral nem barra no topo, sem gradiente */
+.card,.kpi,.kpi-h,.mod,.hub-feed,.stat-grid div,.nstat div{border:1px solid var(--borda)!important;border-radius:var(--raio-m)!important;background:var(--fundo-card)!important;box-shadow:none!important;color:var(--texto)}
+.kpi::before,.card h2::before,.card h3::before{display:none!important}
+.kpi.ok,.kpi.ntn{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cor-ok) 35%,transparent)!important}
+.kpi.bad{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cor-alerta) 45%,transparent)!important}
+.kpi.warn{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cor-aviso) 40%,transparent)!important}
+.card h2,.card h3{text-transform:none!important;font-size:1rem!important;font-weight:700!important;color:var(--texto)!important}
+/* Cabeçalho: sem gradiente de fundo, linha fina de marca */
+.top,.sh-bar,header.barra{background:var(--fundo)!important;border-bottom:1px solid var(--borda)!important}
+.wm2,.grad,[class*="grad-txt"]{background:none!important;-webkit-text-fill-color:currentColor!important;color:var(--texto)!important}
+/* Tipografia mínima legível */
+small,.muted,.sub,.meta,.kpi small,.kpi .sub,.legend,.tagline,.marca-txt small{font-size:max(12px,.8rem)!important;color:var(--texto-suave)}
+.muted,.sub,.meta{color:var(--texto-suave)!important}
+/* Interação: hover e foco visíveis e iguais em tudo */
+a,button,summary,select,input,[role="button"]{transition:background-color .15s,border-color .15s,color .15s,box-shadow .15s}
+:focus-visible{outline:2px solid #6091ff!important;outline-offset:2px;box-shadow:none}
+.card:hover{border-color:color-mix(in srgb,var(--cor-info) 35%,var(--borda))!important}
+.btn-primary,.btn.btn-primary,.btn.pri,.seg button.on,.btn[aria-pressed="true"]{background:var(--cor-info)!important;border-color:var(--cor-info)!important;color:#fff!important}
+.btn-primary:hover,.btn.btn-primary:hover,.btn.pri:hover{background:var(--cor-info-hover)!important}
+.top .link,nav a{color:var(--cor-info-texto)!important}
+.dot,.hb-dot{box-shadow:none!important}
+/* Estados vazio, carregando e erro (padrão único) */
+.vazio,.empty-st{display:block;padding:var(--esp-5) var(--esp-4)!important;text-align:center;border:1px dashed var(--borda)!important;border-radius:var(--raio-m);background:transparent!important;color:var(--texto-suave)}
+.vazio b{display:block;color:var(--texto);font-size:1rem;margin-bottom:4px}.vazio p{margin:0 0 var(--esp-3)}
+.vazio.erro{border-color:color-mix(in srgb,var(--cor-alerta) 50%,var(--borda))!important}.vazio.erro b{color:var(--cor-alerta-texto)}
+.vazio.carregando b::after{content:"";display:inline-block;width:12px;height:12px;margin-left:8px;border:2px solid var(--borda);border-top-color:var(--cor-info);border-radius:50%;animation:v2gira .8s linear infinite;vertical-align:-1px}
+@keyframes v2gira{to{transform:rotate(360deg)}}
+.wait-banner{border:1px dashed var(--borda)!important;background:transparent!important;color:var(--texto-suave)!important}
+/* Início (hub.css era claro): mesmas superfícies escuras */
+body.hub-pg{background:var(--fundo)!important;color:var(--texto)!important}
+.hub-tit p,.kpi-h small,.ks{color:var(--texto-suave)!important}
+table{color:var(--texto)}th{color:var(--texto-suave)}td,th{border-color:var(--borda)!important}
+input,select,textarea{background:var(--fundo-card-2);color:var(--texto);border:1px solid var(--borda);border-radius:var(--raio-s)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Início: cartões de módulo e feed */
+.hub-c,.hub-feed ul{background:var(--fundo-card)!important;border:1px solid var(--borda)!important;box-shadow:none!important;color:var(--texto)!important}
+
+.hub-c b,.hub-c h2,.hub-c h3,.hub-feed b{color:var(--texto)!important}
+[hidden]{display:none!important}
+/* Contraste: item ativo do menu e placeholders */
+[aria-current="page"],[aria-current="true"],.sh-nav a[aria-current]{color:#fff!important}
+[aria-current] .ico{color:#fff!important}
+::placeholder{color:#97a2bb!important;opacity:1}
+.aviso{border:1px solid color-mix(in srgb,var(--cor-alerta) 45%,var(--borda))!important;border-left-width:1px!important;background:var(--cor-alerta-fundo)!important;color:var(--texto)!important}
+.tech-h,.sh-sep,.sh-grupo{color:var(--texto-suave)!important}
+h1{font-size:clamp(1.4rem,2.2vw,1.75rem)}h2{font-size:1.2rem}h3{font-size:1.05rem}
+p,li{max-width:80ch}
+.marca-txt small,.sh-marca small,.tagline{font-size:12px!important;opacity:1!important}
+h1 em,.wordmark{background:none!important;-webkit-background-clip:initial!important;background-clip:initial!important;-webkit-text-fill-color:var(--texto)!important;color:var(--texto)!important}
+
+```
+
+byGui

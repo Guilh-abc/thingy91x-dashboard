@@ -1,0 +1,15 @@
+import fs from 'fs';import vm from 'vm';import assert from 'assert';
+const ctx={window:{},document:{querySelector(){return null},getElementById(){return null},activeElement:null},navigator:{},setInterval,clearInterval,console};ctx.window.matchMedia=()=>({matches:false});
+vm.createContext(ctx);vm.runInContext(fs.readFileSync(new URL('../utilities',import.meta.url).pathname+'/busca-card.js','utf8'),ctx);
+const B=ctx.window.BuscaCardU,P=B.parseLinha;
+for(const e of ['CATM','SINCRONIA','BUSCA','REGISTRADO','ENVIO','FALHA']) assert.equal(P(`APP|123456|STATE|${e}`).estado,e);
+let r=P('APP|42000|SIG|rsrp=-115 dBm nivel=MEDIO');assert.equal(r.rsrp,-115);assert.equal(r.nivel,'medio');assert.equal(r.up,42000);
+r=P('APP|42000|SIG|rsrp=-104 dBm nivel=FORTE');assert.equal(r.nivel,'forte');
+r=P('APP|42000|SIG|rsrp=-125 dBm nivel=FRACO');assert.equal(r.nivel,'fraco');
+r=P('APP|42000|SIG|rsrp=NA nivel=NA');assert.ok(r.semLeitura);assert.equal(r.rsrp,null);
+assert.equal(B.nivel(-121).k,'fraco');assert.equal(B.nivel(-120).k,'medio');assert.equal(B.nivel(-110).k,'medio');assert.equal(B.nivel(-109).k,'forte');
+assert.equal(B.nivel(-130,'forte').k,'forte');
+let n=B.parseNuvem({r:-108,n:'n'});assert.equal(n.rsrp,-108);assert.equal(n.estado,'REGISTRADO');assert.equal(n.rede,'satelite');
+assert.equal(B.parseNuvem({r:-90,n:'c'}).estado,'CATM');assert.equal(B.parseNuvem({}),null);
+assert.equal(P('lixo qualquer'),null);
+console.log('parse firmware 1.7 OK');
