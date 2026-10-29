@@ -63,6 +63,8 @@
       if (!cur) continue;
       cur.ev.push(r); cur.last = t;
       if (e === 'back_catm' || (e === 'sw' && r.value === 0)) close(t, e === 'back_catm' ? 'voltou ao Cat-M' : 'voltou ao Cat-M (' + (r.info || '') + ')');
+      else if (e === 'off_end') close(t, 'encerrada: offline'); /* v75: backend confirmou placa sem comunicação */
+      else if (window.StatusDesligado && StatusDesligado.ehTimeoutNtn(r)) close(t, 'Sem registro em 20 min, voltou ao Cat-M'); /* v75: fw 2.1 */
     }
     if (cur) { cur.open = true; out.push(cur); }
     return out.map((s) => { const f = (e) => s.ev.find((r) => r.event === e); s.gnss = f('gnss_ok') || f('gnss_fail') || s.ev.find((r) => r.event === 'fix'); s.search = f('sat_search'); s.reg = s.ev.find((r) => r.event === 'sat_reg' && !r.fakeNtn); s.lost = f('sat_lost');
@@ -77,7 +79,7 @@
     const rd = rs.filter((r) => r.type === 'telemetry' && r.totalL != null);
     const tel = rs.filter((r) => r.type === 'telemetry');
     const al = rs.filter((r) => r.type === 'alarm');
-    const last = rd[rd.length - 1], lastAny = [...rs].sort((a, b) => RX(a) - RX(b)).pop(), lt = tel[tel.length - 1];
+    const last = rd[rd.length - 1], lastAny = [...rs.filter((r) => !r.srv), ...locais].sort((a, b) => RX(a) - RX(b)).pop() /* v75: último dado da placa, nuvem ou USB; eventos de servidor não contam */, lt = tel[tel.length - 1];
     $('waitBanner').hidden = rs.length > 0;
     if (rs.length && !rd.length) { $('waitBanner').hidden = false; $('waitBanner').textContent = 'A placa já se comunicou, mas ainda não enviou nenhuma leitura de consumo.'; }
     const ivs = []; for (let i = 1; i < tel.length; i++) { const d = (T(tel[i]) - T(tel[i - 1])) / 60000; if (d > 0.5 && d < 30) ivs.push(d); }
@@ -86,7 +88,9 @@
     /* v7: evidência real tem prioridade sobre a flag de teste. Sessão aberta (sat_start/stest) mas última telemetria é Cat-M depois do início e de qualquer evidência de satélite => está no Cat-M. */
     const lastSatEv = sCur ? [...sCur.ev].reverse().find((r) => ['sat_search', 'sat_reg', 'sat_lost'].includes(r.event) || (r.type === 'telemetry' && isSat(r))) : null;
     const catmNow = !!(sCur && ((lt && !isSat(lt) && T(lt) > Math.max(sCur.start, lastSatEv ? T(lastSatEv) : 0)) || (window.StatusDesligado && StatusDesligado.voltouCatm && StatusDesligado.voltouCatm(rs.concat(locais), RX(sCur.ev[0] || { ts: new Date(sCur.start).toISOString() }))))); /* v70.1: Cat-M recebido (rx) após o início encerra o teste, mesmo com seq repetido */
-    const sNet = catmNow ? null : sCur;
+    /* v75: o leitor USB do Mac (type 'local') também abre a busca: STATE BUSCA/SINCRONIA recente, mais novo que o último envio da nuvem. A placa não transmite nada enquanto busca, então sem isso a tela ficava em Cat-M/GNSS. */
+    const lastNuvem = [...rs.filter((r) => !r.srv)].sort((a, b) => RX(a) - RX(b)).pop(), eUsb = [...locais].reverse().find((r) => r.estado), usbBusca = !!(eUsb && ['BUSCA', 'SINCRONIA'].includes(eUsb.estado) && Date.now() - RX(eUsb) < 10 * 60000 && (!lastNuvem || RX(eUsb) > RX(lastNuvem)));
+    const sNet = catmNow ? (usbBusca ? { start: RX(eUsb), ev: [], search: 1, open: true } : null) : sCur || (usbBusca ? { start: RX(eUsb), ev: [], search: 1, open: true } : null);
     const st1 = [...rs].reverse().find((r) => r.type === 'event' && r.event === 'stest');
     const tOn = !catmNow && (!!sCur || (st1 && st1.value === 1 && !ses.some((s) => s.start >= T(st1) && !s.open) && !(window.StatusDesligado && StatusDesligado.voltouCatm && StatusDesligado.voltouCatm(rs.concat(locais), RX(st1)))));
     rapido = !!sNet || tOn || !!(window.SatCmdU && SatCmdU.ativo()) || !!(window.StatusDesligado && StatusDesligado.emBusca(rs)); // v71: polling de 5 s
@@ -99,17 +103,19 @@
     K.push(kpi('', 'Total acumulado', last ? nf(last.totalL) + '<u>L</u>' : '—', last ? m3(last.totalL) + ' m³ · leitura ' + hm(T(last)) : 'aguardando primeira leitura'));
     K.push(kpi('', 'Consumo hoje', rd.length ? nf(today.s) + '<u>L</u>' : '—', rd.length ? `última hora: <b>${nf(hour.s)} L</b>${hour.n ? '' : ' (sem leituras na última hora)'}` : 'aguardando primeira leitura'));
     let netBig = '—', netSub = 'aguardando primeira leitura', netCls = 'off';
-    if (sNet) { netCls = 'ntn'; netBig = sCur.reg ? 'Satélite Skylo' : 'Buscando Skylo'; netSub = (sCur.reg ? 'registrado na rede 90198' : `teste desde ${hm(sCur.start)} · sem registro em 90198`) + (lastAny && Date.now() - RX(lastAny) > 1800000 ? ` · último estado conhecido, sem notícias há ${ago(lastAny.rx || lastAny.ts)}` : ''); }
+    if (sNet) { netCls = 'ntn'; netBig = sNet.reg ? 'Satélite Skylo' : 'Buscando Skylo'; netSub = (sNet.reg ? 'registrado na rede 90198' : `teste desde ${hm(sNet.start)} · sem registro em 90198`) + (lastAny && Date.now() - RX(lastAny) > 1800000 ? ` · último estado conhecido, sem notícias há ${ago(lastAny.rx || lastAny.ts)}` : ''); }
     else if (lt) { const sat = isSat(lt); netCls = sat ? 'ntn' : 'catm'; netBig = sat ? 'Satélite Skylo' : 'Cat-M'; netSub = sat ? 'PLMN 90198' : `${OPS[lt.plmn] || 'operadora'} (${esc(lt.plmn || '—')}) · LTE-M banda ${esc(lt.band || '—')}${catmNow ? ' · modo teste NTN ligado, sem registro no satélite' : ''}`; }
     /* v8: offline quando o último dado passa de 2,5x o intervalo medido (mínimo 5 min no Cat-M; 15 min em satélite, como no ntn/) */
-    const buscaSat = !!sNet || !!(window.StatusDesligado && window.StatusDesligado.emBusca(rs)), offLimMs = buscaSat ? 15 * 60000 : 5 * 60000 /* regra Desligado: 5 min sem mensagem; 15 min em busca/modo satélite (v69) */, offNow = !!lastAny && Date.now() - RX(lastAny) > offLimMs;
+    const buscaSat = !!sNet || !!(window.StatusDesligado && window.StatusDesligado.emBusca(rs)), offSC = window.StatusDesligado && StatusDesligado.semComunicacao ? StatusDesligado.semComunicacao(lastAny ? RX(lastAny) : null, Date.now(), buscaSat, ivMin ? ivMin * 60000 : null) : { offline: false, limMs: 5 * 60000 }, offLimMs = offSC.limMs || 5 * 60000 /* v75: 5 min em busca; 2,5x o intervalo em Cat-M */, offNow = !!lastAny && offSC.offline;
+    const ultSes = ses[ses.length - 1], toNtn = ultSes && !ultSes.open && /20 min/.test(ultSes.why || '') && Date.now() - ultSes.end < 3600000 ? ultSes : null; /* v75: timeout fw 2.1 */
+    if (toNtn && !sNet && !offNow) netSub = 'Sem registro em 20 min, voltou ao Cat-M às ' + StatusDesligado.horaCurta(toNtn.end) + ' · ' + netSub;
     const lastNetTxt = netBig;
-    if (offNow) { netCls = 'off'; netSub = 'última mensagem há ' + agoS(Date.now() - RX(lastAny)) + ' · última rede conhecida: ' + netBig; netBig = 'Desligado'; }
+    if (offNow) { netCls = 'off'; netSub = 'último dado às ' + StatusDesligado.horaCurta(RX(lastAny)) + ' (há ' + agoS(Date.now() - RX(lastAny)) + ') · última rede conhecida: ' + netBig; netBig = 'Desligada / sem comunicação'; }
     K.push(kpi(netCls, 'Rede atual', netBig, netSub));
     const q = sigQ(lt?.rsrp);
     K.push(kpi(q ? q[2] : 'off', 'Qualidade do sinal', lt?.rsrp != null ? `${lt.rsrp}<u>dBm</u>` : '—', lt?.rsrp != null ? `<b style="color:${q[1]}">${q[0]}</b> · SNR ${lt.snr ?? '—'} dB${sNet ? ' · na última leitura Cat-M' : ''}` : 'sem medição ainda', gauge(lt?.rsrp)));
     const onlineMs = 5 * 60000, age = lastAny ? Date.now() - RX(lastAny) : null, on = age != null && age < onlineMs, busc = !on && buscaSat && age != null && age < offLimMs;
-    K.push(kpi(lastAny ? (on ? 'ok' : busc ? 'ntn' : 'off') : 'off', 'Último envio', lastAny ? 'há ' + agoS(age) : '—', lastAny ? `<span style="color:${on ? '#2fd27a' : busc ? '#5aa9e6' : '#9aa3ad'}"><span class="dot"></span>${on ? 'Online' : busc ? 'Buscando satélite' : 'Desligado'}</span> · ${dmy(RX(lastAny))}` : 'aguardando primeira leitura'));
+    K.push(kpi(lastAny ? (on ? 'ok' : busc ? 'ntn' : 'off') : 'off', 'Último envio', lastAny ? 'há ' + agoS(age) : '—', lastAny ? `<span style="color:${on ? '#2fd27a' : busc ? '#5aa9e6' : '#9aa3ad'}"><span class="dot"></span>${on && !offNow ? 'Online' : busc && !offNow ? 'Buscando satélite' : 'Desligada / sem comunicação'}</span> · ${dmy(RX(lastAny))}` : 'aguardando primeira leitura'));
     const sim = [...rs].reverse().find((r) => r.event === 'sim'), sp = sim ? simParse(sim) : null;
     const simOk = sp && sp.pin === 'READY';
     K.push(kpi(sim ? (simOk ? 'ok' : 'bad') : 'off', 'SIM', sim ? (simOk ? 'Pronto' : 'Erro') : '—', sim ? `ICCID •••• ${esc(sp.ic || '—')} · PIN ${esc(sp.pin || '—')} · ${ago(sim.ts)}` : 'sem dados do SIM ainda'));
@@ -124,11 +130,11 @@
     if (window.drawHeroU) { let runStart = null; for (let i = tel.length - 1; i >= 0 && !isSat(tel[i]); i--) runStart = T(tel[i]);
       const chg = [...rs].reverse().find((r) => r.type === 'event' && ['boot', 'back_catm', 'sw', 'lost', 'reg'].includes(r.event)); if (runStart != null && chg && T(chg) > runStart) runStart = T(chg);
       const key = !rs.length ? 'nodata' : offNow || (!on && !(sNet && age < 1800000)) ? 'off' : sNet ? (sNet.reg ? 'ntn' : 'search') : 'catm';
-      window.drawHeroU({ key, buscaSat, lastNet: lastNetTxt, busca: key === 'search' ? { usbMac: (() => { const sg = [...locais].reverse().find((r) => 'rsrp' in r), e = [...locais].reverse().find((r) => r.estado); return sg || e ? { rsrp: sg ? sg.rsrp : undefined, nivel: sg ? sg.nivel : null, at: sg ? RX(sg) : 0, estado: e ? e.estado : null, estadoAt: e ? RX(e) : 0 } : null; })(), t0: sNet.start, iniTxt: 'teste satélite (botão 4)', sync: sNet.gnss || sNet.search ? 1 : null, reg: sNet.reg ? 1 : null,
+      window.drawHeroU({ key, buscaSat, offLimMs, timeoutNtn: toNtn && key === 'catm' ? toNtn.end : null, lastNet: lastNetTxt, busca: key === 'search' ? { usbMac: (() => { const sg = [...locais].reverse().find((r) => 'rsrp' in r), e = [...locais].reverse().find((r) => r.estado); return sg || e ? { rsrp: sg ? sg.rsrp : undefined, nivel: sg ? sg.nivel : null, at: sg ? RX(sg) : 0, estado: e ? e.estado : null, estadoAt: e ? RX(e) : 0 } : null; })(), t0: sNet.start, iniTxt: 'teste satélite (botão 4)', sync: sNet.gnss || sNet.search ? 1 : null, reg: sNet.reg ? 1 : null,
         sinal: (() => { const x = [...sNet.ev].reverse().find((r) => (r.plmn === '90198' || r.type === 'satsum' || r.type === 'satdet' || /^sat_/.test(r.event || '')) && (r.rsrp != null || r.rsrpAvg != null)); return x ? { rsrp: x.rsrp ?? x.rsrpAvg, snr: x.snr ?? x.snrAvg, at: T(x) } : null; })(),
         nuvem: (() => { const x = [...sNet.ev].reverse().find((r) => r.estado != null || r.state != null || (r.rsrp != null && isSat(r))); if (!x) return null; const nt = isSat(x) ? 'ntn' : netOf(x); /* só registros de satélite: a volta ao Cat-M já vem pelo estado da plataforma */ /* v2: campos da nuvem r (RSRP) e n ('n' satélite, 'c' Cat-M), já normalizados como rsrp/net */ return Object.assign({}, x, { r: x.rsrp, n: nt === 'ntn' ? 'n' : nt === 'catm' ? 'c' : undefined, at: T(x) }); })(), refs: ses.filter((x) => x.reg).map((x) => T(x.reg) - x.start), rej: sNet.ev.filter((r) => r.rej != null).map((r) => r.rej) } : null, since: key === 'ntn' ? T(sNet.reg) : key === 'search' ? sNet.start : key === 'catm' ? runStart : null, lastRx: lastAny ? RX(lastAny) : null,
         ultRsrp: key === 'ntn' ? (() => { const x = [...sNet.ev].reverse().find((r) => (r.event === 'sat_reg' || (r.type === 'telemetry' && isSat(r))) && r.rsrp != null); return x ? { rsrp: x.rsrp, snr: x.snr, at: T(x) } : null; })() : null,
-        note: key === 'catm' && tOn ? 'modo teste NTN ligado, sem registro no satélite' : key === 'catm' && lt ? `${OPS[lt.plmn] || 'operadora'} (${lt.plmn || 'n/d'}) · banda ${lt.band || 'n/d'} · ${lt.rsrp ?? 'n/d'} dBm` : '' }); }
+        note: key === 'catm' && toNtn ? 'Sem registro em 20 min, voltou ao Cat-M às ' + StatusDesligado.horaCurta(toNtn.end) : key === 'catm' && tOn ? 'modo teste NTN ligado, sem registro no satélite' : key === 'catm' && lt ? `${OPS[lt.plmn] || 'operadora'} (${lt.plmn || 'n/d'}) · banda ${lt.band || 'n/d'} · ${lt.rsrp ?? 'n/d'} dBm` : '' }); }
 
     $('cChart').innerHTML = consumo(rd);
     $('sChart').innerHTML = sinal(rs, tel);

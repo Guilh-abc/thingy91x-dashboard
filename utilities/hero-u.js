@@ -16,9 +16,9 @@
   setInterval(function () { if (ultimo) window.drawHeroU(ultimo); }, 30000); // timer local da regra Desligado
   window.drawHeroU = function (o) {
     var el = document.getElementById('hero'); if (!el) return; ultimo = o;
-    var now = Date.now(), dl = window.StatusDesligado && o.key !== 'nodata' ? window.StatusDesligado.avaliar(o.lastRx, now, !!o.buscaSat) : { desligado: false };
+    var now = Date.now(), dl = window.StatusDesligado && o.key !== 'nodata' ? (function () { var a = window.StatusDesligado.semComunicacao(o.lastRx, now, !!o.buscaSat, null); if (o.offLimMs) a = { offline: now - o.lastRx > o.offLimMs, limMs: o.offLimMs, min: Math.max(0, Math.floor((now - o.lastRx) / 60000)) }; return { desligado: !!o.lastRx && a.offline, limMs: a.limMs, min: a.min }; })() : { desligado: false }; /* v75: limiar da Utilities (5 min em busca, 2,5x intervalo em Cat-M) */
     var k = qs.get('estado') && ST[qs.get('estado')] ? qs.get('estado') : dl.desligado ? 'desligado' : o.key, d = ST[k];
-    if (k === 'desligado' && dl.desligado) d = ['desligado', window.StatusDesligado.ICO, 'Desligado', 'Sem nenhuma mensagem da placa há mais de ' + Math.round(dl.limMs / 60000) + ' min · ' + window.StatusDesligado.texto(dl.min) + (o.lastNet ? ' · última rede conhecida: ' + o.lastNet : '')];
+    if (k === 'desligado' && dl.desligado) d = ['desligado', window.StatusDesligado.ICO, 'Desligada / sem comunicação', 'Último dado às ' + window.StatusDesligado.horaCurta(o.lastRx) + ' · nenhum envio da placa (nuvem ou USB) há mais de ' + Math.round(dl.limMs / 60000) + ' min · ' + window.StatusDesligado.texto(dl.min) + (o.lastNet ? ' · última rede conhecida: ' + o.lastNet : '')];
     if (k === 'off' && o.lastRx && !qs.get('estado')) d = ['off', '⛔', 'Offline: sem dados da placa há ' + dur(now - o.lastRx), 'Último dado ' + hm(o.lastRx) + (o.lastNet ? ' · última rede conhecida: ' + o.lastNet : '')];
     el.hidden = false; el.className = 'hero ' + d[0];
     var BU = window.BuscaCardU || window.BuscaUI; // v13: cartão único no Utilities; BuscaUI fica de reserva

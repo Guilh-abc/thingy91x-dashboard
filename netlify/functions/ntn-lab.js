@@ -137,6 +137,83 @@ export function meterDevDe(dv, tokenMedidor) {
 }
 export const CMD_TTL_MS = 10 * 60000;
 const CMD_KEY = 'cmd/atual', CMD_HIST = 'cmd/hist';
+export const CMD_FINAIS = ['cancelado', 'expirado', 'recebido', 'recusado', 'sem_resposta', 'cancelado_offline', 'encerrado_catm', 'encerrado_reboot'];
+
+/* ---------- v75: placa sem comunicação (nuvem ou USB local) ----------
+   Preguiçoso e idempotente, avaliado nas leituras ?meter=1 e ?cmd=1 (como o sem_resposta).
+   Limiar: 5 min em busca/teste satélite; 2,5x o intervalo mediano de telemetria (padrão 2 min) em Cat-M.
+   Confirmado o offline: grava um evento de servidor {type:'event',event:'off_end',srv:1,info:'encerrada: offline'}
+   que fecha a sessão de busca, e o comando pendente/entregue vira 'cancelado_offline' (final, libera novo). */
+export const OFF_BUSCA_MS = 5 * 60000, OFF_IV_PADRAO_MS = 2 * 60000;
+const tRx = (r) => Date.parse(r.rx || r.ts) || 0;
+/** Evento de timeout de 20 min do fw 2.1: {t:'e',e:'fail',i:'ntn_timeout'} (aceita também satsum w:'t'). */
+export function ehTimeoutNtn(r) { return !!r && ((r.type === 'event' && r.event === 'fail' && /ntn_timeout|20min/i.test(r.info || '')) || (r.type === 'satsum' && r.why === '20min')); }
+export function emBuscaSrv(recs) {
+  const rs = recs.slice().sort((a, b) => tRx(a) - tRx(b));
+  for (let i = rs.length - 1; i >= 0; i--) {
+    const r = rs[i], e = r.event, st = String(r.estado || '').toUpperCase();
+    if (r.srv) { if (e === 'off_end') return false; continue; }
+    if (ehTimeoutNtn(r)) return false;
+    if (r.type === 'local') { if (['BUSCA', 'SINCRONIA', 'REGISTRADO', 'ENVIO'].includes(st)) return true; if (st === 'CATM') return false; continue; }
+    if (r.type === 'telemetry') { if (r.net === 'ntn' || r.txNet === 'ntn' || r.transport === 'udp') return true; if (r.net === 'catm') return false; continue; }
+    if (['sat_start', 'sat_search', 'sat_reg', 'wait'].includes(e) || ((e === 'stest' || e === 'sw') && r.value === 1)) return true;
+    if (e === 'back_catm' || e === 'boot' || ((e === 'stest' || e === 'sw') && r.value === 0)) return false;
+  }
+  return false;
+}
+/** Avaliação pura. recs = registros do medidor (nuvem) + locais (USB). Ignora registros de servidor (srv). */
+export function offlineAvalia(recs, now = Date.now()) {
+  const dev = (recs || []).filter((r) => !r.srv && tRx(r));
+  if (!dev.length) return { offline: false, lastRx: null };
+  const lastRx = Math.max(...dev.map(tRx)), busca = emBuscaSrv(recs); // off_end (srv) fecha a busca
+  const tel = dev.filter((r) => r.type === 'telemetry').map(tRx).sort((a, b) => a - b), ivs = [];
+  for (let i = 1; i < tel.length; i++) { const d = tel[i] - tel[i - 1]; if (d > 30000 && d < 30 * 60000) ivs.push(d); }
+  ivs.sort((a, b) => a - b);
+  const iv = ivs.length ? ivs[ivs.length >> 1] : OFF_IV_PADRAO_MS, limMs = busca ? OFF_BUSCA_MS : Math.round(2.5 * iv);
+  return { offline: now - lastRx > limMs, lastRx, busca, limMs, offEm: lastRx + limMs };
+}
+/* v75: comando recebido (cmd_rx x:1) é encerrado quando, depois do cmd_rx, chega:
+   boot novo (event boot ou uptime menor que o do cmd_rx) => 'encerrado_reboot';
+   STATE CATM do USB, ou envio Cat-M ('c') sem sessão de busca aberta (após 90 s de carência) => 'encerrado_catm'. */
+export const FIM_CARENCIA_MS = 90000;
+export function fimRecebido(c, recs) {
+  if (!c || c.status !== 'recebido' || !c.recebidoEm) return null;
+  const t0 = Date.parse(c.recebidoEm), all = (recs || []).filter((r) => !r.srv).sort((a, b) => tRx(a) - tRx(b));
+  const rx = all.find((r) => r.type === 'event' && r.event === 'cmd_rx' && r.info === c.cid);
+  const up0 = c.recebidoUp != null ? c.recebidoUp : rx && rx.up != null ? rx.up : null;
+  const depois = all.filter((r) => tRx(r) > t0 && r !== rx);
+  for (let i = 0; i < depois.length; i++) {
+    const r = depois[i], em = new Date(tRx(r)).toISOString();
+    if (r.type !== 'local' && (r.event === 'boot' || (up0 != null && r.up != null && r.up < up0))) return { ...c, status: 'encerrado_reboot', encerradoEm: em, motivo: 'placa reiniciou depois do comando' };
+    if (r.type === 'local' && String(r.estado || '').toUpperCase() === 'CATM') return { ...c, status: 'encerrado_catm', encerradoEm: em, motivo: 'placa voltou ao Cat-M (USB)' };
+    if (r.type !== 'local' && r.net === 'catm' && tRx(r) - t0 > FIM_CARENCIA_MS && !emBuscaSrv(depois.slice(0, i))) return { ...c, status: 'encerrado_catm', encerradoEm: em, motivo: 'envio Cat-M sem busca aberta' };
+  }
+  return null;
+}
+async function registrosRecentes(store, now) {
+  const out = [];
+  for (const d of new Set([new Date(now).toISOString().slice(0, 10), new Date(now - 86400000).toISOString().slice(0, 10)])) {
+    const m = await store.get('meter/' + d, { type: 'json' }).catch(() => null); if (Array.isArray(m)) out.push(...m);
+    const l = await store.get('local/' + d, { type: 'json' }).catch(() => null); if (Array.isArray(l)) out.push(...l);
+  }
+  return out;
+}
+/** Aplica o offline: fecha a sessão de busca (uma vez) e cancela o comando ativo. Idempotente. */
+export async function offlineLazy(store, now = Date.now()) {
+  const recs = await registrosRecentes(store, now), a = offlineAvalia(recs, now);
+  const c0 = cmdVivo(await store.get(CMD_KEY, { type: 'json' }).catch(() => null), now), fim = fimRecebido(c0, recs);
+  if (fim) { await cmdSalva(store, fim); a.cmdEncerrado = fim.status; }
+  if (!a.offline) return a;
+  const em = new Date(a.offEm).toISOString();
+  if (a.busca && !recs.some((r) => r.srv && r.event === 'off_end' && tRx(r) >= a.lastRx)) {
+    const key = 'meter/' + new Date(now).toISOString().slice(0, 10), list = (await store.get(key, { type: 'json' }).catch(() => null)) || [];
+    list.push({ type: 'event', event: 'off_end', srv: 1, dv: METER_DV_PADRAO, info: 'encerrada: offline', ts: em, rx: em, ultimoDado: new Date(a.lastRx).toISOString() });
+    await store.setJSON(key, list); a.sessaoEncerrada = true;
+  }
+  const c = cmdVivo(await store.get(CMD_KEY, { type: 'json' }).catch(() => null), now);
+  if (c && (c.status === 'pendente' || c.status === 'entregue')) { await cmdSalva(store, { ...c, status: 'cancelado_offline', canceladoEm: em, motivo: 'placa sem comunicação' }); a.cmdCancelado = c.cid; }
+  return a;
+}
 export function proxyUser(req) {
   if (!tokenOk(req.headers.get('x-ntn-proxy'), 'NTN_PROXY_TOKEN')) return null;
   const email = String(req.headers.get('x-ntn-user') || '').toLowerCase().slice(0, 120), role = String(req.headers.get('x-ntn-role') || '');
@@ -155,7 +232,7 @@ export function cmdNaResposta(c) { return { cmd: c.cmd, cid: c.cid }; }
 export function respostaIngest(extra) { return extra ? '{"ok":1,"cmd":' + JSON.stringify(String(extra.cmd)) + ',"cid":' + JSON.stringify(String(extra.cid)) + '}' : '{"ok":1}'; }
 async function cmdSalva(store, c) {
   await store.setJSON(CMD_KEY, c);
-  if (['cancelado', 'expirado', 'recebido', 'recusado', 'sem_resposta'].includes(c.status)) {
+  if (CMD_FINAIS.includes(c.status)) {
     const h = (await store.get(CMD_HIST, { type: 'json' }).catch(() => null)) || [];
     if (!h.some((x) => x.cid === c.cid && x.status === c.status)) { h.push(c); await store.setJSON(CMD_HIST, h.slice(-20)); }
   }
@@ -163,6 +240,7 @@ async function cmdSalva(store, c) {
 async function cmdRota(req, store, url) {
   const u = proxyUser(req);
   if (!u) return json(401, { ok: false, error: 'sem sessão' });
+  if (req.method === 'GET') await offlineLazy(store).catch(() => null); // v75
   let c = cmdVivo(await store.get(CMD_KEY, { type: 'json' }).catch(() => null));
   if (req.method === 'GET') return json(200, { ok: true, cmd: c, serverTime: new Date().toISOString() });
   if (u.role !== 'admin') return json(403, { ok: false, error: 'somente admin' });
@@ -191,12 +269,14 @@ async function cmdNoIngest(store, rec) {
   let c = cmdVivo(await store.get(CMD_KEY, { type: 'json' }).catch(() => null));
   if (!c) return null;
   if (c.status === 'expirado' || c.status === 'sem_resposta') { await cmdSalva(store, c); return null; }
+  if (c.status === 'cancelado_offline') return null;
   // fw 1.9: {t:'e',n:'c',e:'cmd_rx',x:1|0,i:cid}. x:1 recebido (vai migrar); x:0 recusado (final, nunca reentrega).
   if (rec.type === 'event' && rec.event === 'cmd_rx' && rec.info === c.cid && (c.status === 'entregue' || c.status === 'pendente')) {
     const base = { ...c, entregueEm: c.entregueEm || rec.rx };
-    await cmdSalva(store, rec.value === 0 ? { ...base, status: 'recusado', recusadoEm: rec.rx } : { ...base, status: 'recebido', recebidoEm: rec.rx });
+    await cmdSalva(store, rec.value === 0 ? { ...base, status: 'recusado', recusadoEm: rec.rx } : { ...base, status: 'recebido', recebidoEm: rec.rx, ...(rec.up != null ? { recebidoUp: rec.up } : {}) });
     return null;
   }
+  if (c.status === 'recebido') { const prev = await registrosRecentes(store, Date.now()), fim = fimRecebido(c, prev.some((r) => r === rec || (r.rx === rec.rx && r.seq === rec.seq && r.type === rec.type)) ? prev : prev.concat(rec)); if (fim) await cmdSalva(store, fim); return null; } // v75
   const alvoOk = !c.dv || c.dv === rec.dv;
   if (c.status === 'pendente' && alvoOk && rec.dv && rec.net === 'catm' && rec.transport !== 'udp') {
     await cmdSalva(store, { ...c, status: 'entregue', entregueEm: rec.rx, entregueSeq: rec.seq });
@@ -297,6 +377,7 @@ export default async (req) => {
   const url = new URL(req.url);
   if (req.method === 'GET' && url.searchParams.get('meter')) {
     // Connect Utilities: leituras/alarmes do medidor (device separado, campo dv)
+    await offlineLazy(store).catch(() => null); // v75: placa sem comunicação fecha a busca e cancela o comando
     const since = url.searchParams.get('since'), sinceT = Date.parse(since || '');
     let days = Math.min(62, Math.max(1, parseInt(url.searchParams.get('days') || '31', 10) || 31));
     // v71: incremental, lê só os dias desde since (ts pode ser até 1 dia antes do rx por atraso declarado)

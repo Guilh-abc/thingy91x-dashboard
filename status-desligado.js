@@ -19,6 +19,8 @@
       var r = rs[i], e = r.event;
       if (r.type === 'telemetry') { if (r.net === 'ntn' || r.txNet === 'ntn' || r.transport === 'udp') return true; if (r.net === 'catm') return false; continue; }
       if (e === 'sat_start' || e === 'sat_search' || e === 'sat_reg' || e === 'wait' || (e === 'stest' && r.value === 1) || (e === 'sw' && r.value === 1)) return true;
+      if (e === 'off_end' || ehTimeoutNtn(r)) return false;
+      if (r.srv) continue;
       if (e === 'back_catm' || e === 'boot' || (e === 'sw' && r.value === 0) || (e === 'stest' && r.value === 0)) return false;
     }
     return false;
@@ -31,15 +33,26 @@
     (recs || []).forEach(function (r) {
       var t = tm(r); if (!(t > inicioRx)) return;
       var st = String(r.estado || r.state || '').toUpperCase(), e = r.event;
-      var catm = st === 'CATM' || r.n === 'c' || e === 'back_catm' || (r.type === 'telemetry' && (r.net === 'catm' || (r.net == null && r.n == null && r.plmn && r.plmn !== '90198')));
+      var catm = st === 'CATM' || ehTimeoutNtn(r) || r.n === 'c' || e === 'back_catm' || (r.type === 'telemetry' && (r.net === 'catm' || (r.net == null && r.n == null && r.plmn && r.plmn !== '90198')));
       var sat = !catm && (r.n === 'n' || ['BUSCA', 'SINCRONIA', 'REGISTRADO', 'ENVIO'].indexOf(st) >= 0 || e === 'sat_start' || e === 'sat_search' || e === 'sat_reg' || (r.type === 'telemetry' && (r.net === 'ntn' || r.plmn === '90198')));
       if ((catm || sat) && t >= ultT) { ultT = t; ult = catm ? 'catm' : 'sat'; }
     });
     return ult === 'catm';
   }
+  /* v75 (Utilities): placa sem comunicação. Último dado da nuvem OU do USB local.
+     Limiar: 5 min em busca; 2,5x o intervalo (padrão 2 min) em Cat-M. Mesma regra do backend (offlineAvalia). */
+  var OFF_BUSCA_MS = 5 * 60000, IV_PADRAO_MS = 2 * 60000;
+  function semComunicacao(lastMs, now, busca, ivMs) {
+    if (lastMs == null || !isFinite(lastMs)) return { offline: false, limMs: null };
+    var n = now == null ? Date.now() : now, iv = ivMs > 30000 && ivMs < 30 * 60000 ? ivMs : IV_PADRAO_MS, lim = busca ? OFF_BUSCA_MS : Math.round(2.5 * iv);
+    return { offline: n - lastMs > lim, limMs: lim, ageMs: n - lastMs, min: Math.max(0, Math.floor((n - lastMs) / 60000)) };
+  }
+  /* v75: timeout de 20 min do fw 2.1: {t:'e',e:'fail',i:'ntn_timeout'} => event 'fail', info 'ntn_timeout' (ou satsum why '20min'). */
+  function ehTimeoutNtn(r) { return !!r && ((r.type === 'event' && r.event === 'fail' && /ntn_timeout|20min/i.test(r.info || '')) || (r.type === 'satsum' && r.why === '20min')); }
+  function horaCurta(ms) { var d = new Date(ms); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
   function texto(min) { var d = Math.floor(min / 1440), h = Math.floor((min % 1440) / 60); return 'última mensagem há ' + (min < 60 ? min + ' min' : d ? d + (d === 1 ? ' dia' : ' dias') + (h ? ' e ' + h + ' h' : '') : h + ' h ' + String(min % 60).padStart(2, '0') + ' min'); }
   var ICO = '<svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64A9 9 0 0 1 20.77 15"/><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68"/><path d="M12 2v4"/><path d="m2 2 20 20"/></svg>';
-  var api = { LIM_MS: LIM_MS, LIM_BUSCA_MS: LIM_BUSCA_MS, avaliar: avaliar, emBusca: emBusca, voltouCatm: voltouCatm, texto: texto, ICO: ICO };
+  var api = { LIM_MS: LIM_MS, LIM_BUSCA_MS: LIM_BUSCA_MS, avaliar: avaliar, emBusca: emBusca, voltouCatm: voltouCatm, texto: texto, ICO: ICO, OFF_BUSCA_MS: OFF_BUSCA_MS, semComunicacao: semComunicacao, ehTimeoutNtn: ehTimeoutNtn, horaCurta: horaCurta, TXT_OFF: 'Desligada / sem comunicação', TXT_TIMEOUT: 'Sem registro em 20 min, voltou ao Cat-M' };
   if (typeof document !== 'undefined' && !document.getElementById('st-desligado-css')) {
     var st = document.createElement('style'); st.id = 'st-desligado-css';
     st.textContent = '.hero.desligado{background:var(--neutro,#5b6470);animation:none}.hero.desligado .hero-ico svg{width:1em;height:1em}';
