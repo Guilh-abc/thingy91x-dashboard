@@ -9,11 +9,11 @@
   function etapas(c, recs, now) {
     if (!c) return null;
     now = now == null ? Date.now() : now;
-    var st = c.status === 'pendente' && now > Date.parse(c.expira) ? 'expirado' : c.status, t = { pendente: Date.parse(c.criado) };
+    var st = c.status === 'pendente' && now > Date.parse(c.expira) ? 'expirado' : c.status === 'entregue' && c.entregueEm && now > Date.parse(c.entregueEm) + 600000 ? 'sem_resposta' : c.status, t = { pendente: Date.parse(c.criado) };
     if (c.entregueEm) t.entregue = Date.parse(c.entregueEm);
     if (c.recebidoEm) t.recebido = Date.parse(c.recebidoEm);
     if (c.recusadoEm) t.recusado = Date.parse(c.recusadoEm);
-    if (st === 'expirado' || st === 'cancelado' || st === 'recusado') return { fim: st, idx: st === 'recusado' ? 1 : c.entregueEm ? 1 : 0, t: t, status: st };
+    if (st === 'expirado' || st === 'cancelado' || st === 'recusado' || st === 'sem_resposta') return { fim: st, idx: st === 'recusado' ? 1 : c.entregueEm ? 1 : 0, t: t, status: st };
     var idx = st === 'recebido' ? 2 : st === 'entregue' ? 1 : 0;
     if (t.recebido) (recs || []).filter(function (r) { return RX(r) > t.recebido; }).sort(function (a, b) { return RX(a) - RX(b); }).forEach(function (r) {
       var e = String(r.estado || r.state || '').toUpperCase(), ev = r.event, sat = r.net === 'ntn' || r.plmn === '90198' || r.type === 'satsum' || r.type === 'satdet' || /^sat_/.test(ev || '');
@@ -69,7 +69,7 @@
         var feito = i <= e.idx && !(e.fim && i > e.idx), atual = i === e.idx && !e.fim, tm = e.t[s[0]];
         return '<li class="' + (feito ? 'ok' : '') + (atual ? ' atual' : '') + '"' + (atual ? ' aria-current="step"' : '') + '><span>' + s[1] + '</span>' + (tm && feito ? '<small>' + hm(tm) + '</small>' : '') + '</li>';
       }).join('') + '</ol>';
-      if (e.fim) h += '<p class="sc-fim" role="status">' + (e.fim === 'recusado' ? 'Recusado' + (e.t.recusado ? ' às ' + hm(e.t.recusado) : '') + ': placa recusou: já em teste, fora do Cat-M ou ocupada. O comando não será repetido.' : e.fim === 'expirado' ? 'Expirado: a placa não pegou o comando em 10 minutos. Ela continua no Cat-M.' : 'Cancelado' + (cmd.canceladoPor ? ' por ' + esc(cmd.canceladoPor) : '') + '. A placa continua no Cat-M.') + '</p>';
+      if (e.fim) h += '<p class="sc-fim" role="status">' + (e.fim === 'sem_resposta' ? 'Sem resposta: o comando foi enviado, mas a placa não confirmou em 10 minutos. Ela continua no Cat-M.' : e.fim === 'recusado' ? 'Recusado' + (e.t.recusado ? ' às ' + hm(e.t.recusado) : '') + ': placa recusou: já em teste, fora do Cat-M ou ocupada. O comando não será repetido.' : e.fim === 'expirado' ? 'Expirado: a placa não pegou o comando em 10 minutos. Ela continua no Cat-M.' : 'Cancelado' + (cmd.canceladoPor ? ' por ' + esc(cmd.canceladoPor) : '') + '. A placa continua no Cat-M.') + '</p>';
       else if (e.status === 'pendente') h += '<p class="sc-mut" role="status">Aguardando o próximo envio da placa pelo Cat-M. Expira às ' + hm(Date.parse(cmd.expira)) + '.</p>';
     }
     if (msg) h += '<p class="sc-erro" role="alert">' + esc(msg) + '</p>';

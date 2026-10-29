@@ -146,6 +146,8 @@ export function proxyUser(req) {
 export function cmdVivo(c, now = Date.now()) {
   if (!c) return null;
   if (c.status === 'pendente' && now > Date.parse(c.expira)) return { ...c, status: 'expirado', expiradoEm: c.expira };
+  // entregue sem cmd_rx em 10 min -> final 'sem_resposta' (libera novo comando)
+  if (c.status === 'entregue' && now > Date.parse(c.entregueEm) + CMD_TTL_MS) return { ...c, status: 'sem_resposta', semRespostaEm: new Date(Date.parse(c.entregueEm) + CMD_TTL_MS).toISOString() };
   return c;
 }
 /** fw 1.9: resposta do ingest com comando é exatamente {"ok":1,"cmd":"sat","cid":"<id>"} (sem espaços). */
@@ -153,7 +155,7 @@ export function cmdNaResposta(c) { return { cmd: c.cmd, cid: c.cid }; }
 export function respostaIngest(extra) { return extra ? '{"ok":1,"cmd":' + JSON.stringify(String(extra.cmd)) + ',"cid":' + JSON.stringify(String(extra.cid)) + '}' : '{"ok":1}'; }
 async function cmdSalva(store, c) {
   await store.setJSON(CMD_KEY, c);
-  if (['cancelado', 'expirado', 'recebido', 'recusado'].includes(c.status)) {
+  if (['cancelado', 'expirado', 'recebido', 'recusado', 'sem_resposta'].includes(c.status)) {
     const h = (await store.get(CMD_HIST, { type: 'json' }).catch(() => null)) || [];
     if (!h.some((x) => x.cid === c.cid && x.status === c.status)) { h.push(c); await store.setJSON(CMD_HIST, h.slice(-20)); }
   }
@@ -188,7 +190,7 @@ async function cmdRota(req, store, url) {
 async function cmdNoIngest(store, rec) {
   let c = cmdVivo(await store.get(CMD_KEY, { type: 'json' }).catch(() => null));
   if (!c) return null;
-  if (c.status === 'expirado') { await cmdSalva(store, c); return null; }
+  if (c.status === 'expirado' || c.status === 'sem_resposta') { await cmdSalva(store, c); return null; }
   // fw 1.9: {t:'e',n:'c',e:'cmd_rx',x:1|0,i:cid}. x:1 recebido (vai migrar); x:0 recusado (final, nunca reentrega).
   if (rec.type === 'event' && rec.event === 'cmd_rx' && rec.info === c.cid && (c.status === 'entregue' || c.status === 'pendente')) {
     const base = { ...c, entregueEm: c.entregueEm || rec.rx };
@@ -384,7 +386,8 @@ export default async (req) => {
     }
     if (!dup) { list.push(rec); await store.setJSON(key, list.slice(-DAY_MAX)); }
     const extra = await cmdNoIngest(store, rec); // v72: comando pendente vai na resposta (poucos bytes)
-    return new Response(respostaIngest(extra), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    const corpo = respostaIngest(extra); // corpo de tamanho fixo: Content-Length explícito, sem chunked
+    return new Response(corpo, { status: 200, headers: { 'Content-Type': 'application/json', 'Content-Length': String(Buffer.byteLength(corpo)), 'Connection': 'close', 'Cache-Control': 'no-store' } });
   }
   if (req.method === 'GET') {
     const rec = await store.get(KEY, { type: 'json' }).catch(() => null);

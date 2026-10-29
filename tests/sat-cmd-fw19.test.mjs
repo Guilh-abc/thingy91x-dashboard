@@ -76,3 +76,23 @@ console.log('sat-cmd fw1.9 OK');
   assert.equal((await post({ t: 'm', dv: 'm1', s: 906, u: 9060, n: 'c' }, DT)).st, 401, 'rastreador não manda dv de medidor');
   console.log('sat-cmd fw1.9 dv-por-token OK');
 }
+
+// sem_resposta: entregue sem cmd_rx por 10 min
+{
+  const post = async (m) => { const r = await h(new Request('https://x/.netlify/functions/ntn-lab?ingest=1', { method: 'POST', headers: { Authorization: 'Bearer ' + MT }, body: JSON.stringify(m) })); return r; };
+  const c = (await cmd('POST', { acao: 'criar', cmd: 'sat' })).j.cmd;
+  const r1 = await post({ t: 'm', s: 950, u: 9500, n: 'c' });
+  const t1 = await r1.text(); assert.equal(t1, '{"ok":1,"cmd":"sat","cid":"' + c.cid + '"}');
+  assert.equal(r1.headers.get('content-length'), String(Buffer.byteLength(t1))); assert.equal(r1.headers.get('connection'), 'close');
+  assert.equal((await cmd('POST', { acao: 'criar', cmd: 'sat' })).st, 409, 'entregue recente ainda trava');
+  const atual = JSON.parse(globalThis.__mem3.get('cmd/atual'));
+  globalThis.__mem3.set('cmd/atual', JSON.stringify({ ...atual, entregueEm: new Date(Date.now() - 11 * 60000).toISOString() }));
+  const g = (await cmd('GET')).j.cmd; assert.equal(g.status, 'sem_resposta'); assert.ok(g.semRespostaEm);
+  const r2 = await post({ t: 'm', s: 951, u: 9510, n: 'c' }); assert.equal(await r2.text(), '{"ok":1}', 'sem reentrega');
+  assert.equal(r2.headers.get('content-length'), '8');
+  assert.ok(JSON.parse(globalThis.__mem3.get('cmd/hist')).some((x) => x.cid === c.cid && x.status === 'sem_resposta'), 'histórico');
+  assert.equal((await cmd('POST', { acao: 'criar', cmd: 'sat' })).st, 201, 'libera novo comando');
+  const S = globalThis.SatCmdU, e = S.etapas({ cid: 'z', cmd: 'sat', criado: new Date(0).toISOString(), expira: new Date(600000).toISOString(), status: 'entregue', entregueEm: new Date(1000).toISOString() }, [], 12 * 60000);
+  assert.equal(e.fim, 'sem_resposta');
+  console.log('sat-cmd sem_resposta OK');
+}
