@@ -34,8 +34,9 @@ async function fetchTracker(days = 7) {
  * @param {number} days - janela em dias (padrao 62)
  * @returns {Promise<object[]>}
  */
-async function fetchMeter(days = 62) {
-  const r = await fetch(API + '?meter=1&days=' + days + '&t=' + Date.now(), { cache: 'no-store' });
+async function fetchMeter(days = 62, since) {
+  // v71: since=<ISO do último rx> traz só o que chegou depois (consulta incremental)
+  const r = await fetch(API + '?meter=1&days=' + days + (since ? '&since=' + encodeURIComponent(since) : '') + '&t=' + Date.now(), { cache: 'no-store' });
   const j = noteOffline(await r.json());
   return Array.isArray(j.records) ? j.records : [];
 }

@@ -75,6 +75,54 @@ export function normalizeIngest(m, rawLen, rxIso, trHint) {
   else Object.assign(rec, { event: str(m.e, 12), value: num(m.x), info: str(m.i, 40), pressTotal: num(m.bc), firstAgoS: num(m.fa), ntnBytes: num(m.nb), ntnMsgs: num(m.nm), ...(m.p ? { plmn: str(m.p, 8), act: num(m.a) } : {}), ...(num(m.r) != null ? { rsrp: m.r === 999 ? null : num(m.r), snr: m.q === 999 ? null : num(m.q) } : {}) });
   return rec;
 }
+/** v71: duplicata = mesmo seq+tipo E mesmo boot. O boot é identificado pelo uptime (up): após reboot o uptime
+    reinicia e a placa reenvia seq antigos, que são dados novos e não podem ser descartados. Sem uptime, compara o ts
+    (reenvio idêntico tem o mesmo ts, tolerância de 2 min pelo atraso declarado). Exportado para testes. */
+export function isDup(list, rec) {
+  if (rec.seq == null) return false;
+  return list.some((x) => x.seq === rec.seq && x.type === rec.type && (x.dv || null) === (rec.dv || null) &&
+    (rec.up != null && x.up != null ? x.up === rec.up : Math.abs(Date.parse(x.ts) - Date.parse(rec.ts)) < 120000));
+}
+/** v71: filtro incremental ?since=<ISO>: só registros recebidos (rx) depois de since. Exportado para testes. */
+export function sinceFilter(records, since) {
+  const t = Date.parse(since || '');
+  if (!Number.isFinite(t)) return records;
+  return records.filter((r) => Date.parse(r.rx || r.ts) > t);
+}
+/** v71: leitura local (leitor serial do Mac, fonte=usb). Aceita a linha crua do firmware 1.7 ou campos.
+    Retorna o registro com rx do servidor, ou null se inválido. Exportado para testes. */
+export const LOCAL_ESTADOS = ['CATM', 'SINCRONIA', 'BUSCA', 'REGISTRADO', 'ENVIO', 'FALHA'];
+export function normalizeLocal(m, rxIso) {
+  if (!m || typeof m !== 'object') return null;
+  let estado = null, rsrp, nivel = null, up = num(m.up);
+  const linha = typeof m.linha === 'string' ? m.linha.trim().slice(0, 120) : '';
+  if (linha) {
+    const p = linha.split('|');
+    if (p[0] !== 'APP' || p.length < 4) return null;
+    if (up == null && /^\d+$/.test(p[1])) up = +p[1];
+    if (p[2] === 'STATE') estado = String(p[3]).trim().toUpperCase();
+    else if (p[2] === 'SIG') {
+      const r = /rsrp=(-?\d+|NA)/i.exec(p[3]), n = /nivel=([A-Z]+)/i.exec(p[3]);
+      if (!r) return null;
+      rsrp = /NA/i.test(r[1]) ? null : +r[1]; nivel = n ? n[1].toUpperCase() : null;
+    } else return null;
+  } else {
+    if (m.estado != null) estado = String(m.estado).toUpperCase();
+    if ('rsrp' in m) rsrp = m.rsrp === 'NA' || m.rsrp === null ? null : num(m.rsrp);
+    if (m.nivel != null) nivel = String(m.nivel).toUpperCase();
+  }
+  if (estado != null && !LOCAL_ESTADOS.includes(estado)) return null;
+  if (nivel != null && !['FRACO', 'MEDIO', 'FORTE', 'NA'].includes(nivel)) return null;
+  if (rsrp !== undefined && rsrp !== null && (rsrp > -40 || rsrp < -160)) return null;
+  if (estado == null && rsrp === undefined) return null;
+  const rec = { type: 'local', fonte: 'usb', rx: rxIso, ts: rxIso, up };
+  if (estado) rec.estado = estado;
+  if (rsrp !== undefined) { rec.rsrp = rsrp; rec.nivel = rsrp === null ? 'NA' : nivel === 'NA' ? null : nivel; }
+  if (typeof m.dv === 'string' && /^m[0-9a-z]{1,7}$/.test(m.dv)) rec.dv = m.dv;
+  return rec;
+}
+const LOCAL_MAX = 2000, LOCAL_JANELA_MS = 2 * 3600000;
+
 /** v37: "cl":"72410,C423,0C5F2C16" (PLMN,TAC hex,ECI hex) -> objeto lte do nRF Cloud ground fix. */
 export function parseCell(cl, rsrp) {
   const m = /^(\d{3})(\d{2,3}),([0-9A-Fa-f]{1,8}),([0-9A-Fa-f]{1,8})$/.exec(String(cl || ''));
@@ -167,15 +215,23 @@ export default async (req) => {
   const url = new URL(req.url);
   if (req.method === 'GET' && url.searchParams.get('meter')) {
     // Connect Utilities: leituras/alarmes do medidor (device separado, campo dv)
-    const days = Math.min(62, Math.max(1, parseInt(url.searchParams.get('days') || '31', 10) || 31));
+    const since = url.searchParams.get('since'), sinceT = Date.parse(since || '');
+    let days = Math.min(62, Math.max(1, parseInt(url.searchParams.get('days') || '31', 10) || 31));
+    // v71: incremental, lê só os dias desde since (ts pode ser até 1 dia antes do rx por atraso declarado)
+    if (Number.isFinite(sinceT)) days = Math.min(62, Math.max(1, Math.ceil((Date.now() - sinceT) / 86400000) + 1));
     const out = [];
     for (let i = days - 1; i >= 0; i--) {
       const list = await store.get('meter/' + new Date(Date.now() - i * 86400000).toISOString().slice(0, 10), { type: 'json' }).catch(() => null);
       if (Array.isArray(list)) out.push(...list.map(publicView));
     }
     // rolling: média móvel das 24 leituras anteriores e desvio % (campo opcional, calculado se ainda não gravado)
+    // v71: leituras locais (USB do Mac) das últimas 2 h, guardadas à parte para não ocupar a lista do medidor
+    for (const d of new Set([new Date().toISOString().slice(0, 10), new Date(Date.now() - LOCAL_JANELA_MS).toISOString().slice(0, 10)])) {
+      const loc = await store.get('local/' + d, { type: 'json' }).catch(() => null);
+      if (Array.isArray(loc)) out.push(...loc.filter((r) => Date.now() - Date.parse(r.rx) < LOCAL_JANELA_MS));
+    }
     out.sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts));
-    const records = withRolling(out);
+    const records = sinceFilter(withRolling(out), since);
     // ?metric=deltaL|rsrp|snr: série histórica da métrica (valor, média, desvio) para o gráfico de linha
     const metric = url.searchParams.get('metric');
     const series = ROLLING_METRICS.includes(metric) ? records.filter((r) => r.type === 'telemetry' && num(r[metric]) != null).map((r) => ({ ts: r.ts, seq: r.seq, value: r[metric], ...(r.rolling[metric] || {}) })) : undefined;
@@ -192,6 +248,21 @@ export default async (req) => {
     out.sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts));
     const records = withMovement(out).map(publicView);
     return json(200, { ok: true, schema: 'ntn-pro/1', serverTime: new Date().toISOString(), records });
+  }
+  if (req.method === 'POST' && url.searchParams.get('local')) {
+    // v71: ingest local do leitor serial do Mac (fonte=usb). Mesmo token de escrita do Mac (NTN_LAB_WRITE_TOKEN).
+    if (!process.env.NTN_LAB_WRITE_TOKEN) return json(503, { ok: false, error: 'write token not configured' });
+    if (!tokenOk(req.headers.get('authorization'))) return json(401, { ok: false, error: 'unauthorized' });
+    const raw = await req.text();
+    if (raw.length > 512) return json(413, { ok: false, error: 'payload > 512 B' });
+    let m; try { m = JSON.parse(scrub(raw)); } catch { return json(400, { ok: false, error: 'invalid json' }); }
+    const rx = new Date().toISOString();
+    const rec = normalizeLocal(m, rx);
+    if (!rec) return json(400, { ok: false, error: 'bad message' });
+    const key = 'local/' + rx.slice(0, 10);
+    const list = (await store.get(key, { type: 'json' }).catch(() => null)) || [];
+    list.push(rec); await store.setJSON(key, list.slice(-LOCAL_MAX));
+    return json(200, { ok: true, rx });
   }
   if (req.method === 'POST' && url.searchParams.get('ingest')) {
     // v36: telemetria/eventos da placa (app v2.0). Resposta minima (poucos bytes no satelite).
@@ -219,7 +290,7 @@ export default async (req) => {
     if (meterDev) rec.dv = meterDev;
     const key = meterDev ? 'meter/' + rec.ts.slice(0, 10) : dayKey(rec.ts);
     const list = (await store.get(key, { type: 'json' }).catch(() => null)) || [];
-    const dup = rec.seq != null && list.some((x) => x.seq === rec.seq && x.type === rec.type);
+    const dup = isDup(list, rec); // v71: inclui o boot (uptime) na chave
     // medidor: grava a média móvel e o desvio % junto da leitura (usa o dia anterior se faltar histórico)
     if (meterDev && rec.type === 'telemetry' && !dup) {
       let history = list.filter((x) => x.type === 'telemetry');

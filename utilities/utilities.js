@@ -19,7 +19,7 @@
   /* Ajuda: <dialog> nativo (foco preso, Esc fecha); devolve o foco ao botão. */
   { const bt = document.getElementById('linkAjuda'), dl = document.getElementById('dlgAjuda');
     if (bt && dl) { bt.addEventListener('click', () => { if (dl.showModal) dl.showModal(); else dl.setAttribute('open', ''); }); dl.addEventListener('close', () => bt.focus()); dl.addEventListener('click', (e) => { if (e.target === dl) dl.close(); }); } }
-  let recs = [], agg = 'i', map, mk, circ, fT = 'all', fN = 'all';
+  let recs = [], locais = [], rapido = false, agg = 'i', map, mk, circ, fT = 'all', fN = 'all';
   document.addEventListener('sw:focusMap', (e) => { const d = e.detail || {}; if (map && isFinite(d.lat) && isFinite(d.lon)) { map.setView([d.lat, d.lon], 16); document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
   $('tariff').value = localStorage.getItem('cu.tariff') || '';
   $('tariff').addEventListener('input', () => { localStorage.setItem('cu.tariff', $('tariff').value); render(); });
@@ -85,10 +85,11 @@
     const ses = sessions(rs), sCur = ses.length && ses[ses.length - 1].open ? ses[ses.length - 1] : null;
     /* v7: evidência real tem prioridade sobre a flag de teste. Sessão aberta (sat_start/stest) mas última telemetria é Cat-M depois do início e de qualquer evidência de satélite => está no Cat-M. */
     const lastSatEv = sCur ? [...sCur.ev].reverse().find((r) => ['sat_search', 'sat_reg', 'sat_lost'].includes(r.event) || (r.type === 'telemetry' && isSat(r))) : null;
-    const catmNow = !!(sCur && lt && !isSat(lt) && T(lt) > Math.max(sCur.start, lastSatEv ? T(lastSatEv) : 0));
+    const catmNow = !!(sCur && ((lt && !isSat(lt) && T(lt) > Math.max(sCur.start, lastSatEv ? T(lastSatEv) : 0)) || (window.StatusDesligado && StatusDesligado.voltouCatm && StatusDesligado.voltouCatm(rs.concat(locais), RX(sCur.ev[0] || { ts: new Date(sCur.start).toISOString() }))))); /* v70.1: Cat-M recebido (rx) após o início encerra o teste, mesmo com seq repetido */
     const sNet = catmNow ? null : sCur;
     const st1 = [...rs].reverse().find((r) => r.type === 'event' && r.event === 'stest');
-    const tOn = !!sCur || (st1 && st1.value === 1 && !ses.some((s) => s.start >= T(st1) && !s.open));
+    const tOn = !catmNow && (!!sCur || (st1 && st1.value === 1 && !ses.some((s) => s.start >= T(st1) && !s.open) && !(window.StatusDesligado && StatusDesligado.voltouCatm && StatusDesligado.voltouCatm(rs.concat(locais), RX(st1)))));
+    rapido = !!sNet || tOn || !!(window.StatusDesligado && StatusDesligado.emBusca(rs)); // v71: polling de 5 s
     $('testPill').hidden = !tOn; if (tOn) $('testPill').textContent = 'Modo teste satélite ativo';
 
     /* KPIs */
@@ -123,7 +124,7 @@
     if (window.drawHeroU) { let runStart = null; for (let i = tel.length - 1; i >= 0 && !isSat(tel[i]); i--) runStart = T(tel[i]);
       const chg = [...rs].reverse().find((r) => r.type === 'event' && ['boot', 'back_catm', 'sw', 'lost', 'reg'].includes(r.event)); if (runStart != null && chg && T(chg) > runStart) runStart = T(chg);
       const key = !rs.length ? 'nodata' : offNow || (!on && !(sNet && age < 1800000)) ? 'off' : sNet ? (sNet.reg ? 'ntn' : 'search') : 'catm';
-      window.drawHeroU({ key, buscaSat, lastNet: lastNetTxt, busca: key === 'search' ? { t0: sNet.start, iniTxt: 'teste satélite (botão 4)', sync: sNet.gnss || sNet.search ? 1 : null, reg: sNet.reg ? 1 : null,
+      window.drawHeroU({ key, buscaSat, lastNet: lastNetTxt, busca: key === 'search' ? { usbMac: (() => { const sg = [...locais].reverse().find((r) => 'rsrp' in r), e = [...locais].reverse().find((r) => r.estado); return sg || e ? { rsrp: sg ? sg.rsrp : undefined, nivel: sg ? sg.nivel : null, at: sg ? RX(sg) : 0, estado: e ? e.estado : null, estadoAt: e ? RX(e) : 0 } : null; })(), t0: sNet.start, iniTxt: 'teste satélite (botão 4)', sync: sNet.gnss || sNet.search ? 1 : null, reg: sNet.reg ? 1 : null,
         sinal: (() => { const x = [...sNet.ev].reverse().find((r) => (r.plmn === '90198' || r.type === 'satsum' || r.type === 'satdet' || /^sat_/.test(r.event || '')) && (r.rsrp != null || r.rsrpAvg != null)); return x ? { rsrp: x.rsrp ?? x.rsrpAvg, snr: x.snr ?? x.snrAvg, at: T(x) } : null; })(),
         nuvem: (() => { const x = [...sNet.ev].reverse().find((r) => r.estado != null || r.state != null || (r.rsrp != null && isSat(r))); if (!x) return null; const nt = isSat(x) ? 'ntn' : netOf(x); /* só registros de satélite: a volta ao Cat-M já vem pelo estado da plataforma */ /* v2: campos da nuvem r (RSRP) e n ('n' satélite, 'c' Cat-M), já normalizados como rsrp/net */ return Object.assign({}, x, { r: x.rsrp, n: nt === 'ntn' ? 'n' : nt === 'catm' ? 'c' : undefined, at: T(x) }); })(), refs: ses.filter((x) => x.reg).map((x) => T(x.reg) - x.start), rej: sNet.ev.filter((r) => r.rej != null).map((r) => r.rej) } : null, since: key === 'ntn' ? T(sNet.reg) : key === 'search' ? sNet.start : key === 'catm' ? runStart : null, lastRx: lastAny ? RX(lastAny) : null,
         ultRsrp: key === 'ntn' ? (() => { const x = [...sNet.ev].reverse().find((r) => (r.event === 'sat_reg' || (r.type === 'telemetry' && isSat(r))) && r.rsrp != null); return x ? { rsrp: x.rsrp, snr: x.snr, at: T(x) } : null; })() : null,
@@ -255,9 +256,23 @@
   if ($('btnCsvU')) $('btnCsvU').onclick = exportCsv;
   if ($('btnPdfU')) $('btnPdfU').onclick = function () { location.href = '../app/relatorio/?fonte=meter&dias=7'; }; // relatório completo no padrão do demo
 
-  async function load() { try { recs = sanitizeNet(await window.ApiCore.fetchMeter(62)); /* B3: via api-core.js */ } catch (e) { console.warn('utilities: falha ao carregar', e); } render(); }
-  // A3: Poll 30 s: suficiente para o medidor.
-  // Rastreador usa 15 s (troca de rede precisa aparecer rapido na demo).
-  // Consumo usa 45 s (dados historicos, sem urgencia de tempo real).
-  load(); setInterval(load, 30000); setInterval(render, 15000); // v8: reavalia offline sem dado novo
+  /* v71: carga completa (62 dias) uma vez; depois só o que chegou após o último rx (since=). Reenvios pós-boot
+     entram normalmente: a junção usa ApiCore.dedup (rx|seq|type|dv), não descarta por seq.
+     Registros type 'local' (leitor serial do Mac) ficam em `locais`, fora das leituras, gráficos e regra Desligado. */
+  let ultRx = null, carregando = false, timer = null;
+  async function load() {
+    if (carregando) return; carregando = true;
+    try {
+      const novos = sanitizeNet(await window.ApiCore.fetchMeter(62, ultRx || undefined)); /* B3: via api-core.js */
+      const loc = novos.filter((r) => r.type === 'local'), med = novos.filter((r) => r.type !== 'local');
+      recs = ultRx ? window.ApiCore.dedup(recs.concat(med)) : med;
+      locais = window.ApiCore.dedup(locais.concat(loc)).filter((r) => Date.now() - RX(r) < 2 * 3600000);
+      for (const r of novos) if (r.rx && (!ultRx || Date.parse(r.rx) > Date.parse(ultRx))) ultRx = r.rx;
+    } catch (e) { console.warn('utilities: falha ao carregar', e); }
+    carregando = false; render(); agenda();
+  }
+  // v71: polling adaptativo: 5 s com teste satélite ou troca de rede em aberto, 30 s no resto; pausa com a aba oculta
+  function agenda() { clearTimeout(timer); if (!document.hidden) timer = setTimeout(load, rapido ? 5000 : 30000); }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); else clearTimeout(timer); });
+  load(); setInterval(render, 15000); // v8: reavalia offline sem dado novo
 })();

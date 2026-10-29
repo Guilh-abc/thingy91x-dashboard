@@ -4,6 +4,7 @@
   'use strict';
   /* Constantes fáceis de mudar. Registro pode levar muitos minutos: nada de alarme precoce. */
   var CFG = window.BuscaCardCfg || { sugestaoMin: 10, alertaMin: 30, serialFrescoS: 30 };
+  if (CFG.macFrescoS == null) CFG.macFrescoS = 45; // v71: leitura do leitor serial do Mac (SIG a cada 10 s + polling 5 s)
   var LIM_MIN = CFG.sugestaoMin;
   /* Máquina de estados da UI (firmware 1.7: APP|<uptime>|STATE|<X>) */
   var ESTADOS = {
@@ -85,9 +86,17 @@
   function medidor(n, rsrp, extra, cls) {
     return '<div class="bc-medidor ' + (n ? n.k : 'nd') + (cls ? ' ' + cls : '') + '">' + barras(n) + '<div><b>' + (n ? n.t : 'Sem leitura') + '</b>' + (rsrp != null ? '<span class="bc-dbm">' + rsrp + ' dBm</span>' : '') + (extra ? '<span class="bc-mut">' + extra + '</span>' : '') + '</div></div>';
   }
-  function blocoSerial() {
+  /* v71: leitor serial do Mac publica na nuvem (fonte=usb, rx do servidor). Só aparece se a Web Serial direta não estiver ao vivo. */
+  function blocoMac(m) {
+    var fresco = m && m.rsrp !== undefined && Date.now() - m.at < CFG.macFrescoS * 1000;
+    if (!fresco) return '';
+    var n = m.rsrp != null ? nivel(m.rsrp, m.nivel) : null;
+    return '<div class="bc-sinal" aria-live="polite"><small>Sinal ao vivo</small>' + medidor(n, m.rsrp, (m.rsrp == null ? 'placa sem medida agora (NA), ' : '') + 'via USB do Mac, ' + idade(m.at)) + '</div>';
+  }
+  function blocoSerial(mac) {
     var s = serial, fresco = Date.now() - s.at < CFG.serialFrescoS * 1000, n = fresco && s.rsrp != null ? nivel(s.rsrp, s.nivelPlaca) : null, corpo;
     if (s.estado === 'sem-api') corpo = '<p class="bc-mut">Este navegador não lê a porta USB. Use Chrome ou Edge no Mac.</p>';
+    else if (s.estado !== 'ligado' && blocoMac(mac)) return blocoMac(mac);
     else if (s.estado !== 'ligado') corpo = '<p class="bc-mut">Com a placa no USB do Mac, veja o sinal enquanto ela busca.</p><button type="button" class="btn btn-sm" data-bc="serial">Ler sinal pelo USB</button>';
     else if (!n) corpo = medidor(null, null, fresco && s.semLeitura ? 'placa sem medida agora (NA) ' + idade(s.at) : 'porta aberta, aguardando a placa') + '<button type="button" class="bc-link" data-bc="serial-off">Desconectar</button>';
     else corpo = medidor(n, s.rsrp, 'ao vivo pelo USB, ' + idade(s.at) + (s.snr != null ? ' · SNR ' + s.snr + ' dB' : '')) + '<button type="button" class="bc-link" data-bc="serial-off">Desconectar</button>';
@@ -114,6 +123,7 @@
     var cand = [{ e: o.reg ? 'REGISTRADO' : o.sync ? 'SINCRONIA' : 'BUSCA', at: o.lastRx || o.t0, src: 'plataforma' }];
     var nv = parseNuvem(o.nuvem); if (nv && nv.estado) cand.push({ e: nv.estado, at: nv.at || 0, src: 'nuvem' });
     if (serial.placa) cand.push({ e: serial.placa, at: serial.placaAt, src: 'USB' });
+    if (o.usbMac && o.usbMac.estado && ESTADOS[o.usbMac.estado]) cand.push({ e: o.usbMac.estado, at: o.usbMac.estadoAt, src: 'USB do Mac' });
     var est = cand.reduce(function (a, b) { return b.at >= a.at ? b : a; }), E = ESTADOS[est.e], buscando = est.e === 'BUSCA' || est.e === 'SINCRONIA';
     var sug = buscando && ms > LIM_MIN * 60000, alerta = buscando && ms > CFG.alertaMin * 60000, longo = alerta;
     var passo = o.semRetorno ? 'A placa não voltou ao Cat-M depois da sonda. Reinicie a placa.'
@@ -138,7 +148,7 @@
         trilha +
         '<div class="bc-corpo">' +
           '<div class="bc-crono"><small>' + (buscando ? 'Tempo de busca' : 'Desde o início do teste') + '</small><b class="bc-tempo" role="timer">' + dur(ms) + '</b><span class="bc-mut">início às ' + new Date(o.t0).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + (ref ? ' · ' + ref.toLowerCase().replace('registros anteriores levaram', 'antes levou') : '') + '</span>' + barra + '</div>' +
-          '<div class="bc-sinais">' + blocoSerial() + nuvem + '</div>' +
+          '<div class="bc-sinais">' + blocoSerial(o.usbMac) + nuvem + '</div>' +
         '</div>' +
         '<div class="bc-passo"><span class="bc-passo-i" aria-hidden="true">→</span><p><b>Próximo passo.</b> ' + passo + '</p></div>' +
         '<p class="bc-led"><span class="led ' + E.led[0] + '"></span>' + E.led[1] + '</p>' +
