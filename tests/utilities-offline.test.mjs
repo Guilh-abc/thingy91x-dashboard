@@ -79,6 +79,7 @@ const loc = (ago, estado) => ({ type: 'local', fonte: 'usb', estado, rx: iso(now
   const t = ev(1 * m, 'fail', { info: 'ntn_timeout' });
   assert.equal(L.ehTimeoutNtn(t), true); assert.equal(SD.ehTimeoutNtn(t), true);
   assert.equal(SD.ehTimeoutNtn({ type: 'satsum', why: '20min' }), true);
+  for (const info of ['ntn timeout', 'NTN_TIMEOUT', 'ntn_timeout']) { assert.equal(L.ehTimeoutNtn(ev(1 * m, 'fail', { info, value: 1200 })), true, info); assert.equal(SD.ehTimeoutNtn(ev(1 * m, 'fail', { info, net: 'ntn' })), true, info); }
   assert.equal(SD.ehTimeoutNtn(ev(1 * m, 'fail', { info: 'timeout' })), false, 'falha de envio comum não é o timeout');
   const recs = [tel(30 * m), ev(25 * m, 'sat_start'), ev(24 * m, 'sat_search'), t];
   assert.equal(SD.emBusca(recs, now), false); assert.equal(L.emBuscaSrv(recs), false);
@@ -88,30 +89,36 @@ const loc = (ago, estado) => ({ type: 'local', fonte: 'usb', estado, rx: iso(now
   reset();
   await h(new Request('https://x/.netlify/functions/ntn-lab?ingest=1', { method: 'POST', headers: { Authorization: 'Bearer ' + MT }, body: JSON.stringify({ t: 'e', s: 9, u: 99, n: 'c', e: 'fail', i: 'ntn_timeout', x: 20 }) }));
   const g = get(day).pop(); assert.equal(g.event, 'fail'); assert.equal(g.info, 'ntn_timeout'); assert.equal(L.ehTimeoutNtn(g), true);
+  // formato real do fw 2.1: n:'n', x em segundos, i 'ntn timeout'
+  await h(new Request('https://x/.netlify/functions/ntn-lab?ingest=1', { method: 'POST', headers: { Authorization: 'Bearer ' + MT }, body: JSON.stringify({ t: 'e', s: 10, u: 1300, n: 'n', e: 'fail', x: 1200, i: 'ntn timeout' }) }));
+  const g2 = get(day).pop(); assert.equal(g2.info, 'ntn timeout'); assert.equal(g2.value, 1200); assert.equal(g2.net, 'ntn'); assert.equal(L.ehTimeoutNtn(g2), true); assert.equal(SD.ehTimeoutNtn(g2), true);
   const u = readFileSync(new URL('../utilities/utilities.js', import.meta.url), 'utf8');
   assert.match(u, /close\(t, 'Sem registro em 20 min, voltou ao Cat-M'\)/); assert.match(u, /close\(t, 'encerrada: offline'\)/);
 }
-// 7) recebido encerrado: reboot, STATE CATM, Cat-M sem busca; caso real ff99e7fc
+// 7) recebido encerrado: reboot, STATE CATM, Cat-M com e sem prova de migração; caso real ff99e7fc
 {
   const c = { cid: 'ff99e7fc', cmd: 'sat', status: 'recebido', recebidoEm: iso(now - 15 * m) };
-  const rx = ev(15 * m, 'cmd_rx', { info: 'ff99e7fc', value: 1, up: 5000 });
-  assert.equal(L.fimRecebido(c, [rx, ev(2 * m, 'boot', { up: 5 })]).status, 'encerrado_reboot');
-  assert.equal(L.fimRecebido(c, [rx, tel(2 * m, 'catm', 20)]).status, 'encerrado_reboot', 'uptime menor');
-  assert.equal(L.fimRecebido(c, [rx, loc(3 * m, 'CATM')]).status, 'encerrado_catm');
-  assert.equal(L.fimRecebido(c, [rx, tel(3 * m, 'catm', 6000)]).status, 'encerrado_catm');
-  assert.equal(L.fimRecebido(c, [rx, ev(14 * m, 'sat_start', { up: 5100 }), tel(3 * m, 'catm', 6000)]), null, 'Cat-M com busca aberta não encerra');
-  assert.equal(L.fimRecebido(c, [rx, tel(14.5 * m, 'catm', 5010)]), null, 'carência de 90 s');
+  const rx = ev(15 * m, 'cmd_rx', { info: 'ff99e7fc', value: 1, up: 5000 }), F = (rs) => L.fimRecebido(c, [rx, ...rs]);
+  assert.equal(F([ev(2 * m, 'boot', { up: 5 })]).status, 'encerrado_reboot');
+  assert.equal(F([tel(2 * m, 'catm', 20)]).status, 'encerrado_reboot', 'uptime menor');
+  assert.equal(F([loc(3 * m, 'CATM')]).status, 'encerrado_catm');
+  assert.equal(F([ev(3 * m, 'fail', { info: 'ntn timeout', value: 1200, net: 'ntn', up: 6300 })]).status, 'encerrado_catm', 'timeout');
+  assert.equal(F([tel(14.9 * m, 'catm', 5001), tel(14.8 * m, 'catm', 5002)]), null, 'fila Cat-M sem prova, < 5 min');
+  assert.equal(F([ev(14.95 * m, 'stest', { value: 1, net: 'catm', up: 5001 }), tel(14.9 * m, 'catm', 5002), ev(14.85 * m, 'sat_start', { net: 'catm', up: 5003 })]), null, 'fila após stest');
+  assert.equal(F([loc(14 * m, 'BUSCA')]), null, 'BUSCA no USB é migração, não fim');
+  assert.equal(F([ev(14.9 * m, 'sat_start', { up: 5001 }), tel(3 * m, 'catm', 6000)]).status, 'encerrado_catm');
+  assert.equal(F([loc(14 * m, 'SINCRONIA'), tel(10 * m, 'catm', 5300)]).status, 'encerrado_catm');
+  assert.equal(F([tel(9 * m, 'catm', 5360)]).motivo, 'envio Cat-M sem prova de migração');
+  assert.equal(F([tel(11 * m, 'catm', 5240)]), null, '4 min sem prova não encerra');
   assert.equal(L.fimRecebido({ ...c, status: 'recusado' }, [rx, ev(2 * m, 'boot')]), null);
-  // pelo handler: ingest depois do recebido encerra; idempotente
   reset(); put(day, [rx]); put('cmd/atual', c);
   await h(new Request('https://x/.netlify/functions/ntn-lab?ingest=1', { method: 'POST', headers: { Authorization: 'Bearer ' + MT }, body: JSON.stringify({ t: 'm', s: 1600, u: 15, n: 'c' }) }));
   assert.equal(get('cmd/atual').status, 'encerrado_reboot');
   await cmd('GET'); await meter();
   assert.equal(get('cmd/hist').filter((x) => x.cid === 'ff99e7fc').length, 1);
-  // pela leitura preguiçosa (dados já gravados antes do deploy)
-  reset(); put(day, [rx, ev(4 * m, 'boot', { up: 3 }), tel(3 * m, 'catm', 20)]); put('cmd/atual', c);
-  assert.equal((await cmd('GET')).j.cmd.status, 'encerrado_reboot');
-  // tela
+  reset(); put(day, [rx, ev(14.98 * m, 'stest', { value: 1, net: 'catm', up: 5000 }), ev(14.95 * m, 'sat_start', { net: 'catm', up: 5002 })]);
+  put(lday, [loc(14.3 * m, 'BUSCA'), loc(1.5 * m, 'CATM')]); put('cmd/atual', c);
+  assert.equal((await cmd('GET')).j.cmd.status, 'encerrado_catm');
   const e = SC.etapas({ ...c, status: 'encerrado_reboot', criado: iso(now - 16 * m) }, [], now); assert.equal(e.fim, 'encerrado_reboot');
   const e2 = SC.etapas({ ...c, status: 'cancelado_offline', criado: iso(now - 16 * m) }, [], now); assert.equal(e2.fim, 'cancelado_offline');
 }

@@ -146,8 +146,9 @@ export const CMD_FINAIS = ['cancelado', 'expirado', 'recebido', 'recusado', 'sem
    que fecha a sessão de busca, e o comando pendente/entregue vira 'cancelado_offline' (final, libera novo). */
 export const OFF_BUSCA_MS = 5 * 60000, OFF_IV_PADRAO_MS = 2 * 60000;
 const tRx = (r) => Date.parse(r.rx || r.ts) || 0;
-/** Evento de timeout de 20 min do fw 2.1: {t:'e',e:'fail',i:'ntn_timeout'} (aceita também satsum w:'t'). */
-export function ehTimeoutNtn(r) { return !!r && ((r.type === 'event' && r.event === 'fail' && /ntn_timeout|20min/i.test(r.info || '')) || (r.type === 'satsum' && r.why === '20min')); }
+/** Timeout de 20 min do fw 2.1: {t:'e',s,u,n:'n'|'c',e:'fail',x:1200,i:'ntn timeout'} (x em segundos; aceita ntn_timeout e satsum w:'t'). */
+export const TIMEOUT_RE = /ntn[ _]timeout/i;
+export function ehTimeoutNtn(r) { return !!r && ((r.type === 'event' && r.event === 'fail' && TIMEOUT_RE.test(r.info || '')) || (r.type === 'satsum' && r.why === '20min')); }
 export function emBuscaSrv(recs) {
   const rs = recs.slice().sort((a, b) => tRx(a) - tRx(b));
   for (let i = rs.length - 1; i >= 0; i--) {
@@ -172,21 +173,26 @@ export function offlineAvalia(recs, now = Date.now()) {
   const iv = ivs.length ? ivs[ivs.length >> 1] : OFF_IV_PADRAO_MS, limMs = busca ? OFF_BUSCA_MS : Math.round(2.5 * iv);
   return { offline: now - lastRx > limMs, lastRx, busca, limMs, offEm: lastRx + limMs };
 }
-/* v75: comando recebido (cmd_rx x:1) é encerrado quando, depois do cmd_rx, chega:
+/* v75: comando recebido (cmd_rx x:1) encerra, preguiçoso e idempotente:
    boot novo (event boot ou uptime menor que o do cmd_rx) => 'encerrado_reboot';
-   STATE CATM do USB, ou envio Cat-M ('c') sem sessão de busca aberta (após 90 s de carência) => 'encerrado_catm'. */
-export const FIM_CARENCIA_MS = 90000;
+   STATE CATM no USB, timeout ntn, back_catm => 'encerrado_catm';
+   prova de migração = STATE BUSCA/SINCRONIA no USB ou sat_start/stest depois do cmd_rx. Telemetria Cat-M encerra só
+   se vier mais de 2 min depois da prova (a fila do fw sai pelo Cat-M logo após o cmd_rx), ou mais de 5 min depois do cmd_rx sem prova. */
+export const FIM_POS_MIGRACAO_MS = 2 * 60000, FIM_SEM_PROVA_MS = 5 * 60000;
 export function fimRecebido(c, recs) {
   if (!c || c.status !== 'recebido' || !c.recebidoEm) return null;
   const t0 = Date.parse(c.recebidoEm), all = (recs || []).filter((r) => !r.srv).sort((a, b) => tRx(a) - tRx(b));
   const rx = all.find((r) => r.type === 'event' && r.event === 'cmd_rx' && r.info === c.cid);
   const up0 = c.recebidoUp != null ? c.recebidoUp : rx && rx.up != null ? rx.up : null;
-  const depois = all.filter((r) => tRx(r) > t0 && r !== rx);
-  for (let i = 0; i < depois.length; i++) {
-    const r = depois[i], em = new Date(tRx(r)).toISOString();
-    if (r.type !== 'local' && (r.event === 'boot' || (up0 != null && r.up != null && r.up < up0))) return { ...c, status: 'encerrado_reboot', encerradoEm: em, motivo: 'placa reiniciou depois do comando' };
-    if (r.type === 'local' && String(r.estado || '').toUpperCase() === 'CATM') return { ...c, status: 'encerrado_catm', encerradoEm: em, motivo: 'placa voltou ao Cat-M (USB)' };
-    if (r.type !== 'local' && r.net === 'catm' && tRx(r) - t0 > FIM_CARENCIA_MS && !emBuscaSrv(depois.slice(0, i))) return { ...c, status: 'encerrado_catm', encerradoEm: em, motivo: 'envio Cat-M sem busca aberta' };
+  let mig = null;
+  for (const r of all) {
+    const t = tRx(r); if (!(t > t0) || r === rx) continue;
+    const em = new Date(t).toISOString(), st = String(r.estado || '').toUpperCase(), loc = r.type === 'local';
+    if (!loc && (r.event === 'boot' || (up0 != null && r.up != null && r.up < up0))) return { ...c, status: 'encerrado_reboot', encerradoEm: em, motivo: 'placa reiniciou depois do comando' };
+    if (loc && st === 'CATM') return { ...c, status: 'encerrado_catm', encerradoEm: em, motivo: 'placa voltou ao Cat-M (USB)' };
+    if (ehTimeoutNtn(r) || r.event === 'back_catm') return { ...c, status: 'encerrado_catm', encerradoEm: em, motivo: ehTimeoutNtn(r) ? 'sem registro em 20 min' : 'placa voltou ao Cat-M' };
+    if (mig == null && ((loc && (st === 'BUSCA' || st === 'SINCRONIA')) || r.event === 'sat_start' || (r.event === 'stest' && r.value === 1))) { mig = t; continue; }
+    if (!loc && r.type === 'telemetry' && r.net === 'catm' && (mig != null ? t - mig > FIM_POS_MIGRACAO_MS : t - t0 > FIM_SEM_PROVA_MS)) return { ...c, status: 'encerrado_catm', encerradoEm: em, motivo: mig != null ? 'envio Cat-M depois da migração' : 'envio Cat-M sem prova de migração' };
   }
   return null;
 }

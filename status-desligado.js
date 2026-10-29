@@ -48,7 +48,7 @@
     return { offline: n - lastMs > lim, limMs: lim, ageMs: n - lastMs, min: Math.max(0, Math.floor((n - lastMs) / 60000)) };
   }
   /* v75: timeout de 20 min do fw 2.1: {t:'e',e:'fail',i:'ntn_timeout'} => event 'fail', info 'ntn_timeout' (ou satsum why '20min'). */
-  function ehTimeoutNtn(r) { return !!r && ((r.type === 'event' && r.event === 'fail' && /ntn_timeout|20min/i.test(r.info || '')) || (r.type === 'satsum' && r.why === '20min')); }
+  function ehTimeoutNtn(r) { return !!r && ((r.type === 'event' && r.event === 'fail' && /ntn[ _]timeout/i.test(r.info || '')) || (r.type === 'satsum' && r.why === '20min')); }
   function horaCurta(ms) { var d = new Date(ms); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
   function texto(min) { var d = Math.floor(min / 1440), h = Math.floor((min % 1440) / 60); return 'última mensagem há ' + (min < 60 ? min + ' min' : d ? d + (d === 1 ? ' dia' : ' dias') + (h ? ' e ' + h + ' h' : '') : h + ' h ' + String(min % 60).padStart(2, '0') + ' min'); }
   var ICO = '<svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64A9 9 0 0 1 20.77 15"/><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68"/><path d="M12 2v4"/><path d="m2 2 20 20"/></svg>';
